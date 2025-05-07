@@ -1,0 +1,4 @@
+microservice:
+  name: facade-operator
+
+log.level: info
