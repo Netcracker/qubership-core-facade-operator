@@ -22,8 +22,6 @@ import (
 	"github.com/netcracker/qubership-core-lib-go-rest-utils/v2/consul-propertysource"
 	"github.com/netcracker/qubership-core-lib-go/v3/configloader"
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
-	"github.com/netcracker/qubership-core-lib-go/v3/security"
-	"github.com/netcracker/qubership-core-lib-go/v3/serviceloader"
 	openshiftv1 "github.com/openshift/api/route/v1"
 	hpav2 "k8s.io/api/autoscaling/v2"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -53,11 +51,7 @@ var (
 	ctx      = context.WithValue(context.Background(), "requestId", "")
 )
 
-func init() {
-	serviceloader.Register(1, &security.DummyToken{})
-	serviceloader.Register(1, services.NewBaseAnnotationGetter("qubership.cloud"))
-	serviceloader.Register(1, restclient.NewSimpleRestClient())
-
+func RunService() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(facadeV1Alpha.AddToScheme(scheme))
 	utilruntime.Must(facadeV1.AddToScheme(scheme))
@@ -70,11 +64,8 @@ func init() {
 	consulPS := consul.NewLoggingPropertySource()
 	propertySources := configloader.BasePropertySources(configloader.YamlPropertySourceParams{ConfigFilePath: "application.yaml"})
 	configloader.InitWithSourcesArray(append(propertySources, consulPS))
-	consul.StartWatchingForPropertiesWithRetry(context.Background(), consulPS, func(event interface{}, err error) {
-	})
-}
+	consul.StartWatchingForPropertiesWithRetry(context.Background(), consulPS, func(event interface{}, err error) {})
 
-func RunService() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
@@ -154,14 +145,10 @@ func healthProbe(c *fiber.Ctx) error {
 }
 
 func setupReconcilers(mgr manager.Manager, namespace string) {
-	var err error
-
-	maxConcurrentReconciles := 10
-	if maxConcurrentReconcilesStr := os.Getenv("MAX_CONCURRENT_RECONCILES"); maxConcurrentReconcilesStr != "" {
-		maxConcurrentReconciles, err = strconv.Atoi(maxConcurrentReconcilesStr)
-		if err != nil {
-			setupLog.Panicf(errs.ToLogFormat(errs.NewError(customerrors.InitParamsValidationError, "Can not parse MAX_CONCURRENT_RECONCILES value. Value should be integer", err)))
-		}
+	maxConcurrentReconciles, err := strconv.Atoi(os.Getenv("MAX_CONCURRENT_RECONCILES"))
+	if err != nil {
+		setupLog.Error(errs.ToLogFormat(errs.NewError(customerrors.InitParamsValidationError, "Can not parse MAX_CONCURRENT_RECONCILES value. Value should be integer", err)))
+		os.Exit(1)
 	}
 	client := mgr.GetClient()
 	ingressBuilder := templates.NewIngressTemplateBuilder(

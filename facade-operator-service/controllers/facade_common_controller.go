@@ -13,6 +13,7 @@ import (
 	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
 	"github.com/netcracker/qubership-core-lib-go/v3/serviceloader"
+	utilsCore "github.com/netcracker/qubership-core-lib-go/v3/utils"
 	"runtime/debug"
 
 	"fmt"
@@ -497,7 +498,7 @@ func (r *FacadeCommonReconciler) cleanupLastApplied(ctx context.Context, req ctr
 		r.logger.InfoC(ctx, "[%v] Annotations not found on deployment '%s'", req.NamespacedName, deployment.GetName())
 		return nil
 	}
-	lastAppliedCRAnnotation, found := serviceloader.MustLoad[services.AnnotationGetter]().Get(deployment.Annotations, utils.LastAppliedCRAnnotationKey)
+	lastAppliedCRAnnotation, found := serviceloader.MustLoad[utilsCore.AnnotationMapper]().Find(deployment.Annotations, utils.LastAppliedCRAnnotationKey)
 	if !found {
 		r.logger.InfoC(ctx, "[%v] %s annotation not found on deployment '%s'", req.NamespacedName, utils.LastAppliedCRAnnotation, deployment.GetName())
 		return nil

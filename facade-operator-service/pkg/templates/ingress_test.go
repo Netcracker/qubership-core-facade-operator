@@ -3,6 +3,8 @@ package templates
 import (
 	"github.com/netcracker/qubership-core-facade-operator/api/facade"
 	facadeV1Alpha "github.com/netcracker/qubership-core-facade-operator/api/facade/v1alpha"
+	"github.com/netcracker/qubership-core-lib-go/v3/serviceloader"
+	"github.com/netcracker/qubership-core-lib-go/v3/utils"
 	"os"
 	"testing"
 
@@ -12,6 +14,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
+
+func TestMain(m *testing.M) {
+	serviceloader.Register(1, utils.NewResourceGroupAnnotationsMapper("qubership.cloud", "acme.com"))
+	os.Exit(m.Run())
+}
 
 func TestBuildCustomIngress(t *testing.T) {
 	testBuildIngress(t, "test-gw")
@@ -118,6 +125,7 @@ func validateIngressName(t *testing.T, ingressName, gwServiceName string, isGrpc
 func validateAnnotations(t *testing.T, annotations map[string]string, gwServiceName string, isGrpc bool) {
 	assert.Equal(t, "facade-operator", annotations["app.kubernetes.io/managed-by"])
 	assert.Equal(t, "1", annotations["qubership.cloud/start.stage"])
+	assert.Equal(t, "1", annotations["acme.com/start.stage"])
 
 	if gwServiceName == facade.PublicGatewayService {
 		assert.Equal(t, "GENERAL", annotations["qubership.cloud/tenant.service.tenant.id"])

@@ -6,6 +6,7 @@ import (
 	"github.com/netcracker/qubership-core-facade-operator/pkg/utils"
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
 	"github.com/netcracker/qubership-core-lib-go/v3/serviceloader"
+	utilsCore "github.com/netcracker/qubership-core-lib-go/v3/utils"
 	appsV1 "k8s.io/api/apps/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
@@ -117,7 +118,7 @@ func (c *crPriorityServiceImpl) getMasterCR(deployment *appsV1.Deployment) strin
 }
 
 func (c *crPriorityServiceImpl) getLastAppliedCR(ctx context.Context, deployment *appsV1.Deployment) (*utils.LastAppliedCr, error) {
-	lastAppliedCRAnnotation, _ := serviceloader.MustLoad[AnnotationGetter]().Get(deployment.Annotations, utils.LastAppliedCRAnnotationKey)
+	lastAppliedCRAnnotation, _ := serviceloader.MustLoad[utilsCore.AnnotationMapper]().Find(deployment.Annotations, utils.LastAppliedCRAnnotationKey)
 	lastAppliedCr, err := utils.JsonUnmarshal[utils.LastAppliedCr](lastAppliedCRAnnotation)
 	if err != nil {
 		c.logger.ErrorC(ctx, "Can not unmarshal '%s' annotation with value: %s", utils.LastAppliedCRAnnotation, lastAppliedCRAnnotation)
