@@ -3,9 +3,9 @@ package services
 import (
 	"context"
 	"fmt"
-	monitoringV1 "github.com/netcracker/qubership-core-facade-operator/api/monitoring/v1"
-	customerrors "github.com/netcracker/qubership-core-facade-operator/pkg/errors"
-	"github.com/netcracker/qubership-core-facade-operator/pkg/utils"
+	monitoringV1 "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/monitoring/v1"
+	customerrors "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/errors"
+	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
 	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
 

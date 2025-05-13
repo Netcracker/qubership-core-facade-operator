@@ -3,9 +3,9 @@ package builder
 import (
 	"context"
 	"fmt"
-	"github.com/netcracker/qubership-core-facade-operator/api/facade"
-	"github.com/netcracker/qubership-core-facade-operator/pkg/templates"
-	"github.com/netcracker/qubership-core-facade-operator/pkg/utils"
+	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
+	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/templates"
+	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
 
 	hpav2 "k8s.io/api/autoscaling/v2"

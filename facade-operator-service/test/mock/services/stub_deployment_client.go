@@ -13,7 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	utils "github.com/netcracker/qubership-core-facade-operator/pkg/utils"
+	utils "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
 	gomock "go.uber.org/mock/gomock"
 	v1 "k8s.io/api/apps/v1"
 	controllerruntime "sigs.k8s.io/controller-runtime"

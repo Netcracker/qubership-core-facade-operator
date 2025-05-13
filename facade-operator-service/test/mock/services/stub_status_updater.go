@@ -13,7 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	facade "github.com/netcracker/qubership-core-facade-operator/api/facade"
+	facade "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
 	gomock "go.uber.org/mock/gomock"
 )
 

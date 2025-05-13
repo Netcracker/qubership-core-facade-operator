@@ -3,10 +3,10 @@ package indexes
 import (
 	"context"
 	"fmt"
-	facadeV1 "github.com/netcracker/qubership-core-facade-operator/api/facade/v1"
-	facadeV1Alpha "github.com/netcracker/qubership-core-facade-operator/api/facade/v1alpha"
-	customerrors "github.com/netcracker/qubership-core-facade-operator/pkg/errors"
-	"github.com/netcracker/qubership-core-facade-operator/pkg/utils"
+	facadeV1 "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1"
+	facadeV1Alpha "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1alpha"
+	customerrors "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/errors"
+	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
 	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
 
 	openshiftv1 "github.com/openshift/api/route/v1"

@@ -2,9 +2,9 @@ package services
 
 import (
 	"context"
-	"github.com/netcracker/qubership-core-facade-operator/api/facade"
-	facadeV1 "github.com/netcracker/qubership-core-facade-operator/api/facade/v1"
-	"github.com/netcracker/qubership-core-facade-operator/pkg/utils"
+	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
+	facadeV1 "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1"
+	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
 	"time"
 

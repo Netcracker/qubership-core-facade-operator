@@ -1,8 +1,8 @@
 package templates
 
 import (
-	"github.com/netcracker/qubership-core-facade-operator/api/facade"
-	"github.com/netcracker/qubership-core-facade-operator/pkg/utils"
+	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
+	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

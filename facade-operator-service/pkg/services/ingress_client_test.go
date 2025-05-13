@@ -2,12 +2,12 @@ package services
 
 import (
 	"context"
-	"github.com/netcracker/qubership-core-facade-operator/api/facade"
-	facadeV1Alpha "github.com/netcracker/qubership-core-facade-operator/api/facade/v1alpha"
-	"github.com/netcracker/qubership-core-facade-operator/pkg/templates"
-	"github.com/netcracker/qubership-core-facade-operator/pkg/utils"
-	mock_client "github.com/netcracker/qubership-core-facade-operator/test/mock/client"
-	mock_services "github.com/netcracker/qubership-core-facade-operator/test/mock/services"
+	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
+	facadeV1Alpha "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1alpha"
+	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/templates"
+	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
+	mock_client "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/test/mock/client"
+	mock_services "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/test/mock/services"
 	"go.uber.org/mock/gomock"
 	"os"
 	"testing"

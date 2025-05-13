@@ -3,9 +3,9 @@ package services
 import (
 	"context"
 	"fmt"
-	customerrors "github.com/netcracker/qubership-core-facade-operator/pkg/errors"
-	"github.com/netcracker/qubership-core-facade-operator/pkg/templates"
-	mock_client "github.com/netcracker/qubership-core-facade-operator/test/mock/client"
+	customerrors "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/errors"
+	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/templates"
+	mock_client "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/test/mock/client"
 	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"

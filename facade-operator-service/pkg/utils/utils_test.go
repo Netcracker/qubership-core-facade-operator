@@ -3,9 +3,9 @@ package utils
 import (
 	"context"
 	"fmt"
-	"github.com/netcracker/qubership-core-facade-operator/api/facade"
-	facadeV1Alpha "github.com/netcracker/qubership-core-facade-operator/api/facade/v1alpha"
-	customerrors "github.com/netcracker/qubership-core-facade-operator/pkg/errors"
+	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
+	facadeV1Alpha "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1alpha"
+	customerrors "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/errors"
 	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
 	"os"
 	"reflect"

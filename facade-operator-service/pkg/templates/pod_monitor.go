@@ -1,8 +1,8 @@
 package templates
 
 import (
-	v1 "github.com/netcracker/qubership-core-facade-operator/api/monitoring/v1"
-	"github.com/netcracker/qubership-core-facade-operator/pkg/utils"
+	v1 "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/monitoring/v1"
+	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )

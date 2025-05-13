@@ -2,8 +2,8 @@ package services
 
 import (
 	"errors"
-	mock_client "github.com/netcracker/qubership-core-facade-operator/test/mock/client"
-	mock_services "github.com/netcracker/qubership-core-facade-operator/test/mock/services"
+	mock_client "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/test/mock/client"
+	mock_services "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/test/mock/services"
 	"go.uber.org/mock/gomock"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"

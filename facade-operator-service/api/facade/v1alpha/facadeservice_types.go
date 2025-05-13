@@ -1,7 +1,7 @@
 package v1alpha
 
 import (
-	"github.com/netcracker/qubership-core-facade-operator/api/facade"
+	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

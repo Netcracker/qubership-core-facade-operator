@@ -3,7 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
-	customerrors "github.com/netcracker/qubership-core-facade-operator/pkg/errors"
+	customerrors "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/errors"
 	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
 
