@@ -1,7 +1,6 @@
 package restclient
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -9,7 +8,6 @@ import (
 	customerrors "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/errors"
 	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
-	"github.com/netcracker/qubership-core-lib-go/v3/serviceloader"
 	"net/http"
 )
 
@@ -30,7 +28,7 @@ type GatewayDeclaration struct {
 type cpClient struct {
 	logger          logging.Logger
 	controlPlaneUrl string
-	m2mClient       RestClient
+	m2mClient       *SimpleRestClient
 }
 
 func NewControlPlaneClient() ControlPlaneClient {
@@ -38,7 +36,8 @@ func NewControlPlaneClient() ControlPlaneClient {
 	return &cpClient{
 		logger:          logging.GetLogger("ControlPlaneClient"),
 		controlPlaneUrl: controlPlaneUrl,
-		m2mClient:       serviceloader.MustLoad[RestClient]()}
+		m2mClient:       NewSimpleRestClient(),
+	}
 }
 
 func (c *cpClient) sendRequest(ctx context.Context, method, path string, requestBody any) (*Response, error) {
@@ -46,7 +45,7 @@ func (c *cpClient) sendRequest(ctx context.Context, method, path string, request
 	if err != nil {
 		return nil, errs.NewError(customerrors.UnknownErrorCode, "could not serialize gateway registration request body", err)
 	}
-	resp, err := c.m2mClient.DoRequest(ctx, method, c.controlPlaneUrl+path, bytes.NewReader(body))
+	resp, err := c.m2mClient.DoRequest(ctx, method, c.controlPlaneUrl+path, string(body))
 	if err != nil {
 		return nil, errs.NewError(customerrors.ControlPlaneError, fmt.Sprintf("%s request to control-plane %s failed with error", method, path), err)
 	}
