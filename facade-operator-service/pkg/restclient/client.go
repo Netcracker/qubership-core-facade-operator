@@ -14,11 +14,15 @@ import (
 )
 
 type SimpleRestClient struct {
-	logger logging.Logger
+	logger        logging.Logger
+	tokenProvider security.TokenProvider
 }
 
 func NewSimpleRestClient() *SimpleRestClient {
-	return &SimpleRestClient{logger: logging.GetLogger("SimpleRestClient")}
+	return &SimpleRestClient{
+		logger:        logging.GetLogger("SimpleRestClient"),
+		tokenProvider: serviceloader.MustLoad[security.TokenProvider](),
+	}
 }
 
 func (c SimpleRestClient) DoRequest(ctx context.Context, httpMethod string, url string, body string) (*Response, error) {
@@ -35,7 +39,7 @@ func (c SimpleRestClient) DoRequest(ctx context.Context, httpMethod string, url 
 	}
 
 	// add token if it needed
-	m2mToken, err := serviceloader.MustLoad[security.TokenProvider]().GetToken(ctx)
+	m2mToken, err := c.tokenProvider.GetToken(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error getting m2m token from tokenprovider: %w", err)
 	}
