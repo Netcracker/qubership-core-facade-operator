@@ -1,0 +1,212 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+    name: "{{ .Values.SERVICE_NAME }}"
+    labels:
+        name: '{{ .Values.SERVICE_NAME }}'
+        app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
+        app.kubernetes.io/instance: '{{ cat .Values.SERVICE_NAME "-" .Values.NAMESPACE | nospace | trunc 63 | trimSuffix "-" }}'
+        app.kubernetes.io/version: '{{ .Values.ARTIFACT_DESCRIPTOR_VERSION }}'
+        app.kubernetes.io/component: 'operator'
+        app.kubernetes.io/part-of: 'Cloud-Core'
+        app.kubernetes.io/managed-by: 'saasDeployer'
+        app.kubernetes.io/technology: 'go'
+        deployment.qubership.org/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
+spec:
+    replicas: 1
+    revisionHistoryLimit: 3
+    strategy:
+    {{- if eq (default "" .Values.DEPLOYMENT_STRATEGY_TYPE) "recreate" }}
+      type: Recreate
+    {{- else if eq (default "" .Values.DEPLOYMENT_STRATEGY_TYPE) "best_effort_controlled_rollout" }}
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 0
+        maxUnavailable: 80%
+    {{- else if eq (default "" .Values.DEPLOYMENT_STRATEGY_TYPE) "ramped_slow_rollout" }}
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    {{- else if eq (default "" .Values.DEPLOYMENT_STRATEGY_TYPE) "custom_rollout" }}
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: {{ .Values.DEPLOYMENT_STRATEGY_MAXSURGE | default "25%" }}
+        maxUnavailable: {{ .Values.DEPLOYMENT_STRATEGY_MAXUNAVAILABLE | default "25%" }}
+    {{- else }}
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+    {{- end }}
+    selector:
+        matchLabels:
+            app: '{{ .Values.SERVICE_NAME }}'
+    template:
+        metadata:
+            labels:
+                app: '{{ .Values.SERVICE_NAME }}'
+                name: '{{ .Values.SERVICE_NAME }}'
+                app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
+                app.kubernetes.io/instance: '{{ cat .Values.SERVICE_NAME "-" .Values.NAMESPACE | nospace | trunc 63 | trimSuffix "-" }}'
+                app.kubernetes.io/version: '{{ .Values.ARTIFACT_DESCRIPTOR_VERSION }}'
+                app.kubernetes.io/component: 'operator'
+                app.kubernetes.io/part-of: 'Cloud-Core'
+                app.kubernetes.io/technology: 'go'
+        spec:
+            volumes:
+            -   name: client-credentials
+                secret:
+                  secretName: "{{ .Values.SERVICE_NAME }}-client-credentials"
+            containers:
+            -   name: "{{ .Values.SERVICE_NAME }}"
+                image: '{{ .Values.IMAGE_REPOSITORY }}:{{ .Values.TAG }}'
+                args:
+                  - /app/facade-operator-service
+                ports:
+                  -   name: web
+                      containerPort: 8080
+                      protocol: TCP
+                  -   name: tls
+                      containerPort: 8443
+                      protocol: TCP
+                env:
+                -   name: CLOUD_NAMESPACE
+                    valueFrom:
+                        fieldRef:
+                            fieldPath: metadata.namespace
+                -   name: LOG_LEVEL
+                    value: '{{ lower .Values.LOG_LEVEL }}'
+                -   name: MICROSERVICE_NAMESPACE
+                    valueFrom:
+                        fieldRef:
+                            fieldPath: metadata.namespace
+                -   name: PAAS_PLATFORM
+                    value: '{{ .Values.PAAS_PLATFORM }}'
+                -   name: PAAS_VERSION
+                    value: '{{ .Values.PAAS_VERSION }}'
+                -   name: FACADE_GATEWAY_REPLICAS
+                    value: '{{ .Values.FACADE_GATEWAY_REPLICAS }}'
+                -   name: FACADE_GATEWAY_MEMORY_LIMIT
+                    value: '{{ .Values.FACADE_GATEWAY_MEMORY_LIMIT }}'
+                -   name: FACADE_GATEWAY_CPU_LIMIT
+                    value: '{{ .Values.FACADE_GATEWAY_CPU_LIMIT }}'
+                -   name: FACADE_GATEWAY_CPU_REQUEST
+                    value: '{{ .Values.FACADE_GATEWAY_CPU_REQUEST }}'
+                -   name: FACADE_GATEWAY_CONCURRENCY
+                    value: '0'
+                -   name: PEER_NAMESPACE
+                    value: {{ .Values.PEER_NAMESPACE }}
+                -   name: INGRESS_CLASS
+                    value: {{ .Values.INGRESS_CLASS }}
+                -   name: FACADE_GATEWAY_TERMINATION_GRACE_PERIOD_S
+                    value: '{{ .Values.FACADE_GATEWAY_TERMINATION_GRACE_PERIOD_S }}'
+                -   name: ARTIFACT_DESCRIPTOR_VERSION
+                    value: '{{ .Values.ARTIFACT_DESCRIPTOR_VERSION }}'
+                -   name: IP_STACK
+                    value: '{{ .Values.IP_STACK }}'
+                -   name: IP_BIND
+                    value: '{{ if eq .Values.IP_STACK "v6" }} "::" {{ else }} "0.0.0.0" {{ end }}'
+                -   name: MONITORING_ENABLED
+                    value: '{{ .Values.MONITORING_ENABLED }}'
+                -   name: TRACING_ENABLED
+                    value: '{{ .Values.TRACING_ENABLED }}'
+                -   name: TRACING_HOST
+                    value: '{{ .Values.TRACING_HOST }}'
+                -   name: TRACING_SAMPLER_RATELIMITING
+                    value: '{{ .Values.TRACING_SAMPLER_RATELIMITING }}'
+                -   name: MAX_CONCURRENT_RECONCILES
+                    value: '{{ .Values.MAX_CONCURRENT_RECONCILES }}'
+                -   name: GOGC
+                    value: '{{ .Values.GOGC }}'
+                -   name: CLOUD_TOPOLOGY_KEY
+                    value: '{{ .Values.CLOUD_TOPOLOGY_KEY }}'
+                -   name: XDS_CLUSTER_HOST
+                    value: '{{ .Values.XDS_CLUSTER_HOST }}'
+                -   name: XDS_CLUSTER_PORT
+                    value: '{{ .Values.XDS_CLUSTER_PORT }}'
+                -   name: ISSUER_GROUP
+                    value: '{{ .Values.ISSUER_GROUP }}'
+                -   name: ISSUER_KIND
+                    value: '{{ .Values.ISSUER_KIND }}'
+                -   name: ISSUER_NAME
+                    value: '{{ .Values.ISSUER_NAME }}'
+                -   name: TLS_SECRET
+                    value: '/etc/tls'
+                -   name: TLS_PASSWORD_SECRET_NAME
+                    value: 'tls-password-secret'
+                -   name: TLS_PASSWORD_KEY
+                    value: 'tls-password'
+                -   name: READONLY_CONTAINER_FILE_SYSTEM_ENABLED
+                    value: '{{ and .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED (eq .Values.PAAS_PLATFORM "KUBERNETES") }}'
+{{- if .Values.CLOUD_TOPOLOGIES }}
+                -   name: CLOUD_TOPOLOGIES_JSON_BASE64
+                    value: {{ .Values.CLOUD_TOPOLOGIES | toJson | b64enc }}
+{{- end }}
+                -   name: K8S_SERVICE_TYPE
+                    value: '{{ .Values.K8S_SERVICE_TYPE }}'
+                -   name: CONSUL_ENABLED
+                    value: '{{ .Values.CONSUL_ENABLED }}'
+                    {{ if .Values.CONSUL_ENABLED }}
+                -   name: CONSUL_URL
+                    value: '{{ .Values.CONSUL_URL }}'
+                    {{ end }}
+                resources:
+                    requests:
+                        cpu: {{ .Values.CPU_REQUEST }}
+                        memory: {{ .Values.MEMORY_LIMIT }}
+                    limits:
+                        memory: {{ .Values.MEMORY_LIMIT }}
+                        cpu: {{ .Values.CPU_LIMIT }}
+                livenessProbe:
+                  failureThreshold: 4
+                  httpGet:
+                    path: /health
+                    port: web
+                    scheme: HTTP
+                  initialDelaySeconds: 10
+                  timeoutSeconds: 5
+                readinessProbe:
+                  failureThreshold: 4
+                  httpGet:
+                    path: /ready
+                    port: web
+                    scheme: HTTP
+                  initialDelaySeconds: 5
+                  timeoutSeconds: 5
+                securityContext:
+{{ if eq .Values.PAAS_PLATFORM "KUBERNETES" }}
+                    runAsGroup: 10001
+{{ end }}
+                    readOnlyRootFilesystem: {{ and .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED (eq .Values.PAAS_PLATFORM "KUBERNETES") }}
+                    runAsNonRoot: true
+                    seccompProfile:
+                      type: RuntimeDefault
+                    allowPrivilegeEscalation: false
+                    capabilities:
+                      drop:
+                        - ALL
+                volumeMounts:
+                    - name: client-credentials
+                      mountPath: "/etc/secret"
+                      readOnly: true
+            serviceAccountName: {{ .Values.SERVICE_NAME }}
+            topologySpreadConstraints:
+{{- if .Values.CLOUD_TOPOLOGIES }}
+{{- range $v := .Values.CLOUD_TOPOLOGIES }}
+              - topologyKey: {{ $v.topologyKey }}
+                maxSkew: {{ $v.maxSkew | default 1 }}
+                whenUnsatisfiable: {{ $v.whenUnsatisfiable | default "ScheduleAnyway" }}
+                labelSelector:
+                  matchLabels:
+                    name: "{{ $.Values.SERVICE_NAME }}"
+{{- end }}
+{{- else }}
+              - maxSkew: 1
+                topologyKey: "{{ .Values.CLOUD_TOPOLOGY_KEY }}"
+                whenUnsatisfiable: ScheduleAnyway
+                labelSelector:
+                  matchLabels:
+                    name: "{{ .Values.SERVICE_NAME }}"
+{{- end }}
