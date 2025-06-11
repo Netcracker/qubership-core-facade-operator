@@ -55,10 +55,6 @@ spec:
                 app.kubernetes.io/part-of: 'Cloud-Core'
                 app.kubernetes.io/technology: 'go'
         spec:
-            volumes:
-            -   name: client-credentials
-                secret:
-                  secretName: "{{ .Values.SERVICE_NAME }}-client-credentials"
             containers:
             -   name: "{{ .Values.SERVICE_NAME }}"
                 image: '{{ .Values.IMAGE_REPOSITORY }}:{{ .Values.TAG }}'
@@ -187,10 +183,6 @@ spec:
                     capabilities:
                       drop:
                         - ALL
-                volumeMounts:
-                    - name: client-credentials
-                      mountPath: "/etc/secret"
-                      readOnly: true
             serviceAccountName: {{ .Values.SERVICE_NAME }}
             topologySpreadConstraints:
 {{- if .Values.CLOUD_TOPOLOGIES }}
