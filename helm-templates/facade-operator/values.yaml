@@ -2,7 +2,7 @@
 MONITORING_ENABLED: true
 CLOUD_TOPOLOGY_KEY: kubernetes.io/hostname
 READONLY_CONTAINER_FILE_SYSTEM_ENABLED: false
-IMAGE_REPOSITORY: 'ghcr:io/netcracker/qubership-core-facade-operator'
+IMAGE_REPOSITORY: 'ghcr.io/netcracker/qubership-core-facade-operator'
 
 # ============== SERVICE VARIABLES ============================
 SERVICE_NAME: 'facade-operator'
