@@ -106,12 +106,12 @@ Example facade operator CR
 * GatewayPorts - In case you need a non-standard port or the service needs to serve more than 1 port, then they all should be listed in this field. This field takes precedence over the 'port' field
 * MasterConfiguration - The field indicates whether this CR will be considered the main [Master custom resource configuration](#master-custom-resource-configuration)
 * FacadeGatewayConcurrency - limit number of workers inside envoy which process requests
-* gatewayType - optional type of gateway. Possible values: `ingress`, `mesh`, `egress`. Default is `mesh`. There are limitations for custom `ingress` gateways, see [ingress-gateways](https://github.com/PROD.Platform.Cloud_Core/control-plane/-/blob/master/docs/mesh/ingress-gateways.md) // TODO OS. 
+* gatewayType - optional type of gateway. Possible values: `ingress`, `mesh`, `egress`. Default is `mesh`. There are limitations for custom `ingress` gateways, see [ingress-gateways](https://github.com/Netcracker/qubership-core-control-plane/blob/main/docs/mesh/ingress-gateways.md) // TODO OS. 
 
 # Control Plane API to register a route
 Control Plane manages routing tables that are executed by gateways. 
 The role of a routing table is to define microservice that will serve particular request by the request path and version.
-For creating routes use [Control Plane API](https://github.com/PROD.Platform.Cloud_Core/control-plane#rest-api) to register routes // TODO OS
+For creating routes use [Control Plane API](https://github.com/Netcracker/qubership-core-control-plane/blob/main/docs/api/control-plane-api.md) to register routes
 
 # Master custom resource configuration
 In order to set the composite gateway HW resources, you can use the masterConfiguration field on one of the CR.
@@ -123,7 +123,6 @@ If during your project deploy some facade-gateways or services are not created b
 It should recreate the missing entities.
 
 If your project contains a big amount of services and facade-operator gets killed you need to adjust the resources limits.
-Use [Cloud Platform Profiles](https://github.com/PROD.Platform.Cloud_Core/infrastructure-items/-/blob/master/docs/Cloud-Core-Overview.md#cloud-platform-profiles) // TODO OS
 for overriding CPU_REQUEST, CPU_LIMIT, MEMORY_LIMIT parameters.
 
 Be aware the parameters FACADE_OPERATOR_CPU_REQUEST, FACADE_OPERATOR_CPU_LIMIT, FACADE_OPERATOR_MEMORY_LIMIT 
