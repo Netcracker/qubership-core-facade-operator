@@ -1,0 +1,31 @@
+# ============== DEPLOYMENT VARIABLES ============================
+MONITORING_ENABLED: true
+CLOUD_TOPOLOGY_KEY: kubernetes.io/hostname
+READONLY_CONTAINER_FILE_SYSTEM_ENABLED: false
+IMAGE_REPOSITORY: 'ghcr.io/netcracker/qubership-core-facade-operator'
+
+# ============== SERVICE VARIABLES ============================
+SERVICE_NAME: 'facade-operator'
+LOG_LEVEL: "info"
+
+TRACING_ENABLED: false
+TRACING_HOST: 'nc-diagnostic-agent'
+TRACING_SAMPLER_RATELIMITING: 10
+
+GOGC: "20"
+
+IP_STACK: "v4"
+MAX_CONCURRENT_RECONCILES: 7
+XDS_CLUSTER_HOST: control-plane
+XDS_CLUSTER_PORT: 15010
+ISSUER_GROUP: 'cert-manager.io'
+ISSUER_KIND: 'ClusterIssuer'
+ISSUER_NAME: ''
+X509_AUTHENTICATION_ENABLED: false
+GW_INGRESS_ANNOTATIONS: ''
+FACADE_GATEWAY_TERMINATION_GRACE_PERIOD_S: 60
+PEER_NAMESPACE: ''
+INGRESS_CLASS: ''
+K8S_SERVICE_TYPE: 'CLUSTER_IP'
+CONSUL_ENABLED: false
+CONSUL_URL: ''
