@@ -26,8 +26,6 @@
       "ARTIFACT_DESCRIPTOR_VERSION": "",
       "IP_STACK": "v4",
       "MONITORING_ENABLED": false,
-      "TRACING_ENABLED": false,
-      "TRACING_HOST": "nc-diagnostic-agent",
       "MAX_CONCURRENT_RECONCILES": 10,
       "CLOUD_TOPOLOGY_KEY": "kubernetes.io/hostname",
       "XDS_CLUSTER_HOST": "control-plane",
@@ -37,7 +35,6 @@
       "ISSUER_NAME": "",
       "FACADE_GATEWAY_TERMINATION_GRACE_PERIOD_S": 60,
       "LOG_LEVEL": "info",
-      "TRACING_SAMPLER_RATELIMITING": 10,
       "K8S_SERVICE_TYPE": "CLUSTER_IP",
       "GOGC": "20"
     }
@@ -199,22 +196,6 @@
       ],
       "title": "The MONITORING_ENABLED schema"
     },
-    "TRACING_ENABLED": {
-      "$id": "#/properties/TRACING_ENABLED",
-      "$ref": "#/definitions/booleanOrString",
-      "description": "Is tracing enabled",
-      "examples": [
-        false
-      ],
-      "title": "The TRACING_ENABLED schema"
-    },
-    "TRACING_HOST": {
-      "$id": "#/properties/TRACING_HOST",
-      "type": "string",
-      "title": "The TRACING_HOST schema",
-      "description": "Tracing server host",
-      "default": "nc-diagnostic-agent"
-    },
     "FACADE_GATEWAY_REPLICAS": {
       "$id": "#/properties/FACADE_GATEWAY_REPLICAS",
       "$ref": "#/definitions/integerOrString",
@@ -375,13 +356,6 @@
       "title": "The GW_INGRESS_ANNOTATIONS schema",
       "description": "Annotations for public and private gateways ingresses/routes.",
       "default": ""
-    },
-    "TRACING_SAMPLER_RATELIMITING": {
-      "$id": "#/properties/TRACING_SAMPLER_RATELIMITING",
-      "$ref": "#/definitions/integerOrString",
-      "default": 10,
-      "description": "The rate for requests sampling (number of traces per second)",
-      "title": "The TRACING_SAMPLER_RATELIMITING schema"
     },
     "PEER_NAMESPACE": {
       "$id": "#/properties/PEER_NAMESPACE",

@@ -646,8 +646,6 @@ func (r *FacadeCommonReconciler) applyDeployment(ctx context.Context, req ctrl.R
 		ArtifactDescriptionVersion: utils.ArtifactDescriptorVersion,
 		ImageName:                  publicGatewayImage,
 		Recourses:                  r.getFacadeResources(ctx, req, cr),
-		TracingEnabled:             utils.TracingEnabled,
-		TracingHost:                utils.TracingHost,
 		IpStack:                    utils.IpStack,
 		IpBind:                     utils.IpBind,
 		MeshRouter:                 meshRouter,
