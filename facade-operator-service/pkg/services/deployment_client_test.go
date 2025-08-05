@@ -636,6 +636,8 @@ func getFacadeDeploymentWithName(req reconcile.Request, gatewayName string) (*v1
 		ArtifactDescriptionVersion: "ArtifactDescriptorVersion",
 		ImageName:                  "publicGatewayImage",
 		Recourses:                  corev1.ResourceRequirements{},
+		TracingEnabled:             "TracingEnabled",
+		TracingHost:                "TracingHost",
 		IpStack:                    "IpStack",
 		IpBind:                     "IpBind",
 		MeshRouter:                 false,

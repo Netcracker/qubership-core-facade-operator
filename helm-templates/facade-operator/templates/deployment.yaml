@@ -106,6 +106,12 @@ spec:
                     value: '{{ if eq .Values.IP_STACK "v6" }} "::" {{ else }} "0.0.0.0" {{ end }}'
                 -   name: MONITORING_ENABLED
                     value: '{{ .Values.MONITORING_ENABLED }}'
+                -   name: TRACING_ENABLED
+                    value: '{{ .Values.TRACING_ENABLED }}'
+                -   name: TRACING_HOST
+                    value: '{{ .Values.TRACING_HOST }}'
+                -   name: TRACING_SAMPLER_RATELIMITING
+                    value: '{{ .Values.TRACING_SAMPLER_RATELIMITING }}'
                 -   name: MAX_CONCURRENT_RECONCILES
                     value: '{{ .Values.MAX_CONCURRENT_RECONCILES }}'
                 -   name: GOGC

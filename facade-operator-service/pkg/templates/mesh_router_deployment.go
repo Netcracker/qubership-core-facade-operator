@@ -28,6 +28,8 @@ type RouterDeployment struct {
 	ArtifactDescriptionVersion string
 	ImageName                  string
 	Recourses                  corev1.ResourceRequirements
+	TracingEnabled             string
+	TracingHost                string
 	IpStack                    string
 	IpBind                     string
 	MeshRouter                 bool
@@ -260,6 +262,14 @@ func (d RouterDeployment) getEnvVariables(memLimit string, gwTerminationGracePer
 		{
 			Name:  "GW_TERMINATION_GRACE_PERIOD_S",
 			Value: strconv.Itoa(gwTerminationGracePeriodS),
+		},
+		{
+			Name:  "TRACING_ENABLED",
+			Value: d.TracingEnabled,
+		},
+		{
+			Name:  "TRACING_HOST",
+			Value: d.TracingHost,
 		},
 		{
 			Name:  "IP_STACK",
