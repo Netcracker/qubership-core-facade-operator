@@ -164,10 +164,15 @@ func ResolveGatewayServiceName(crName string, cr facade.MeshGateway) string {
 
 func GetResourceRequirements(ctx context.Context, cr facade.MeshGateway) corev1.ResourceRequirements {
 	memoryLimit := GetValueOrDefault(cr.GetSpec().Env.FacadeGatewayMemoryLimit, DefaultFacadeGatewayMemoryLimit)
+	memoryRequest := GetValueOrDefault(cr.GetSpec().Env.FacadeGatewayMemoryRequest, DefaultFacadeGatewayMemoryRequest)
 	if cr.GetName() == facade.EgressGateway {
 		defaultFacadeGatewayMemoryLimitInt, _ := strconv.Atoi(strings.ReplaceAll(DefaultFacadeGatewayMemoryLimit, "Mi", ""))
 		if defaultFacadeGatewayMemoryLimitInt < MinimumEgressGatewayMemoryLimitInt {
 			memoryLimit = GetValueOrDefault(cr.GetSpec().Env.FacadeGatewayMemoryLimit, strconv.Itoa(MinimumEgressGatewayMemoryLimitInt)+"Mi")
+		}
+		defaultFacadeGatewayMemoryRequestInt, _ := strconv.Atoi(strings.ReplaceAll(DefaultFacadeGatewayMemoryRequest, "Mi", ""))
+		if defaultFacadeGatewayMemoryRequestInt < MinimumEgressGatewayMemoryRequestInt {
+			memoryRequest = GetValueOrDefault(cr.GetSpec().Env.FacadeGatewayMemoryRequest, strconv.Itoa(MinimumEgressGatewayMemoryRequestInt)+"Mi")
 		}
 	}
 	cpuLimit := GetValueOrDefault(fmt.Sprintf("%v", cr.GetSpec().Env.FacadeGatewayCpuLimit), DefaultFacadeGatewayCpuLimit)
@@ -177,6 +182,12 @@ func GetResourceRequirements(ctx context.Context, cr facade.MeshGateway) corev1.
 	if err != nil {
 		logger.ErrorC(ctx, "Error during converting env variable for FacadeGatewayMemoryLimit: %v", err)
 		memoryLimitQuantity = resource.MustParse(DefaultFacadeGatewayMemoryLimit)
+	}
+
+	memoryRequestQuantity, err := resource.ParseQuantity(memoryRequest)
+	if err != nil {
+		logger.ErrorC(ctx, "Error during converting env variable for FacadeGatewayMemoryRequest: %v", err)
+		memoryRequestQuantity = resource.MustParse(DefaultFacadeGatewayMemoryRequest)
 	}
 
 	cpuLimitQuantity, err := resource.ParseQuantity(cpuLimit)
@@ -194,7 +205,7 @@ func GetResourceRequirements(ctx context.Context, cr facade.MeshGateway) corev1.
 	return corev1.ResourceRequirements{
 		Requests: map[corev1.ResourceName]resource.Quantity{
 			corev1.ResourceCPU:    cpuRequestQuantity,
-			corev1.ResourceMemory: memoryLimitQuantity,
+			corev1.ResourceMemory: memoryRequestQuantity,
 		},
 		Limits: map[corev1.ResourceName]resource.Quantity{
 			corev1.ResourceCPU:    cpuLimitQuantity,

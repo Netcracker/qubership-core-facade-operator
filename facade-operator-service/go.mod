@@ -7,10 +7,10 @@ toolchain go1.24.2
 require (
 	github.com/cert-manager/cert-manager v1.17.2
 	github.com/gofiber/fiber/v2 v2.52.6
-	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.0.0-20250403062747-4cb66dc1cc62
-	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.0.0-20250505150321-09ac8e0e3ac2
-	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.0.0-20250508142012-e92225d73d9f
-	github.com/netcracker/qubership-core-lib-go/v3 v3.0.0-20250513173212-f9911835b86e
+	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.0.0-20250808081001-9d392667f3ce
+	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.0.0-20250808080943-88e9aee81aee
+	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.0.0-20250808081005-46924817bcee
+	github.com/netcracker/qubership-core-lib-go/v3 v3.0.0-20250801085730-99b38e3e07af
 	github.com/openshift/api v0.0.0-20250506165729-ec925abe6296
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/mock v0.5.1

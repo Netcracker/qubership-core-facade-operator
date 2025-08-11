@@ -1240,7 +1240,7 @@ func getFacadeResources(facadeService *facadeV1Alpha.FacadeService) corev1.Resou
 	resources := corev1.ResourceRequirements{
 		Requests: map[corev1.ResourceName]resource.Quantity{
 			corev1.ResourceCPU:    resource.MustParse(fmt.Sprintf("%v", facadeService.Spec.Env.FacadeGatewayCpuRequest)),
-			corev1.ResourceMemory: resource.MustParse(facadeService.Spec.Env.FacadeGatewayMemoryLimit),
+			corev1.ResourceMemory: resource.MustParse(facadeService.Spec.Env.FacadeGatewayMemoryRequest),
 		},
 		Limits: map[corev1.ResourceName]resource.Quantity{
 			corev1.ResourceCPU:    resource.MustParse(fmt.Sprintf("%v", facadeService.Spec.Env.FacadeGatewayCpuLimit)),

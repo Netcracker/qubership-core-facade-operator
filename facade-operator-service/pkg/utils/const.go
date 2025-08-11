@@ -4,6 +4,7 @@ import "os"
 
 var DefaultFacadeGatewayReplicas = os.Getenv("FACADE_GATEWAY_REPLICAS")
 var DefaultFacadeGatewayMemoryLimit = os.Getenv("FACADE_GATEWAY_MEMORY_LIMIT")
+var DefaultFacadeGatewayMemoryRequest = os.Getenv("FACADE_GATEWAY_MEMORY_REQUEST")
 var DefaultFacadeGatewayCpuLimit = os.Getenv("FACADE_GATEWAY_CPU_LIMIT")
 var DefaultFacadeGatewayCpuRequest = os.Getenv("FACADE_GATEWAY_CPU_REQUEST")
 var DefaultFacadeGatewayConcurrency = os.Getenv("FACADE_GATEWAY_CONCURRENCY")
@@ -59,3 +60,4 @@ var LastAppliedCRAnnotationKey = "last-applied-cr"
 const Unknown = "unknown"
 
 const MinimumEgressGatewayMemoryLimitInt = 64
+const MinimumEgressGatewayMemoryRequestInt = 64
