@@ -2,6 +2,9 @@ package controllers
 
 import (
 	"context"
+	"regexp"
+	"runtime/debug"
+
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
 	facadeV1Alpha "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1alpha"
 	customerrors "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/errors"
@@ -14,7 +17,6 @@ import (
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
 	"github.com/netcracker/qubership-core-lib-go/v3/serviceloader"
 	utilsCore "github.com/netcracker/qubership-core-lib-go/v3/utils"
-	"runtime/debug"
 
 	"fmt"
 	"strconv"
@@ -26,6 +28,12 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+var (
+	labelRegexp            = regexp.MustCompile("(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?")
+	monitoringConfigSuffix = ".monitoring-config"
+	podMonitorSuffix       = "-pod-monitor"
 )
 
 type FacadeCommonReconciler struct {

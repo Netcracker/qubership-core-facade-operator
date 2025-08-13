@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
 	facadeV1Alpha "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1alpha"
 	customerrors "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/errors"
@@ -9,17 +10,12 @@ import (
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/services"
 	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
 	"github.com/netcracker/qubership-core-lib-go/v3/context-propagation/baseproviders/xrequestid"
-	"regexp"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 )
-
-var labelRegexp = regexp.MustCompile("(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?")
-var monitoringConfigSuffix = ".monitoring-config"
-var podMonitorSuffix = "-pod-monitor"
 
 type FacadeServiceReconciler struct {
 	base *FacadeCommonReconciler
@@ -49,7 +45,7 @@ func (r *FacadeServiceReconciler) SetupFacadeServiceManager(mgr ctrl.Manager, ma
 
 func (r *FacadeServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	ctxWithNewRequestId := context.WithValue(ctx, xrequestid.X_REQUEST_ID_COTEXT_NAME, xrequestid.NewXRequestIdContextObject(""))
-	r.base.logger.InfoC(ctxWithNewRequestId, "Start processing kind=FacadeService apiVersion=qubership.org/v1alpha")
+	r.base.logger.InfoC(ctxWithNewRequestId, "Start processing kind=FacadeService apiVersion=*/v1alpha")
 	cr, err := r.getCR(ctxWithNewRequestId, req)
 	if err != nil {
 		return ctrl.Result{}, err

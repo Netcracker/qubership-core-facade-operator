@@ -5,12 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
-	facadeV1 "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1"
-	facadeV1Alpha "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1alpha"
-	customerrors "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/errors"
-	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
-	"github.com/netcracker/qubership-core-lib-go/v3/configloader"
 	"os"
 	"reflect"
 	"strconv"
@@ -18,19 +12,21 @@ import (
 	"sync"
 	"time"
 
+	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
+	facadeV1 "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1"
+	facadeV1Alpha "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1alpha"
+	customerrors "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/errors"
+	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
+	"github.com/netcracker/qubership-core-lib-go/v3/configloader"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
-	gatewayV1Kind       = resolveCRKind(&facadeV1.Gateway{})
-	gatewayV1ApiVersion = fmt.Sprintf("%s/%s", facadeV1.SchemeBuilder.GroupVersion.Group, facadeV1.SchemeBuilder.GroupVersion.Version)
-	gatewayV1CRType     = fmt.Sprintf("%s-%s", gatewayV1ApiVersion, gatewayV1Kind)
-
-	facadeV1AlphaKind       = resolveCRKind(&facadeV1Alpha.FacadeService{})
-	facadeV1AlphaApiVersion = fmt.Sprintf("%s/%s", facadeV1Alpha.SchemeBuilder.GroupVersion.Group, facadeV1Alpha.SchemeBuilder.GroupVersion.Version)
-	facadeV1AlphaCRType     = fmt.Sprintf("%s-%s", facadeV1AlphaApiVersion, facadeV1AlphaKind)
+	gatewayV1Kind     = resolveCRKind(&facadeV1.Gateway{})
+	facadeV1AlphaKind = resolveCRKind(&facadeV1Alpha.FacadeService{})
 )
 
 func resolveCRKind(cr facade.MeshGateway) string {
@@ -46,12 +42,12 @@ type LastAppliedCr struct {
 }
 
 func (cr *LastAppliedCr) ResolveType() (facade.MeshGateway, error) {
-	ApiKind := cr.ApiVersion + "-" + cr.Kind
-	switch ApiKind {
-	case gatewayV1CRType:
-		return &facadeV1.Gateway{TypeMeta: metav1.TypeMeta{Kind: gatewayV1Kind, APIVersion: gatewayV1ApiVersion}}, nil
-	case facadeV1AlphaCRType:
-		return &facadeV1Alpha.FacadeService{TypeMeta: metav1.TypeMeta{Kind: facadeV1AlphaKind, APIVersion: facadeV1AlphaApiVersion}}, nil
+	// For example: cr.ApiVersion is core.qubership.org/v1, cr.Kind is Gateway
+	switch cr.Kind {
+	case gatewayV1Kind:
+		return &facadeV1.Gateway{TypeMeta: metav1.TypeMeta{Kind: gatewayV1Kind, APIVersion: cr.ApiVersion}}, nil
+	case facadeV1AlphaKind:
+		return &facadeV1Alpha.FacadeService{TypeMeta: metav1.TypeMeta{Kind: facadeV1AlphaKind, APIVersion: cr.ApiVersion}}, nil
 	default:
 		return nil, errs.NewError(customerrors.UnknownErrorCode, fmt.Sprintf("Can not resolve type for apiVersion '%s' and kind '%s'", cr.ApiVersion, cr.Kind), nil)
 	}
