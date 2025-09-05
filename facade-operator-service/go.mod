@@ -1,16 +1,14 @@
 module github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2
 
-go 1.24.0
-
-toolchain go1.24.2
+go 1.24.2
 
 require (
 	github.com/cert-manager/cert-manager v1.17.2
 	github.com/gofiber/fiber/v2 v2.52.9
-	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.0.0-20250808081001-9d392667f3ce
-	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.0.0-20250808080943-88e9aee81aee
-	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.0.0-20250808081005-46924817bcee
-	github.com/netcracker/qubership-core-lib-go/v3 v3.0.0-20250801085730-99b38e3e07af
+	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.0.1
+	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.0.1
+	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.0.1
+	github.com/netcracker/qubership-core-lib-go/v3 v3.0.1
 	github.com/openshift/api v0.0.0-20250506165729-ec925abe6296
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/mock v0.5.1
@@ -75,7 +73,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.0.0-20250418112911-f47fac14e727 // indirect
+	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.0.1 // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
