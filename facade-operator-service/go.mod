@@ -12,7 +12,7 @@ require (
 	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.0.0-20250808081005-46924817bcee
 	github.com/netcracker/qubership-core-lib-go/v3 v3.0.0-20250801085730-99b38e3e07af
 	github.com/openshift/api v0.0.0-20250506165729-ec925abe6296
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.5.1
 	go.uber.org/zap v1.27.0
 	k8s.io/api v0.33.0
