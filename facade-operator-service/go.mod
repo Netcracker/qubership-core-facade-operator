@@ -13,7 +13,7 @@ require (
 	github.com/netcracker/qubership-core-lib-go/v3 v3.0.0-20250801085730-99b38e3e07af
 	github.com/openshift/api v0.0.0-20250506165729-ec925abe6296
 	github.com/stretchr/testify v1.10.0
-	go.uber.org/mock v0.5.1
+	go.uber.org/mock v0.6.0
 	go.uber.org/zap v1.27.0
 	k8s.io/api v0.33.0
 	k8s.io/apimachinery v0.33.0
@@ -101,7 +101,7 @@ require (
 	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0 // indirect
 	golang.org/x/net v0.39.0 // indirect
 	golang.org/x/oauth2 v0.28.0 // indirect
-	golang.org/x/sync v0.13.0 // indirect
+	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/term v0.31.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
