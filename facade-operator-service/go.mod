@@ -10,7 +10,7 @@ require (
 	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.0.0-20250808081001-9d392667f3ce
 	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.0.0-20250808080943-88e9aee81aee
 	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.0.0-20250808081005-46924817bcee
-	github.com/netcracker/qubership-core-lib-go/v3 v3.0.0-20250801085730-99b38e3e07af
+	github.com/netcracker/qubership-core-lib-go/v3 v3.1.0
 	github.com/openshift/api v0.0.0-20250506165729-ec925abe6296
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/mock v0.5.1
@@ -43,7 +43,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/gofiber/adaptor/v2 v2.2.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
+	github.com/golang-jwt/jwt/v5 v5.2.2 // indirect
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/gnostic-models v0.6.9 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
