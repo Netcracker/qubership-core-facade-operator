@@ -1,11 +1,11 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: gateways.core.qubership.org
+  name: gateways.core.netcracker.com
   annotations:
     crd-version: "1"
 spec:
-  group: core.qubership.org
+  group: core.
   versions:
     - name: v1
       served: true

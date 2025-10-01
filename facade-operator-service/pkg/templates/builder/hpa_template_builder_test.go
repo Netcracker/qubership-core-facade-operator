@@ -28,7 +28,7 @@ func TestBuildDefault(t *testing.T) {
 	cr := &facadeV1.Gateway{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Gateway",
-			APIVersion: "core.qubership.org/v1",
+			APIVersion: "core.netcracker.com/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "cr-name",
@@ -121,7 +121,7 @@ func TestBuild(t *testing.T) {
 	cr := &facadeV1.Gateway{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Gateway",
-			APIVersion: "core.qubership.org/v1",
+			APIVersion: "core.netcracker.com/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "cr-name",

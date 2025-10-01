@@ -45,7 +45,7 @@ func TestIngressClientImpl_DeleteOrphaned(t *testing.T) {
 		Name:        "test-gw-web",
 		Namespace:   "test-ns",
 		Annotations: map[string]string{"metadata.annotations.app.kubernetes.io/managed-by": "facade-operator"},
-		Hostname:    "test-host.qubership.org",
+		Hostname:    "test-host.netcracker.com",
 		ServiceName: "test-gw",
 		Port:        8080,
 	}
@@ -53,7 +53,7 @@ func TestIngressClientImpl_DeleteOrphaned(t *testing.T) {
 		Name:        "test-gw2-web",
 		Namespace:   "test-ns",
 		Annotations: map[string]string{"metadata.annotations.app.kubernetes.io/managed-by": "facade-operator"},
-		Hostname:    "test-host2.qubership.org",
+		Hostname:    "test-host2.netcracker.com",
 		ServiceName: "test-gw2",
 		Port:        8080,
 	}
@@ -70,7 +70,7 @@ func TestIngressClientImpl_DeleteOrphaned(t *testing.T) {
 			Port:        8080,
 			GatewayType: facade.Ingress,
 			Ingresses: []facade.IngressSpec{{
-				Hostname:    "test-host2.qubership.org",
+				Hostname:    "test-host2.netcracker.com",
 				IsGrpc:      false,
 				GatewayPort: 8080,
 			}},
@@ -183,7 +183,7 @@ func TestIngressClientImpl_DeleteOrphanedV1Beta1(t *testing.T) {
 		Name:        "test-gw-web",
 		Namespace:   "test-ns",
 		Annotations: map[string]string{"metadata.annotations.app.kubernetes.io/managed-by": "facade-operator"},
-		Hostname:    "test-host.qubership.org",
+		Hostname:    "test-host.netcracker.com",
 		ServiceName: "test-gw",
 		Port:        8080,
 	}
@@ -191,7 +191,7 @@ func TestIngressClientImpl_DeleteOrphanedV1Beta1(t *testing.T) {
 		Name:        "test-gw2-web",
 		Namespace:   "test-ns",
 		Annotations: map[string]string{"metadata.annotations.app.kubernetes.io/managed-by": "facade-operator"},
-		Hostname:    "test-host2.qubership.org",
+		Hostname:    "test-host2.netcracker.com",
 		ServiceName: "test-gw2",
 		Port:        8080,
 	}
@@ -208,7 +208,7 @@ func TestIngressClientImpl_DeleteOrphanedV1Beta1(t *testing.T) {
 			Port:        8080,
 			GatewayType: facade.Ingress,
 			Ingresses: []facade.IngressSpec{{
-				Hostname:    "test-host2.qubership.org",
+				Hostname:    "test-host2.netcracker.com",
 				IsGrpc:      false,
 				GatewayPort: 8080,
 			}},
@@ -321,7 +321,7 @@ func TestIngressClientImpl_DeleteOrphanedOpenshift(t *testing.T) {
 		Name:        "test-gw-web",
 		Namespace:   "test-ns",
 		Annotations: map[string]string{"metadata.annotations.app.kubernetes.io/managed-by": "facade-operator"},
-		Hostname:    "test-host.qubership.org",
+		Hostname:    "test-host.netcracker.com",
 		ServiceName: "test-gw",
 		Port:        8080,
 	}
@@ -329,7 +329,7 @@ func TestIngressClientImpl_DeleteOrphanedOpenshift(t *testing.T) {
 		Name:        "test-gw2-web",
 		Namespace:   "test-ns",
 		Annotations: map[string]string{"metadata.annotations.app.kubernetes.io/managed-by": "facade-operator"},
-		Hostname:    "test-host2.qubership.org",
+		Hostname:    "test-host2.netcracker.com",
 		ServiceName: "test-gw2",
 		Port:        8080,
 	}
@@ -346,7 +346,7 @@ func TestIngressClientImpl_DeleteOrphanedOpenshift(t *testing.T) {
 			Port:        8080,
 			GatewayType: facade.Ingress,
 			Ingresses: []facade.IngressSpec{{
-				Hostname:    "test-host2.qubership.org",
+				Hostname:    "test-host2.netcracker.com",
 				IsGrpc:      false,
 				GatewayPort: 8080,
 			}},
@@ -458,7 +458,7 @@ func TestIngressClientImpl_Apply(t *testing.T) {
 		Name:        "test-ingress",
 		Namespace:   "test-ns",
 		Annotations: map[string]string{"annotation1": "val1"},
-		Hostname:    "test-host.qubership.org",
+		Hostname:    "test-host.netcracker.com",
 		ServiceName: "test-gw",
 		Port:        8080,
 	}
@@ -532,7 +532,7 @@ func TestIngressClientImpl_ApplyK8sBetaV1(t *testing.T) {
 		Name:        "test-ingress",
 		Namespace:   "test-ns",
 		Annotations: map[string]string{"annotation1": "val1"},
-		Hostname:    "test-host.qubership.org",
+		Hostname:    "test-host.netcracker.com",
 		ServiceName: "test-gw",
 		Port:        8080,
 	}
@@ -606,7 +606,7 @@ func TestIngressClientImpl_ApplyOpenshiftRoute(t *testing.T) {
 		Name:        "test-ingress",
 		Namespace:   "test-ns",
 		Annotations: map[string]string{"annotation1": "val1"},
-		Hostname:    "test-host.qubership.org",
+		Hostname:    "test-host.netcracker.com",
 		ServiceName: "test-gw",
 		Port:        8080,
 	}

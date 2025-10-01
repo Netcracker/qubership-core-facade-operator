@@ -1,6 +1,6 @@
-// Package v1alpha contains API Schema definitions for the qubership.org v1alpha API group
+// Package v1alpha contains API Schema definitions for the netcracker.com v1alpha API group
 // +kubebuilder:object:generate=true
-// +groupName=qubership.org
+// +groupName=netcracker.com
 package v1alpha
 
 var ()
