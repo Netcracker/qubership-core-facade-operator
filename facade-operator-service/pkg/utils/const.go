@@ -46,7 +46,7 @@ var HpaDefaultScaleDownPodsPeriodSecondsEnvName = "GATEWAY_HPA_SCALE_DOWN_PODS_P
 
 var FacadeGateway = "facadeGateway"
 var MasterCR = "masterCR"
-var HostedByLabel = "mesh.qubership.org/hosted.by"
+var HostedByLabel = "mesh.netcracker.com/hosted.by"
 var MeshRouter = "mesh-router"
 var SpecGatewayField = "spec.gateway"
 var SpecDnsNamesField = "spec.dnsNames"
@@ -54,7 +54,7 @@ var TlsCertificateVersion = "tlsCertificateVersion"
 var ReadOnlyContainerEnabled = "READONLY_CONTAINER_FILE_SYSTEM_ENABLED"
 var GatewaySuffix = "-gateway"
 var LastAppliedCRAnnotation = LastAppliedCRAnnotationGroup + "/" + LastAppliedCRAnnotationKey
-var LastAppliedCRAnnotationGroup = "qubership.cloud"
+var LastAppliedCRAnnotationGroup = "netcracker.cloud"
 var LastAppliedCRAnnotationKey = "last-applied-cr"
 
 const Unknown = "unknown"
