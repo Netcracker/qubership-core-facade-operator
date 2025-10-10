@@ -20,11 +20,11 @@ func (p *DefaultApiGroupProvider) GetApiGroups(kind string) []schema.GroupVersio
 	switch kind {
 	case GatewayKind:
 		return []schema.GroupVersion{
-			{Group: "core.qubership.org", Version: "v1"},
+			{Group: "core.netcracker.com", Version: "v1"},
 		}
 	case FacadeServiceKind:
 		return []schema.GroupVersion{
-			{Group: "qubership.org", Version: "v1alpha"},
+			{Group: "netcracker.com", Version: "v1alpha"},
 		}
 	default:
 		panic("cannot resolve api GroupVersion for kind: " + kind)

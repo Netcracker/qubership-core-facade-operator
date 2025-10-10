@@ -24,9 +24,9 @@ func NewGatewayReconciler(base *FacadeCommonReconciler) *GatewayReconciler {
 	return &GatewayReconciler{base: base}
 }
 
-//+kubebuilder:rbac:groups=core.qubership.org,resources=gateways,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core.qubership.org,resources=gateways/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=core.qubership.org,resources=gateways/finalizers,verbs=update
+//+kubebuilder:rbac:groups=core.netcracker.com,resources=gateways,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core.netcracker.com,resources=gateways/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=core.netcracker.com,resources=gateways/finalizers,verbs=update
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *GatewayReconciler) SetupMeshGatewayManager(mgr ctrl.Manager, maxConcurrentReconciles int, client client.Client, deploymentsClient services.DeploymentClient, commonCRClient services.CommonCRClient) error {

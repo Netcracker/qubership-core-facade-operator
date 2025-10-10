@@ -25,9 +25,9 @@ func NewFacadeServiceReconciler(base *FacadeCommonReconciler) *FacadeServiceReco
 	return &FacadeServiceReconciler{base: base}
 }
 
-//+kubebuilder:rbac:groups=qubership.org,resources=facadeservices,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=qubership.org,resources=facadeservices/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=qubership.org,resources=facadeservices/finalizers,verbs=update
+//+kubebuilder:rbac:groups=netcracker.com,resources=facadeservices,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=netcracker.com,resources=facadeservices/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=netcracker.com,resources=facadeservices/finalizers,verbs=update
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *FacadeServiceReconciler) SetupFacadeServiceManager(mgr ctrl.Manager, maxConcurrentReconciles int, client client.Client, deploymentsClient services.DeploymentClient, commonCRClient services.CommonCRClient) error {
