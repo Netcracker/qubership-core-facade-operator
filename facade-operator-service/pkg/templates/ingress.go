@@ -6,8 +6,6 @@ import (
 	customerrors "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/errors"
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
 	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
-	"github.com/netcracker/qubership-core-lib-go/v3/serviceloader"
-	utilsCore "github.com/netcracker/qubership-core-lib-go/v3/utils"
 	"maps"
 	"os"
 	"strings"
@@ -252,15 +250,11 @@ func (b *IngressTemplateBuilder) buildIngressLabels(partOfLabel string) map[stri
 func (b *IngressTemplateBuilder) buildIngressAnnotations(gatewayServiceName, namespace string, isGrpc bool) map[string]string {
 	annotations := make(map[string]string)
 	annotations["app.kubernetes.io/managed-by"] = "facade-operator"
-
-	mapper := serviceloader.MustLoad[utilsCore.AnnotationMapper]()
-	maps.Copy(annotations, mapper.AddPrefix(map[string]string{"start.stage": "1"}))
+	annotations["netcracker.cloud/start.stage"] = "1"
 	if gatewayServiceName == facade.PublicGatewayService {
-		maps.Copy(annotations, mapper.AddPrefix(map[string]string{
-			"tenant.service.tenant.id":        "GENERAL",
-			"tenant.service.show.name":        "Public Gateway",
-			"tenant.service.show.description": "Api Gateway to access public API",
-		}))
+		annotations["netcracker.cloud/tenant.service.tenant.id"] = "GENERAL"
+		annotations["netcracker.cloud/tenant.service.show.name"] = "Public Gateway"
+		annotations["netcracker.cloud/tenant.service.show.description"] = "Api Gateway to access public API"
 		maps.Copy(annotations, b.gwIngressAnnotations)
 	} else if gatewayServiceName == facade.PrivateGatewayService {
 		maps.Copy(annotations, b.gwIngressAnnotations)

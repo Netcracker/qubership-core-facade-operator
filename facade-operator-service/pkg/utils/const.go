@@ -53,9 +53,7 @@ var SpecDnsNamesField = "spec.dnsNames"
 var TlsCertificateVersion = "tlsCertificateVersion"
 var ReadOnlyContainerEnabled = "READONLY_CONTAINER_FILE_SYSTEM_ENABLED"
 var GatewaySuffix = "-gateway"
-var LastAppliedCRAnnotation = LastAppliedCRAnnotationGroup + "/" + LastAppliedCRAnnotationKey
-var LastAppliedCRAnnotationGroup = "netcracker.cloud"
-var LastAppliedCRAnnotationKey = "last-applied-cr"
+var LastAppliedCRAnnotation = "netcracker.cloud/last-applied-cr"
 
 const Unknown = "unknown"
 

@@ -108,13 +108,6 @@ func GetPointer[T any](v T) *T {
 	return &v
 }
 
-func MergeIntoMap[K comparable, V any](targetMap, valuesToMerge map[K]V) map[K]V {
-	for key, val := range valuesToMerge {
-		targetMap[key] = val
-	}
-	return targetMap
-}
-
 func MergeOwnerReferences(array1, array2 []metav1.OwnerReference) []metav1.OwnerReference {
 	result := make([]metav1.OwnerReference, 0)
 	result = append(result, array1...)

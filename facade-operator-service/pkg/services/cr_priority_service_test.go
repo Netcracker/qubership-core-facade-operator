@@ -7,8 +7,6 @@ import (
 	facadeV1Alpha "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1alpha"
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
 	mock_services "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/test/mock/services"
-	"github.com/netcracker/qubership-core-lib-go/v3/serviceloader"
-	utils2 "github.com/netcracker/qubership-core-lib-go/v3/utils"
 	"go.uber.org/mock/gomock"
 	"testing"
 
@@ -124,8 +122,6 @@ func TestUpdateAvailable(t *testing.T) {
 		Name:       facadeMasterCR.GetName(),
 	}
 	facadeMasterLastAppliedCrStr, _ := utils.JsonMarshal(facadeMasterLastAppliedCr)
-
-	serviceloader.Register(1, utils2.NewResourceGroupAnnotationsMapper("netcracker.cloud"))
 
 	tests := []testCRPriorityTestStruct{
 		{

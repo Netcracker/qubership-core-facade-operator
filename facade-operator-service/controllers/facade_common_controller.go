@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"runtime/debug"
 
+	"fmt"
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
 	facadeV1Alpha "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1alpha"
 	customerrors "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/errors"
@@ -15,10 +16,6 @@ import (
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
 	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
-	"github.com/netcracker/qubership-core-lib-go/v3/serviceloader"
-	utilsCore "github.com/netcracker/qubership-core-lib-go/v3/utils"
-
-	"fmt"
 	"strconv"
 	"time"
 
@@ -506,8 +503,8 @@ func (r *FacadeCommonReconciler) cleanupLastApplied(ctx context.Context, req ctr
 		r.logger.InfoC(ctx, "[%v] Annotations not found on deployment '%s'", req.NamespacedName, deployment.GetName())
 		return nil
 	}
-	lastAppliedCRAnnotation, found := serviceloader.MustLoad[utilsCore.AnnotationMapper]().Find(deployment.Annotations, utils.LastAppliedCRAnnotationKey)
-	if !found {
+	lastAppliedCRAnnotation := deployment.Annotations[utils.LastAppliedCRAnnotation]
+	if lastAppliedCRAnnotation == "" {
 		r.logger.InfoC(ctx, "[%v] %s annotation not found on deployment '%s'", req.NamespacedName, utils.LastAppliedCRAnnotation, deployment.GetName())
 		return nil
 	}
