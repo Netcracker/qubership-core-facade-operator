@@ -32,7 +32,7 @@ func testBuildIngress(t *testing.T, gwServiceName string) {
 	builder := NewIngressTemplateBuilder(true, false, "")
 
 	ingressTemplate, err := builder.BuildIngressTemplate(facade.IngressSpec{
-		Hostname:    "test-host.netcracker.com",
+		Hostname:    "test-host.qubership.org",
 		IsGrpc:      false,
 		GatewayPort: 8080,
 	}, buildFacadeService(gwServiceName), gwServiceName)
@@ -48,7 +48,7 @@ func testBuildIngress(t *testing.T, gwServiceName string) {
 	builder = NewIngressTemplateBuilder(true, false, "")
 
 	ingressTemplate, err = builder.BuildIngressTemplate(facade.IngressSpec{
-		Hostname:    "test-host-grpc.netcracker.com",
+		Hostname:    "test-host-grpc.qubership.org",
 		IsGrpc:      true,
 		GatewayPort: 10050,
 	}, buildFacadeService(gwServiceName), gwServiceName)
@@ -60,7 +60,7 @@ func testBuildIngress(t *testing.T, gwServiceName string) {
 	builder = NewIngressTemplateBuilder(true, false, "")
 
 	ingressTemplate, err = builder.BuildIngressTemplate(facade.IngressSpec{
-		Hostname:    "test-host-grpc.netcracker.com",
+		Hostname:    "test-host-grpc.qubership.org",
 		IsGrpc:      true,
 		GatewayPort: 10050,
 	}, buildFacadeService(gwServiceName), gwServiceName)
@@ -81,11 +81,11 @@ func buildFacadeService(gwServiceName string) *facadeV1Alpha.FacadeService {
 			},
 			GatewayType: facade.Ingress,
 			Ingresses: []facade.IngressSpec{{
-				Hostname:    "test-host.netcracker.com",
+				Hostname:    "test-host.qubership.org",
 				IsGrpc:      false,
 				GatewayPort: 8080,
 			}, {
-				Hostname:    "test-host-grpc.netcracker.com",
+				Hostname:    "test-host-grpc.qubership.org",
 				IsGrpc:      true,
 				GatewayPort: 10050,
 			}},
@@ -151,9 +151,9 @@ func validateK8sIngress(t *testing.T, ingressTemplate Ingress, gwServiceName str
 	assert.Equal(t, 1, len(k8sIngress.Spec.Rules))
 	rule := k8sIngress.Spec.Rules[0]
 	if isGrpc {
-		assert.Equal(t, "test-host-grpc.netcracker.com", rule.Host)
+		assert.Equal(t, "test-host-grpc.qubership.org", rule.Host)
 	} else {
-		assert.Equal(t, "test-host.netcracker.com", rule.Host)
+		assert.Equal(t, "test-host.qubership.org", rule.Host)
 	}
 	assert.Equal(t, 1, len(rule.IngressRuleValue.HTTP.Paths))
 	path := rule.IngressRuleValue.HTTP.Paths[0]
@@ -187,9 +187,9 @@ func validateK8sBetaIngress(t *testing.T, ingressTemplate Ingress, gwServiceName
 	assert.Equal(t, 1, len(k8sIngress.Spec.Rules))
 	rule := k8sIngress.Spec.Rules[0]
 	if isGrpc {
-		assert.Equal(t, "test-host-grpc.netcracker.com", rule.Host)
+		assert.Equal(t, "test-host-grpc.qubership.org", rule.Host)
 	} else {
-		assert.Equal(t, "test-host.netcracker.com", rule.Host)
+		assert.Equal(t, "test-host.qubership.org", rule.Host)
 	}
 	assert.Equal(t, 1, len(rule.IngressRuleValue.HTTP.Paths))
 	path := rule.IngressRuleValue.HTTP.Paths[0]
@@ -244,7 +244,7 @@ func validateOpenshiftRoute(t *testing.T, ingressTemplate Ingress, gwServiceName
 		assert.False(t, exists)
 	}
 
-	assert.Equal(t, "test-host.netcracker.com", route.Spec.Host)
+	assert.Equal(t, "test-host.qubership.org", route.Spec.Host)
 	assert.Equal(t, "Service", route.Spec.To.Kind)
 	assert.Equal(t, gwServiceName, route.Spec.To.Name)
 	assert.Equal(t, intstr.Int, route.Spec.Port.TargetPort.Type)

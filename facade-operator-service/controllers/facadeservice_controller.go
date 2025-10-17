@@ -45,7 +45,7 @@ func (r *FacadeServiceReconciler) SetupFacadeServiceManager(mgr ctrl.Manager, ma
 
 func (r *FacadeServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	ctxWithNewRequestId := context.WithValue(ctx, xrequestid.X_REQUEST_ID_COTEXT_NAME, xrequestid.NewXRequestIdContextObject(""))
-	r.base.logger.InfoC(ctxWithNewRequestId, "Start processing kind=FacadeService apiVersion=*/v1alpha")
+	r.base.logger.InfoC(ctxWithNewRequestId, "Start processing kind=FacadeService apiVersion=netcracker.com/v1alpha")
 	cr, err := r.getCR(ctxWithNewRequestId, req)
 	if err != nil {
 		return ctrl.Result{}, err

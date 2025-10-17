@@ -44,7 +44,7 @@ func (r *GatewayReconciler) SetupMeshGatewayManager(mgr ctrl.Manager, maxConcurr
 
 func (r *GatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	ctxWithNewRequestId := context.WithValue(ctx, xrequestid.X_REQUEST_ID_COTEXT_NAME, xrequestid.NewXRequestIdContextObject(""))
-	r.base.logger.InfoC(ctxWithNewRequestId, "Start processing kind=Gateway apiVersion=core.*/v1")
+	r.base.logger.InfoC(ctxWithNewRequestId, "Start processing kind=Gateway apiVersion=core.netcracker.com/v1")
 	cr, err := r.getCR(ctxWithNewRequestId, req)
 	if err != nil {
 		return ctrl.Result{}, err
