@@ -12,7 +12,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	facadeV1 "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1"
 	facadeV1Alpha "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1alpha"
-	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/helper"
 	monitoringV1 "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/monitoring/v1"
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/controllers"
 	localLog "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/log"
@@ -54,12 +53,9 @@ var (
 )
 
 func RunService() {
-	schemeManager := helper.DefaultSchemeManager()
-	schemeManager.Register(ctx, helper.GatewayKind, &facadeV1.Gateway{}, &facadeV1.GatewayList{})
-	schemeManager.Register(ctx, helper.FacadeServiceKind, &facadeV1Alpha.FacadeService{}, &facadeV1Alpha.FacadeServiceList{})
-
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(schemeManager.AddAllToScheme(ctx, scheme))
+	utilruntime.Must(facadeV1Alpha.AddToScheme(scheme))
+	utilruntime.Must(facadeV1.AddToScheme(scheme))
 	utilruntime.Must(monitoringV1.AddToScheme(scheme))
 	utilruntime.Must(v1cert.AddToScheme(scheme))
 	utilruntime.Must(openshiftv1.Install(scheme))

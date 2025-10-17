@@ -43,9 +43,9 @@ CRD has unique name, but it is installed once per cloud and it also could be alr
         apiVersion: apiextensions.k8s.io/v1beta1
         kind: CustomResourceDefinition
         metadata:
-          name: facadeservices.qubership.org
+          name: facadeservices.netcracker.com
         spec:
-          group: qubership.org
+          group: netcracker.com
           preserveUnknownFields: true
           version: v1alpha
           names:
@@ -72,9 +72,9 @@ CRD has unique name, but it is installed once per cloud and it also could be alr
         apiVersion: apiextensions.k8s.io/v1
         kind: CustomResourceDefinition
         metadata:
-          name: facadeservices.qubership.org
+          name: facadeservices.netcracker.com
         spec:
-          group: qubership.org
+          group: netcracker.com
           versions:
             - name: v1alpha
               served: true
@@ -99,7 +99,7 @@ CRD has unique name, but it is installed once per cloud and it also could be alr
             kind: FacadeService
           scope: Namespaced
         ```
-2. Cluster admin allow reading/writing resources in the "qubership.org" and "core.qubership.org" API groups for a deploy user.  
+2. Cluster admin allow reading/writing resources in the "netcracker.com" and "core.netcracker.com" API groups for a deploy user.  
    Following Role and RoleBinding can be used to grant permissions:
     
     **Role description example:**
@@ -109,7 +109,7 @@ CRD has unique name, but it is installed once per cloud and it also could be alr
     metadata:
       name: qubership-cr
     rules:
-    - apiGroups: ["qubership.org", "core.qubership.org"]
+    - apiGroups: ["netcracker.com", "core.netcracker.com"]
       resources: ["*"]
       verbs: ["*"]
     ```

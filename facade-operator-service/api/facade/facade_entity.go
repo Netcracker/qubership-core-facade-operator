@@ -17,7 +17,7 @@ const (
 	PublicGatewayService   = "public-gateway-service"
 	PrivateGatewayService  = "private-gateway-service"
 	InternalGatewayService = "internal-gateway-service"
-	IngressClassName       = "bg.mesh.qubership.org"
+	IngressClassName       = "bg.mesh.netcracker.com"
 
 	Egress  GatewayType = "egress"
 	Ingress GatewayType = "ingress"
