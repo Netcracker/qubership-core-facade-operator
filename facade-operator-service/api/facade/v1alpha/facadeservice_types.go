@@ -65,3 +65,7 @@ type FacadeServiceList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []FacadeService `json:"items"`
 }
+
+func init() {
+	SchemeBuilder.Register(&FacadeService{}, &FacadeServiceList{})
+}

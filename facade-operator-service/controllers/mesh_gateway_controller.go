@@ -24,9 +24,9 @@ func NewGatewayReconciler(base *FacadeCommonReconciler) *GatewayReconciler {
 	return &GatewayReconciler{base: base}
 }
 
-//+kubebuilder:rbac:groups=core.qubership.org,resources=gateways,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core.qubership.org,resources=gateways/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=core.qubership.org,resources=gateways/finalizers,verbs=update
+//+kubebuilder:rbac:groups=core.netcracker.com,resources=gateways,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core.netcracker.com,resources=gateways/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=core.netcracker.com,resources=gateways/finalizers,verbs=update
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *GatewayReconciler) SetupMeshGatewayManager(mgr ctrl.Manager, maxConcurrentReconciles int, client client.Client, deploymentsClient services.DeploymentClient, commonCRClient services.CommonCRClient) error {
@@ -44,7 +44,7 @@ func (r *GatewayReconciler) SetupMeshGatewayManager(mgr ctrl.Manager, maxConcurr
 
 func (r *GatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	ctxWithNewRequestId := context.WithValue(ctx, xrequestid.X_REQUEST_ID_COTEXT_NAME, xrequestid.NewXRequestIdContextObject(""))
-	r.base.logger.InfoC(ctxWithNewRequestId, "Start processing kind=Gateway apiVersion=core.*/v1")
+	r.base.logger.InfoC(ctxWithNewRequestId, "Start processing kind=Gateway apiVersion=core.netcracker.com/v1")
 	cr, err := r.getCR(ctxWithNewRequestId, req)
 	if err != nil {
 		return ctrl.Result{}, err

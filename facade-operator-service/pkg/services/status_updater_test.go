@@ -123,7 +123,7 @@ func getFacadeCR() *facadeV1.Gateway {
 	return &facadeV1.Gateway{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "FacadeService",
-			APIVersion: "qubership.org/v1alpha",
+			APIVersion: "netcracker.com/v1alpha",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "name",

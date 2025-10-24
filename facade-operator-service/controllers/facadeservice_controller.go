@@ -25,9 +25,9 @@ func NewFacadeServiceReconciler(base *FacadeCommonReconciler) *FacadeServiceReco
 	return &FacadeServiceReconciler{base: base}
 }
 
-//+kubebuilder:rbac:groups=qubership.org,resources=facadeservices,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=qubership.org,resources=facadeservices/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=qubership.org,resources=facadeservices/finalizers,verbs=update
+//+kubebuilder:rbac:groups=netcracker.com,resources=facadeservices,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=netcracker.com,resources=facadeservices/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=netcracker.com,resources=facadeservices/finalizers,verbs=update
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *FacadeServiceReconciler) SetupFacadeServiceManager(mgr ctrl.Manager, maxConcurrentReconciles int, client client.Client, deploymentsClient services.DeploymentClient, commonCRClient services.CommonCRClient) error {
@@ -45,7 +45,7 @@ func (r *FacadeServiceReconciler) SetupFacadeServiceManager(mgr ctrl.Manager, ma
 
 func (r *FacadeServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	ctxWithNewRequestId := context.WithValue(ctx, xrequestid.X_REQUEST_ID_COTEXT_NAME, xrequestid.NewXRequestIdContextObject(""))
-	r.base.logger.InfoC(ctxWithNewRequestId, "Start processing kind=FacadeService apiVersion=*/v1alpha")
+	r.base.logger.InfoC(ctxWithNewRequestId, "Start processing kind=FacadeService apiVersion=netcracker.com/v1alpha")
 	cr, err := r.getCR(ctxWithNewRequestId, req)
 	if err != nil {
 		return ctrl.Result{}, err
