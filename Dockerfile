@@ -7,7 +7,7 @@ COPY facade-operator-service/ .
 RUN go mod download
 RUN go build -o facade-operator-service .
 
-FROM ghcr.io/netcracker/qubership/core-base:1.2.0 AS run
+FROM ghcr.io/netcracker/qubership/core-base:1.2.2 AS run
 
 EXPOSE 8080 15010
 
