@@ -31,7 +31,7 @@ In order to deploy a facade gateway, you must create a CR.
 For example:
 
 ```
-apiVersion: "qubership.org/v1alpha"
+apiVersion: "netcracker.com/v1alpha"
 kind: FacadeService
 metadata:
   name: test-service #family-name
@@ -61,7 +61,7 @@ The predeploy script for creating CRD supports the following PaaS:
 Example facade operator CR
 ```yaml
 {
-    "apiVersion": "qubership.org/v1alpha",
+    "apiVersion": "netcracker.com/v1alpha",
     "kind": "FacadeService",
     "metadata":
     {

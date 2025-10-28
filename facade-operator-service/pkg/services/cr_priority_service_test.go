@@ -7,8 +7,6 @@ import (
 	facadeV1Alpha "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1alpha"
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
 	mock_services "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/test/mock/services"
-	"github.com/netcracker/qubership-core-lib-go/v3/serviceloader"
-	utils2 "github.com/netcracker/qubership-core-lib-go/v3/utils"
 	"go.uber.org/mock/gomock"
 	"testing"
 
@@ -41,7 +39,7 @@ func TestUpdateAvailable(t *testing.T) {
 	meshCR := &facadeV1.Gateway{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Gateway",
-			APIVersion: "core.qubership.org/v1",
+			APIVersion: "core.netcracker.com/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "name",
@@ -59,7 +57,7 @@ func TestUpdateAvailable(t *testing.T) {
 	meshMasterCR := &facadeV1.Gateway{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Gateway",
-			APIVersion: "core.qubership.org/v1",
+			APIVersion: "core.netcracker.com/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "name",
@@ -71,7 +69,7 @@ func TestUpdateAvailable(t *testing.T) {
 	meshMasterCRSecond := &facadeV1.Gateway{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Gateway",
-			APIVersion: "core.qubership.org/v1",
+			APIVersion: "core.netcracker.com/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "name2",
@@ -91,7 +89,7 @@ func TestUpdateAvailable(t *testing.T) {
 	facadeCR := &facadeV1Alpha.FacadeService{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "FacadeService",
-			APIVersion: "qubership.org/v1alpha",
+			APIVersion: "netcracker.com/v1alpha",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "name",
@@ -109,7 +107,7 @@ func TestUpdateAvailable(t *testing.T) {
 	facadeMasterCR := &facadeV1Alpha.FacadeService{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "FacadeService",
-			APIVersion: "qubership.org/v1alpha",
+			APIVersion: "netcracker.com/v1alpha",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "name",
@@ -124,8 +122,6 @@ func TestUpdateAvailable(t *testing.T) {
 		Name:       facadeMasterCR.GetName(),
 	}
 	facadeMasterLastAppliedCrStr, _ := utils.JsonMarshal(facadeMasterLastAppliedCr)
-
-	serviceloader.Register(1, utils2.NewResourceGroupAnnotationsMapper("qubership.cloud"))
 
 	tests := []testCRPriorityTestStruct{
 		{

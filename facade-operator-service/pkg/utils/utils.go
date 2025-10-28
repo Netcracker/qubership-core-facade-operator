@@ -42,7 +42,7 @@ type LastAppliedCr struct {
 }
 
 func (cr *LastAppliedCr) ResolveType() (facade.MeshGateway, error) {
-	// For example: cr.ApiVersion is core.qubership.org/v1, cr.Kind is Gateway
+	// For example: cr.ApiVersion is core.netcracker.com/v1, cr.Kind is Gateway
 	switch cr.Kind {
 	case gatewayV1Kind:
 		return &facadeV1.Gateway{TypeMeta: metav1.TypeMeta{Kind: gatewayV1Kind, APIVersion: cr.ApiVersion}}, nil
@@ -106,13 +106,6 @@ func ConvertToInt32(value any) (int32, error) {
 
 func GetPointer[T any](v T) *T {
 	return &v
-}
-
-func MergeIntoMap[K comparable, V any](targetMap, valuesToMerge map[K]V) map[K]V {
-	for key, val := range valuesToMerge {
-		targetMap[key] = val
-	}
-	return targetMap
 }
 
 func MergeOwnerReferences(array1, array2 []metav1.OwnerReference) []metav1.OwnerReference {
