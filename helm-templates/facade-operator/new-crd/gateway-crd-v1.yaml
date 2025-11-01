@@ -5,7 +5,7 @@ metadata:
   annotations:
     crd-version: "1"
 spec:
-  group: core.
+  group: core.netcracker.com
   versions:
     - name: v1
       served: true
