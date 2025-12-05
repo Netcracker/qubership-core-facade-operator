@@ -9,7 +9,7 @@ require (
 	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.1.3
 	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.1.3
 	github.com/netcracker/qubership-core-lib-go/v3 v3.2.3
-	github.com/openshift/api v0.0.0-20251127005036-0e3c378fdedc
+	github.com/openshift/api v0.0.0-20251205114208-5eb46a7b4ce8
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
 	go.uber.org/zap v1.27.1
