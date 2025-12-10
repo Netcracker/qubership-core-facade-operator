@@ -8,7 +8,7 @@ require (
 	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.1.0
 	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.1.3
 	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.1.3
-	github.com/netcracker/qubership-core-lib-go/v3 v3.2.3
+	github.com/netcracker/qubership-core-lib-go/v3 v3.2.4
 	github.com/openshift/api v0.0.0-20251208101024-c2a41ea924bd
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
@@ -105,7 +105,7 @@ require (
 	golang.org/x/sys v0.37.0 // indirect
 	golang.org/x/term v0.36.0 // indirect
 	golang.org/x/text v0.30.0 // indirect
-	golang.org/x/time v0.13.0 // indirect
+	golang.org/x/time v0.14.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	google.golang.org/protobuf v1.36.9 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
