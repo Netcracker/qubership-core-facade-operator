@@ -8,7 +8,7 @@ require (
 	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.1.2
 	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.2.1
 	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.1.5
-	github.com/netcracker/qubership-core-lib-go/v3 v3.2.5
+	github.com/netcracker/qubership-core-lib-go/v3 v3.3.0
 	github.com/openshift/api v0.0.0-20251208101024-c2a41ea924bd
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
