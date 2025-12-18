@@ -8,15 +8,15 @@ require (
 	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.1.2
 	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.2.1
 	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.1.5
-	github.com/netcracker/qubership-core-lib-go/v3 v3.2.5
+	github.com/netcracker/qubership-core-lib-go/v3 v3.3.0
 	github.com/openshift/api v0.0.0-20251208101024-c2a41ea924bd
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
 	go.uber.org/zap v1.27.1
-	k8s.io/api v0.34.3
-	k8s.io/apimachinery v0.34.3
-	k8s.io/client-go v0.34.3
-	k8s.io/utils v0.0.0-20250820121507-0af2bda4dd1d // indirect
+	k8s.io/api v0.35.0
+	k8s.io/apimachinery v0.35.0
+	k8s.io/client-go v0.35.0
+	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4 // indirect
 	sigs.k8s.io/controller-runtime v0.22.3 // check compatibility table here https://github.com/kubernetes-sigs/controller-runtime AND cannot be updated until client-go is updated in go-security-scripts and paas-mediation-client
 )
 
@@ -96,7 +96,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.39.0 // indirect
 	go.opentelemetry.io/otel/trace v1.39.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	go.yaml.in/yaml/v2 v2.4.2 // indirect
+	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/exp v0.0.0-20250808145144-a408d31f581a // indirect
 	golang.org/x/net v0.47.0 // indirect
