@@ -121,7 +121,9 @@ func startServer(mgr manager.Manager) {
 		Network:     fiber.NetworkTCP,
 		IdleTimeout: 30 * time.Second,
 	}
+	pprofPort := configloader.GetOrDefaultString("pprof.port", "6060")
 	app, err := fiberserver.New(fiberConfig).
+		WithPprof(pprofPort).
 		WithPrometheus("/prometheus").
 		WithApiVersion().
 		Process()
