@@ -2,3 +2,6 @@ microservice:
   name: facade-operator
 
 log.level: info
+
+pprof:
+  port: 6060
