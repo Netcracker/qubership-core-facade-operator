@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	_ "github.com/KimMachineGun/automemlimit"
 	v1cert "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/gofiber/fiber/v2"
 	facadeV1 "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1"
