@@ -20,8 +20,6 @@ require (
 	sigs.k8s.io/controller-runtime v0.22.3 // check compatibility table here https://github.com/kubernetes-sigs/controller-runtime AND cannot be updated until client-go is updated in go-security-scripts and paas-mediation-client
 )
 
-// By default, it sets `GOMEMLIMIT` to 90% of cgroup's memory limit.
-// See https://github.com/KimMachineGun/automemlimit for details.
 require github.com/KimMachineGun/automemlimit v0.7.5
 
 require (

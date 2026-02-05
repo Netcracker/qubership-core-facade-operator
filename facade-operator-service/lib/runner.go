@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"time"
 
-	_ "github.com/KimMachineGun/automemlimit"
 	v1cert "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/gofiber/fiber/v2"
 	facadeV1 "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1"
@@ -45,6 +44,10 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	//+kubebuilder:scaffold:imports
+
+	// By default, it sets `GOMEMLIMIT` to 90% of cgroup's memory limit.
+	// See https://github.com/KimMachineGun/automemlimit for details.
+	_ "github.com/KimMachineGun/automemlimit"
 )
 
 var (
