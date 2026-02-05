@@ -44,10 +44,6 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	//+kubebuilder:scaffold:imports
-
-	// By default, it sets `GOMEMLIMIT` to 90% of cgroup's memory limit.
-	// See https://github.com/KimMachineGun/automemlimit for details.
-	_ "github.com/KimMachineGun/automemlimit"
 )
 
 var (
