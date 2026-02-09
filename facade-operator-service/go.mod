@@ -5,10 +5,10 @@ go 1.25.7
 require (
 	github.com/cert-manager/cert-manager v1.19.3
 	github.com/gofiber/fiber/v2 v2.52.11
-	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.1.4
+	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.2.0
 	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.2.3
-	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.1.7
-	github.com/netcracker/qubership-core-lib-go/v3 v3.3.1
+	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.2.0
+	github.com/netcracker/qubership-core-lib-go/v3 v3.4.0
 	github.com/openshift/api v0.0.0-20260205045418-81371d13d1fc
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
@@ -42,7 +42,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/gofiber/adaptor/v2 v2.2.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
@@ -62,7 +62,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.18.2 // indirect
 	github.com/knadh/koanf v1.5.0 // indirect
-	github.com/knadh/koanf/v2 v2.3.0 // indirect
+	github.com/knadh/koanf/v2 v2.3.2 // indirect
 	github.com/mailru/easyjson v0.9.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
