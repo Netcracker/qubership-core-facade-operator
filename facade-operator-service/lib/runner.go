@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/KimMachineGun/automemlimit/memlimit"
 	v1cert "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/gofiber/fiber/v2"
 	facadeV1 "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1"
@@ -53,6 +54,19 @@ var (
 )
 
 func RunService() {
+
+	// uses default values:
+	//   WithRatio(0.9)
+	//   WithProvider(memlimit.FromCgroup)
+	// and no logger
+	memlimit, _ := memlimit.SetGoMemLimitWithOpts()
+
+	if memlimit > 0 {
+		setupLog.Info("MEMORY LIMIT set to %d bytes (0.9 of cgroup's memory limit)", memlimit)
+	} else {
+		setupLog.Info("failed to set MEMORY LIMIT")
+	}
+
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(facadeV1Alpha.AddToScheme(scheme))
 	utilruntime.Must(facadeV1.AddToScheme(scheme))
