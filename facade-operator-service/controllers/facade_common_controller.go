@@ -98,7 +98,7 @@ func (r *FacadeCommonReconciler) Reconcile(ctx context.Context, req ctrl.Request
 				r.logger.ErrorC(ctx, "[%v] Can not update status on CR. Error: %s", req.NamespacedName, statusErr.Error())
 			}
 			r.logger.ErrorC(ctx, "Found panic. Err: %s", recErr)
-			r.logger.ErrorC(ctx, string(debug.Stack()))
+			r.logger.ErrorC(ctx, "%s", string(debug.Stack()))
 			result = ctrl.Result{Requeue: true, RequeueAfter: 5 * time.Second}
 		}
 	}()
