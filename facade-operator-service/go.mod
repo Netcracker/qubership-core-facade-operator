@@ -9,7 +9,7 @@ require (
 	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.5.3
 	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.4.3
 	github.com/netcracker/qubership-core-lib-go/v3 v3.7.2
-	github.com/openshift/api v0.0.0-20260205045418-81371d13d1fc
+	github.com/openshift/api v0.0.0-20260401184605-2757d677e9aa
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
 	go.uber.org/zap v1.27.1
@@ -42,7 +42,6 @@ require (
 	github.com/go-openapi/swag/jsonname v0.25.4 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/gofiber/adaptor/v2 v2.2.1 // indirect
-	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
