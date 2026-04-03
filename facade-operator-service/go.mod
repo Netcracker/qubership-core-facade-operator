@@ -3,12 +3,12 @@ module github.com/netcracker/qubership-core-facade-operator/facade-operator-serv
 go 1.26.1
 
 require (
-	github.com/cert-manager/cert-manager v1.20.0
+	github.com/cert-manager/cert-manager v1.20.1
 	github.com/gofiber/fiber/v2 v2.52.12
-	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.4.1
-	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.5.3
-	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.4.3
-	github.com/netcracker/qubership-core-lib-go/v3 v3.7.2
+	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.4.2
+	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.5.4
+	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.4.4
+	github.com/netcracker/qubership-core-lib-go/v3 v3.7.3
 	github.com/openshift/api v0.0.0-20260402111718-ad9eb11110b6
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
@@ -73,7 +73,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.5.3 // indirect
+	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.5.4 // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -100,12 +100,12 @@ require (
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa // indirect
-	golang.org/x/net v0.51.0 // indirect
+	golang.org/x/net v0.52.0 // indirect
 	golang.org/x/oauth2 v0.35.0 // indirect
-	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
-	golang.org/x/term v0.40.0 // indirect
-	golang.org/x/text v0.34.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/term v0.41.0 // indirect
+	golang.org/x/text v0.35.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
