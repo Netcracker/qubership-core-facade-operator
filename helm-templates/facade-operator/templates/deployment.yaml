@@ -114,6 +114,8 @@ spec:
                     value: '{{ .Values.TRACING_SAMPLER_RATELIMITING }}'
                 -   name: MAX_CONCURRENT_RECONCILES
                     value: '{{ .Values.MAX_CONCURRENT_RECONCILES }}'
+                -   name: GW_API_ENABLED
+                    value: '{{ .Values.GW_API_ENABLED }}'
                 -   name: GOGC
                     value: '{{ .Values.GOGC }}'
                 -   name: CLOUD_TOPOLOGY_KEY
