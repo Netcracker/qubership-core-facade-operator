@@ -264,6 +264,9 @@ func (b *IngressTemplateBuilder) buildIngressAnnotations(gatewayServiceName, nam
 		return annotations
 	}
 
+	// If HTTPRoute is deployed alongside Ingress, converter must ignore this Ingress.
+	annotations["gateway-api-converter.netcracker.com/ignore"] = "true"
+
 	if isGrpc {
 		annotations["nginx.ingress.kubernetes.io/ssl-redirect"] = "true"
 		annotations["nginx.ingress.kubernetes.io/backend-protocol"] = "GRPC"
