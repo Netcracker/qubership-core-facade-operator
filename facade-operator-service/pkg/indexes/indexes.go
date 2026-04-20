@@ -43,12 +43,14 @@ func IndexFields(ctx context.Context, indexer cache.Cache) error {
 			}
 		}
 
-		if err := indexer.IndexField(ctx, &gatewayv1.HTTPRoute{}, ManagedByFieldName, func(object client.Object) []string {
-			httpRoute := object.(*gatewayv1.HTTPRoute)
-			val := httpRoute.GetAnnotations()[ManagedByAnnotationName]
-			return []string{val}
-		}); err != nil {
-			return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("could not index gatewayv1.HTTPRoute field %s", ManagedByFieldName), err)
+		if utils.GetBoolEnvValueOrDefault("GW_API_ENABLED", false) {
+			if err := indexer.IndexField(ctx, &gatewayv1.HTTPRoute{}, ManagedByFieldName, func(object client.Object) []string {
+				httpRoute := object.(*gatewayv1.HTTPRoute)
+				val := httpRoute.GetAnnotations()[ManagedByAnnotationName]
+				return []string{val}
+			}); err != nil {
+				return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("could not index gatewayv1.HTTPRoute field %s", ManagedByFieldName), err)
+			}
 		}
 	} else {
 		if err := indexer.IndexField(ctx, &openshiftv1.Route{}, ManagedByFieldName, func(object client.Object) []string {

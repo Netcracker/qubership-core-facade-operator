@@ -29,7 +29,9 @@ import (
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
 	openshiftv1 "github.com/openshift/api/route/v1"
 	hpav2 "k8s.io/api/autoscaling/v2"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -156,10 +158,16 @@ func setupReconcilers(mgr manager.Manager, namespace string) {
 		os.Exit(1)
 	}
 	client := mgr.GetClient()
+	gwAPIEnabled := utils.GetBoolEnvValueOrDefault("GW_API_ENABLED", false)
+	gatewayAPIV1Present := false
+	if gwAPIEnabled {
+		gatewayAPIV1Present = isGatewayAPIV1Present(client.RESTMapper())
+	}
 	ingressBuilder := templates.NewIngressTemplateBuilder(
 		utils.GetBoolEnvValueOrDefault("X509_AUTHENTICATION_ENABLED", false),
 		utils.GetBoolEnvValueOrDefault("COMPOSITE_PLATFORM", false),
-		os.Getenv("BASELINE_PROJ"))
+		os.Getenv("BASELINE_PROJ"),
+		gatewayAPIV1Present)
 
 	commonCRClient := services.NewCommonCRClient(client)
 	serviceClient := services.NewServiceClient(client)
@@ -201,4 +209,16 @@ func setupReconcilers(mgr manager.Manager, namespace string) {
 		setupLog.Error(errs.ToLogFormat(errs.NewError(customerrors.UnknownErrorCode, "Unable to create FacadeService controller", err)))
 		os.Exit(1)
 	}
+}
+
+func isGatewayAPIV1Present(restMapper meta.RESTMapper) bool {
+	_, err := restMapper.RESTMapping(schema.GroupKind{
+		Group: "gateway.networking.k8s.io",
+		Kind:  "HTTPRoute",
+	}, "v1")
+	if err != nil {
+		setupLog.Warnf("gateway.networking.k8s.io/v1 is not available: %v", err)
+		return false
+	}
+	return true
 }
