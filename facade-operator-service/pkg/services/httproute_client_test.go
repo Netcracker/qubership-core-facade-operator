@@ -127,11 +127,15 @@ func TestHTTPRouteClientImpl_DeleteOrphaned(t *testing.T) {
 			return nil
 		})
 	commonCRClient.EXPECT().FindByFields(context.Background(), req, client.MatchingFields{"spec.gatewayType": string(facade.Ingress)}).Return(crs, nil)
-	k8sClient.EXPECT().Get(context.Background(), httpRouteReq, &gatewayv1.HTTPRoute{}, &client.GetOptions{}).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *gatewayv1.HTTPRoute, _ ...client.GetOption) error {
+	k8sClient.EXPECT().Get(context.Background(), httpRouteReq, gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj *gatewayv1.HTTPRoute, _ ...client.GetOption) error {
 		*obj = *httpRoute1
 		return nil
 	})
 	k8sClient.EXPECT().Delete(context.Background(), httpRoute1).Return(nil)
+	k8sClient.EXPECT().Get(context.Background(), httpRouteReq, gomock.Any(), gomock.Any()).Return(getNotFoundError())
+	k8sClient.EXPECT().Get(context.Background(), httpRouteReq, gomock.Any(), gomock.Any()).Return(getNotFoundError())
+	k8sClient.EXPECT().List(context.Background(), gomock.Any(), gomock.Any()).Return(getNotFoundError()).Times(2)
+
 	err := httpRouteClient.DeleteOrphaned(context.Background(), req)
 	assert.Nil(t, err)
 }

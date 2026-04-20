@@ -11,6 +11,7 @@ import (
 	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -24,27 +25,56 @@ type HTTPRouteClient interface {
 
 type HTTPRouteClientImpl struct {
 	GenericClient[*gatewayv1.HTTPRoute]
-	ingressBuilder *templates.IngressTemplateBuilder
-	commonCRClient CommonCRClient
-	logger         logging.Logger
+	ingressBuilder      *templates.IngressTemplateBuilder
+	commonCRClient      CommonCRClient
+	logger              logging.Logger
+	policyClient        client.Client
+	backendPolicyClient GenericClient[*unstructured.Unstructured]
+	clientPolicyClient  GenericClient[*unstructured.Unstructured]
 }
 
 func NewHTTPRouteClient(client client.Client, ingressBuilder *templates.IngressTemplateBuilder, commonCRClient CommonCRClient) *HTTPRouteClientImpl {
 	return &HTTPRouteClientImpl{
-		GenericClient:   NewGenericClient[*gatewayv1.HTTPRoute](client, "HTTPRoute"),
-		ingressBuilder:  ingressBuilder,
-		commonCRClient:  commonCRClient,
-		logger:          logging.GetLogger("gatewayV1.HTTPRoute client"),
+		GenericClient:       NewGenericClient[*gatewayv1.HTTPRoute](client, "HTTPRoute"),
+		ingressBuilder:      ingressBuilder,
+		commonCRClient:      commonCRClient,
+		logger:              logging.GetLogger("gatewayV1.HTTPRoute client"),
+		policyClient:        client,
+		backendPolicyClient: NewGenericClient[*unstructured.Unstructured](client, "BackendTrafficPolicy"),
+		clientPolicyClient:  NewGenericClient[*unstructured.Unstructured](client, "ClientTrafficPolicy"),
 	}
 }
 
 func (h *HTTPRouteClientImpl) Apply(ctx context.Context, req ctrl.Request, httpRoute templates.HTTPRoute) error {
-	return h.GenericClient.Apply(ctx, req, &gatewayv1.HTTPRoute{}, httpRoute.BuildK8sHTTPRoute(), h.mergeHTTPRoutes)
+	if err := h.GenericClient.Apply(ctx, req, &gatewayv1.HTTPRoute{}, httpRoute.BuildK8sHTTPRoute(), h.mergeHTTPRoutes); err != nil {
+		return err
+	}
+
+	if httpRoute.BackendTrafficPolicy != nil {
+		h.logger.InfoC(ctx, "[%v] Applying BackendTrafficPolicy for HTTPRoute %s", req.NamespacedName, httpRoute.Name)
+		if err := h.backendPolicyClient.Apply(ctx, req, &unstructured.Unstructured{}, httpRoute.BackendTrafficPolicy, h.mergeUnstructuredPolicies); err != nil {
+			return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("failed to apply BackendTrafficPolicy for HTTPRoute %s", httpRoute.Name), err)
+		}
+	}
+
+	if httpRoute.ClientTrafficPolicy != nil {
+		h.logger.InfoC(ctx, "[%v] Applying ClientTrafficPolicy for HTTPRoute %s", req.NamespacedName, httpRoute.Name)
+		if err := h.clientPolicyClient.Apply(ctx, req, &unstructured.Unstructured{}, httpRoute.ClientTrafficPolicy, h.mergeUnstructuredPolicies); err != nil {
+			return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("failed to apply ClientTrafficPolicy for HTTPRoute %s", httpRoute.Name), err)
+		}
+	}
+
+	return nil
 }
 
 func (h *HTTPRouteClientImpl) mergeHTTPRoutes(existingResReceiver, newObject *gatewayv1.HTTPRoute) {
 	newObject.ObjectMeta.ResourceVersion = existingResReceiver.ResourceVersion
 	newObject.ObjectMeta.OwnerReferences = utils.MergeOwnerReferences(newObject.ObjectMeta.OwnerReferences, existingResReceiver.ObjectMeta.OwnerReferences)
+}
+
+func (h *HTTPRouteClientImpl) mergeUnstructuredPolicies(existingResReceiver, newObject *unstructured.Unstructured) {
+	newObject.SetResourceVersion(existingResReceiver.GetResourceVersion())
+	newObject.SetOwnerReferences(utils.MergeOwnerReferences(newObject.GetOwnerReferences(), existingResReceiver.GetOwnerReferences()))
 }
 
 func (h *HTTPRouteClientImpl) DeleteOrphaned(ctx context.Context, req ctrl.Request) error {
@@ -75,11 +105,67 @@ func (h *HTTPRouteClientImpl) DeleteOrphaned(ctx context.Context, req ctrl.Reque
 		}
 	}
 
+	if err = h.deleteOrphanedPolicies(ctx, req, httpRouteNamesSet, "BackendTrafficPolicy"); err != nil {
+		return err
+	}
+	if err = h.deleteOrphanedPolicies(ctx, req, httpRouteNamesSet, "ClientTrafficPolicy"); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (h *HTTPRouteClientImpl) Delete(ctx context.Context, req ctrl.Request, name string) error {
-	return h.GenericClient.Delete(ctx, req, name, &gatewayv1.HTTPRoute{})
+	if err := h.GenericClient.Delete(ctx, req, name, &gatewayv1.HTTPRoute{}); err != nil {
+		return err
+	}
+
+	h.logger.InfoC(ctx, "[%v] Deleting BackendTrafficPolicy %s if exists", req.NamespacedName, name)
+	backendPolicy := &unstructured.Unstructured{}
+	backendPolicy.SetAPIVersion("gateway.envoyproxy.io/v1alpha1")
+	backendPolicy.SetKind("BackendTrafficPolicy")
+	if err := h.backendPolicyClient.Delete(ctx, req, name, backendPolicy); err != nil && !k8sErrors.IsNotFound(err) {
+		h.logger.WarnC(ctx, "[%v] Failed to delete BackendTrafficPolicy %s: %v", req.NamespacedName, name, err)
+	}
+
+	// Delete associated ClientTrafficPolicy (same name as HTTPRoute)
+	h.logger.InfoC(ctx, "[%v] Deleting ClientTrafficPolicy %s if exists", req.NamespacedName, name)
+	clientPolicy := &unstructured.Unstructured{}
+	clientPolicy.SetAPIVersion("gateway.envoyproxy.io/v1alpha1")
+	clientPolicy.SetKind("ClientTrafficPolicy")
+	if err := h.clientPolicyClient.Delete(ctx, req, name, clientPolicy); err != nil && !k8sErrors.IsNotFound(err) {
+		h.logger.WarnC(ctx, "[%v] Failed to delete ClientTrafficPolicy %s: %v", req.NamespacedName, name, err)
+	}
+
+	return nil
+}
+
+func (h *HTTPRouteClientImpl) deleteOrphanedPolicies(ctx context.Context, req ctrl.Request, validNames map[string]bool, policyKind string) error {
+	policyList := &unstructured.UnstructuredList{}
+	policyList.SetAPIVersion("gateway.envoyproxy.io/v1alpha1")
+	policyList.SetKind(policyKind + "List")
+
+	err := h.policyClient.List(ctx, policyList, client.InNamespace(req.Namespace))
+	if err != nil {
+		if k8sErrors.IsNotFound(err) || k8sErrors.IsMethodNotSupported(err) {
+			return nil
+		}
+		return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("Failed to list %s in namespace %s", policyKind, req.Namespace), err)
+	}
+
+	for _, policy := range policyList.Items {
+		labels := policy.GetLabels()
+		if labels["app.kubernetes.io/managed-by-operator"] == "facade-operator" {
+			if !validNames[policy.GetName()] {
+				h.logger.InfoC(ctx, "[%v] Deleting orphaned %s: %s", req.NamespacedName, policyKind, policy.GetName())
+				if err := h.policyClient.Delete(ctx, &policy); err != nil && !k8sErrors.IsNotFound(err) {
+					return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("Failed to delete %s %s", policyKind, policy.GetName()), err)
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 func collectHTTPRouteNamesFromFacadeServices(ctx context.Context, req ctrl.Request, ingressBuilder *templates.IngressTemplateBuilder, commonCRClient CommonCRClient) (map[string]bool, error) {
