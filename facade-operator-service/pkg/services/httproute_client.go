@@ -122,7 +122,7 @@ func (h *HTTPRouteClientImpl) Delete(ctx context.Context, req ctrl.Request, name
 
 	h.logger.InfoC(ctx, "[%v] Deleting BackendTrafficPolicy %s if exists", req.NamespacedName, name)
 	backendPolicy := &unstructured.Unstructured{}
-	backendPolicy.SetAPIVersion("gateway.envoyproxy.io/v1alpha1")
+	backendPolicy.SetAPIVersion(utils.ApiVersionV1AlphaV1)
 	backendPolicy.SetKind("BackendTrafficPolicy")
 	if err := h.backendPolicyClient.Delete(ctx, req, name, backendPolicy); err != nil && !k8sErrors.IsNotFound(err) {
 		h.logger.WarnC(ctx, "[%v] Failed to delete BackendTrafficPolicy %s: %v", req.NamespacedName, name, err)
@@ -131,7 +131,7 @@ func (h *HTTPRouteClientImpl) Delete(ctx context.Context, req ctrl.Request, name
 	// Delete associated ClientTrafficPolicy (same name as HTTPRoute)
 	h.logger.InfoC(ctx, "[%v] Deleting ClientTrafficPolicy %s if exists", req.NamespacedName, name)
 	clientPolicy := &unstructured.Unstructured{}
-	clientPolicy.SetAPIVersion("gateway.envoyproxy.io/v1alpha1")
+	clientPolicy.SetAPIVersion(utils.ApiVersionV1AlphaV1)
 	clientPolicy.SetKind("ClientTrafficPolicy")
 	if err := h.clientPolicyClient.Delete(ctx, req, name, clientPolicy); err != nil && !k8sErrors.IsNotFound(err) {
 		h.logger.WarnC(ctx, "[%v] Failed to delete ClientTrafficPolicy %s: %v", req.NamespacedName, name, err)
@@ -142,7 +142,7 @@ func (h *HTTPRouteClientImpl) Delete(ctx context.Context, req ctrl.Request, name
 
 func (h *HTTPRouteClientImpl) deleteOrphanedPolicies(ctx context.Context, req ctrl.Request, validNames map[string]bool, policyKind string) error {
 	policyList := &unstructured.UnstructuredList{}
-	policyList.SetAPIVersion("gateway.envoyproxy.io/v1alpha1")
+	policyList.SetAPIVersion(utils.ApiVersionV1AlphaV1)
 	policyList.SetKind(policyKind + "List")
 
 	err := h.policyClient.List(ctx, policyList, client.InNamespace(req.Namespace))

@@ -335,6 +335,10 @@ func (r *FacadeCommonReconciler) applyIngresses(ctx context.Context, req ctrl.Re
 	if cr.GetGatewayType() != facade.Ingress {
 		return nil
 	}
+	return r.applyIngressSpecs(ctx, req, serviceName, cr)
+}
+
+func (r *FacadeCommonReconciler) applyIngressSpecs(ctx context.Context, req ctrl.Request, serviceName string, cr facade.MeshGateway) error {
 	for _, ingressSpec := range cr.GetSpec().Ingresses {
 		ingressTemplate, err := r.ingressBuilder.BuildIngressTemplate(ingressSpec, cr, serviceName)
 		if err != nil {
@@ -344,15 +348,22 @@ func (r *FacadeCommonReconciler) applyIngresses(ctx context.Context, req ctrl.Re
 		if err = r.ingressClient.Apply(ctx, req, ingressTemplate); err != nil {
 			return err
 		}
-		if utils.GetPlatform() == utils.Kubernetes && r.gwAPIEnabled {
-			httpRouteTemplate, err := r.ingressBuilder.BuildHTTPRouteTemplate(ingressSpec, cr, serviceName)
-			if err != nil {
-				return err
-			}
-			r.logger.InfoC(ctx, "[%v] Applying httproute %+v", req.NamespacedName, ingressSpec)
-			if err = r.httpRouteClient.Apply(ctx, req, httpRouteTemplate); err != nil {
-				return err
-			}
+		if err = r.applyHTTPRouteIfEnabled(ctx, req, serviceName, cr, ingressSpec); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *FacadeCommonReconciler) applyHTTPRouteIfEnabled(ctx context.Context, req ctrl.Request, serviceName string, cr facade.MeshGateway, ingressSpec facade.IngressSpec) error {
+	if utils.GetPlatform() == utils.Kubernetes && r.gwAPIEnabled {
+		httpRouteTemplate, err := r.ingressBuilder.BuildHTTPRouteTemplate(ingressSpec, cr, serviceName)
+		if err != nil {
+			return err
+		}
+		r.logger.InfoC(ctx, "[%v] Applying httproute %+v", req.NamespacedName, ingressSpec)
+		if err = r.httpRouteClient.Apply(ctx, req, httpRouteTemplate); err != nil {
+			return err
 		}
 	}
 	return nil

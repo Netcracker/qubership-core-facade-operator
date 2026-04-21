@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
+	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
@@ -52,7 +53,7 @@ func (b *IngressTemplateBuilder) BuildHTTPRouteTemplate(ingressSpec facade.Ingre
 	httpRoute := HTTPRoute{
 		Name:                httpRouteName,
 		Namespace:           cr.GetNamespace(),
-		Labels:              b.buildIngressLabels(cr.GetLabels()["app.kubernetes.io/part-of"]),
+		Labels:              b.buildIngressLabels(cr.GetLabels()[utils.KubernetesPartOf]),
 		Annotations:         b.buildHTTPRouteAnnotations(gatewayServiceName, cr.GetNamespace(), ingressSpec.IsGrpc),
 		Hostname:            ingressSpec.Hostname,
 		ServiceName:         gatewayServiceName,
@@ -204,12 +205,12 @@ func getPathPointer(path string) *string {
 func (b *IngressTemplateBuilder) buildBackendTrafficPolicy(httpRouteName string, cr facade.MeshGateway) *unstructured.Unstructured {
 	policy := &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": "gateway.envoyproxy.io/v1alpha1",
+			"apiVersion": utils.ApiVersionV1AlphaV1,
 			"kind":       "BackendTrafficPolicy",
 			"metadata": map[string]interface{}{
 				"name":      httpRouteName,
 				"namespace": cr.GetNamespace(),
-				"labels":    b.buildIngressLabels(cr.GetLabels()["app.kubernetes.io/part-of"]),
+				"labels":    b.buildIngressLabels(cr.GetLabels()[utils.KubernetesPartOf]),
 				"ownerReferences": []interface{}{
 					map[string]interface{}{
 						"apiVersion": cr.GetAPIVersion(),
@@ -239,12 +240,12 @@ func (b *IngressTemplateBuilder) buildBackendTrafficPolicy(httpRouteName string,
 func (b *IngressTemplateBuilder) buildClientTrafficPolicy(httpRouteName string, cr facade.MeshGateway, x509SecretNamespace string) *unstructured.Unstructured {
 	policy := &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": "gateway.envoyproxy.io/v1alpha1",
+			"apiVersion": utils.ApiVersionV1AlphaV1,
 			"kind":       "ClientTrafficPolicy",
 			"metadata": map[string]interface{}{
 				"name":      httpRouteName,
 				"namespace": cr.GetNamespace(),
-				"labels":    b.buildIngressLabels(cr.GetLabels()["app.kubernetes.io/part-of"]),
+				"labels":    b.buildIngressLabels(cr.GetLabels()[utils.KubernetesPartOf]),
 				"ownerReferences": []interface{}{
 					map[string]interface{}{
 						"apiVersion": cr.GetAPIVersion(),
