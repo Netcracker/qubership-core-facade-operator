@@ -14,6 +14,7 @@ import (
 	v1 "k8s.io/api/networking/v1"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
 const ManagedByFieldName = "metadata.annotations.app.kubernetes.io/managed-by"
@@ -39,6 +40,16 @@ func IndexFields(ctx context.Context, indexer cache.Cache) error {
 				return []string{val}
 			}); err != nil {
 				return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("could not index v1beta1.Ingress field %s", ManagedByFieldName), err)
+			}
+		}
+
+		if utils.GetBoolEnvValueOrDefault("GW_API_ENABLED", false) {
+			if err := indexer.IndexField(ctx, &gatewayv1.HTTPRoute{}, ManagedByFieldName, func(object client.Object) []string {
+				httpRoute := object.(*gatewayv1.HTTPRoute)
+				val := httpRoute.GetAnnotations()[ManagedByAnnotationName]
+				return []string{val}
+			}); err != nil {
+				return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("could not index gatewayv1.HTTPRoute field %s", ManagedByFieldName), err)
 			}
 		}
 	} else {

@@ -2,13 +2,14 @@ package templates
 
 import (
 	"fmt"
+	"maps"
+	"os"
+	"strings"
+
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
 	customerrors "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/errors"
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
 	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
-	"maps"
-	"os"
-	"strings"
 
 	v1 "github.com/openshift/api/route/v1"
 	"k8s.io/api/extensions/v1beta1"
@@ -24,12 +25,17 @@ type IngressTemplateBuilder struct {
 	isSatellite          bool
 	baselineNamespace    string
 	ingressClassName     *string
+	gatewayAPIV1Present  bool
 }
 
-func NewIngressTemplateBuilder(x509Enable bool, isSatellite bool, baselineNamespace string) *IngressTemplateBuilder {
+func NewIngressTemplateBuilder(x509Enable bool, isSatellite bool, baselineNamespace string, gatewayAPIV1Present ...bool) *IngressTemplateBuilder {
 	peerNamespace := os.Getenv("PEER_NAMESPACE")
 	var ingressClassName *string = nil
 	ingressClassNameString := facade.IngressClassName
+	isGatewayAPIV1Present := false
+	if len(gatewayAPIV1Present) > 0 {
+		isGatewayAPIV1Present = gatewayAPIV1Present[0]
+	}
 	if peerNamespace == "" {
 		ingressClassNameStringFromEnv := os.Getenv("INGRESS_CLASS")
 		if ingressClassNameStringFromEnv != "" {
@@ -39,7 +45,14 @@ func NewIngressTemplateBuilder(x509Enable bool, isSatellite bool, baselineNamesp
 	} else {
 		ingressClassName = &ingressClassNameString
 	}
-	return &IngressTemplateBuilder{gwIngressAnnotations: buildGwIngressAnnotations(), x509Enable: x509Enable, isSatellite: isSatellite, baselineNamespace: baselineNamespace, ingressClassName: ingressClassName}
+	return &IngressTemplateBuilder{
+		gwIngressAnnotations: buildGwIngressAnnotations(),
+		x509Enable:           x509Enable,
+		isSatellite:          isSatellite,
+		baselineNamespace:    baselineNamespace,
+		ingressClassName:     ingressClassName,
+		gatewayAPIV1Present:  isGatewayAPIV1Present,
+	}
 }
 
 func buildGwIngressAnnotations() map[string]string {
@@ -262,6 +275,12 @@ func (b *IngressTemplateBuilder) buildIngressAnnotations(gatewayServiceName, nam
 
 	if utils.GetPlatform() == utils.Openshift {
 		return annotations
+	}
+
+	// Only add this annotation if Gateway API v1 is available AND platform is Kubernetes
+	// Equivalent to: {{- if and (.Capabilities.APIVersions.Has "gateway.networking.k8s.io/v1") (eq .Values.PAAS_PLATFORM "KUBERNETES") -}}
+	if b.gatewayAPIV1Present && utils.GetPlatform() == utils.Kubernetes {
+		annotations["gateway-api-converter.netcracker.com/ignore"] = "true"
 	}
 
 	if isGrpc {

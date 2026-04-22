@@ -23,6 +23,9 @@ var XDSClusterPort = os.Getenv("XDS_CLUSTER_PORT")
 var TlsSecretPath = os.Getenv("TLS_SECRET")
 var TlsPasswordSecretName = os.Getenv("TLS_PASSWORD_SECRET_NAME")
 var TlsPasswordKey = os.Getenv("TLS_PASSWORD_KEY")
+var PaasPlatformKubernetes = "KUBERNETES"
+var ApiVersionV1AlphaV1 = "gateway.envoyproxy.io/v1alpha1"
+var KubernetesPartOf = "app.kubernetes.io/part-of"
 
 // gateway hpa
 var HpaDefaultMinReplicasEnvName = "GATEWAY_HPA_MIN_REPLICAS"

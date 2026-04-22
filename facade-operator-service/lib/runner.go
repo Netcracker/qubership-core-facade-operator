@@ -31,6 +31,7 @@ import (
 	hpav2 "k8s.io/api/autoscaling/v2"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/discovery"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -39,6 +40,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -60,6 +62,7 @@ func RunService() {
 	utilruntime.Must(v1cert.AddToScheme(scheme))
 	utilruntime.Must(openshiftv1.Install(scheme))
 	utilruntime.Must(hpav2.AddToScheme(scheme))
+	utilruntime.Must(gatewayv1.Install(scheme))
 
 	//+kubebuilder:scaffold:scheme
 	consulPS := consul.NewLoggingPropertySource()
@@ -154,10 +157,12 @@ func setupReconcilers(mgr manager.Manager, namespace string) {
 		os.Exit(1)
 	}
 	client := mgr.GetClient()
+	gatewayAPIV1Present := isGatewayAPIV1Present(mgr.GetConfig())
 	ingressBuilder := templates.NewIngressTemplateBuilder(
 		utils.GetBoolEnvValueOrDefault("X509_AUTHENTICATION_ENABLED", false),
 		utils.GetBoolEnvValueOrDefault("COMPOSITE_PLATFORM", false),
-		os.Getenv("BASELINE_PROJ"))
+		os.Getenv("BASELINE_PROJ"),
+		gatewayAPIV1Present)
 
 	commonCRClient := services.NewCommonCRClient(client)
 	serviceClient := services.NewServiceClient(client)
@@ -183,7 +188,8 @@ func setupReconcilers(mgr manager.Manager, namespace string) {
 		statusUpdater,
 		readyService,
 		commonCRClient,
-		crPriorityService)
+		crPriorityService,
+		gatewayAPIV1Present)
 	facadeServiceReconciler := controllers.NewFacadeServiceReconciler(commonFacadeReconciler)
 	meshGatewayReconciler := controllers.NewGatewayReconciler(commonFacadeReconciler)
 	if err = facadeServiceReconciler.SetupFacadeServiceManager(mgr, maxConcurrentReconciles, client, deploymentClient, commonCRClient); err != nil {
@@ -199,4 +205,28 @@ func setupReconcilers(mgr manager.Manager, namespace string) {
 		setupLog.Error("%s", errs.ToLogFormat(errs.NewError(customerrors.UnknownErrorCode, "Unable to create FacadeService controller", err)))
 		os.Exit(1)
 	}
+}
+
+func isGatewayAPIV1Present(config *rest.Config) bool {
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)
+	if err != nil {
+		setupLog.Warnf("Failed to create discovery client: %v", err)
+		return false
+	}
+
+	apiResourceList, err := discoveryClient.ServerResourcesForGroupVersion("gateway.networking.k8s.io/v1")
+	if err != nil {
+		setupLog.Warnf("gateway.networking.k8s.io/v1 is not available: %v", err)
+		return false
+	}
+
+	for _, resource := range apiResourceList.APIResources {
+		if resource.Kind == "HTTPRoute" {
+			setupLog.Info("gateway.networking.k8s.io/v1 HTTPRoute is available")
+			return true
+		}
+	}
+
+	setupLog.Warn("gateway.networking.k8s.io/v1 exists but HTTPRoute resource not found")
+	return false
 }
