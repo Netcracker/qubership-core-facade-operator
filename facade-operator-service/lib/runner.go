@@ -29,10 +29,9 @@ import (
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
 	openshiftv1 "github.com/openshift/api/route/v1"
 	hpav2 "k8s.io/api/autoscaling/v2"
-	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/discovery"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -158,7 +157,7 @@ func setupReconcilers(mgr manager.Manager, namespace string) {
 		os.Exit(1)
 	}
 	client := mgr.GetClient()
-	gatewayAPIV1Present := isGatewayAPIV1Present(client.RESTMapper())
+	gatewayAPIV1Present := isGatewayAPIV1Present(mgr.GetConfig())
 	ingressBuilder := templates.NewIngressTemplateBuilder(
 		utils.GetBoolEnvValueOrDefault("X509_AUTHENTICATION_ENABLED", false),
 		utils.GetBoolEnvValueOrDefault("COMPOSITE_PLATFORM", false),
@@ -208,14 +207,26 @@ func setupReconcilers(mgr manager.Manager, namespace string) {
 	}
 }
 
-func isGatewayAPIV1Present(restMapper meta.RESTMapper) bool {
-	_, err := restMapper.RESTMapping(schema.GroupKind{
-		Group: "gateway.networking.k8s.io",
-		Kind:  "HTTPRoute",
-	}, "v1")
+func isGatewayAPIV1Present(config *rest.Config) bool {
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)
+	if err != nil {
+		setupLog.Warnf("Failed to create discovery client: %v", err)
+		return false
+	}
+
+	apiResourceList, err := discoveryClient.ServerResourcesForGroupVersion("gateway.networking.k8s.io/v1")
 	if err != nil {
 		setupLog.Warnf("gateway.networking.k8s.io/v1 is not available: %v", err)
 		return false
 	}
-	return true
+
+	for _, resource := range apiResourceList.APIResources {
+		if resource.Kind == "HTTPRoute" {
+			setupLog.Info("gateway.networking.k8s.io/v1 HTTPRoute is available")
+			return true
+		}
+	}
+
+	setupLog.Warn("gateway.networking.k8s.io/v1 exists but HTTPRoute resource not found")
+	return false
 }
