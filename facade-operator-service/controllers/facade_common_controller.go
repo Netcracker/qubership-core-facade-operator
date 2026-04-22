@@ -68,6 +68,7 @@ func NewFacadeCommonReconciler(
 	readyService services.ReadyService,
 	commonCRClient services.CommonCRClient,
 	crPriorityService services.CRPriorityService,
+	gatewayAPIV1Present bool,
 ) *FacadeCommonReconciler {
 	return &FacadeCommonReconciler{
 		client:             client,
@@ -79,7 +80,7 @@ func NewFacadeCommonReconciler(
 		hpaClient:          hpaClient,
 		ingressClient:      ingressClient,
 		httpRouteClient:    services.NewHTTPRouteClient(client, ingressBuilder, commonCRClient),
-		gwAPIEnabled:       utils.GetBoolEnvValueOrDefault("GW_API_ENABLED", false),
+		gwAPIEnabled:       gatewayAPIV1Present,
 		ingressBuilder:     ingressBuilder,
 		controlPlaneClient: controlPlaneClient,
 		namedLock:          utils.NewNamedResourceLock(),

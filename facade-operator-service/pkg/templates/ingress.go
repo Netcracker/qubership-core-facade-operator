@@ -277,10 +277,9 @@ func (b *IngressTemplateBuilder) buildIngressAnnotations(gatewayServiceName, nam
 		return annotations
 	}
 
-	// If HTTPRoute is deployed alongside Ingress, converter must ignore this Ingress.
-	if os.Getenv("PAAS_PLATFORM") == utils.PaasPlatformKubernetes &&
-		utils.GetBoolEnvValueOrDefault("GW_API_ENABLED", false) &&
-		b.gatewayAPIV1Present {
+	// Only add this annotation if Gateway API v1 is available AND platform is Kubernetes
+	// Equivalent to: {{- if and (.Capabilities.APIVersions.Has "gateway.networking.k8s.io/v1") (eq .Values.PAAS_PLATFORM "KUBERNETES") -}}
+	if b.gatewayAPIV1Present && utils.GetPlatform() == utils.Kubernetes {
 		annotations["gateway-api-converter.netcracker.com/ignore"] = "true"
 	}
 

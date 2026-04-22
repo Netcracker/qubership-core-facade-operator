@@ -158,11 +158,7 @@ func setupReconcilers(mgr manager.Manager, namespace string) {
 		os.Exit(1)
 	}
 	client := mgr.GetClient()
-	gwAPIEnabled := utils.GetBoolEnvValueOrDefault("GW_API_ENABLED", false)
-	gatewayAPIV1Present := false
-	if gwAPIEnabled {
-		gatewayAPIV1Present = isGatewayAPIV1Present(client.RESTMapper())
-	}
+	gatewayAPIV1Present := isGatewayAPIV1Present(client.RESTMapper())
 	ingressBuilder := templates.NewIngressTemplateBuilder(
 		utils.GetBoolEnvValueOrDefault("X509_AUTHENTICATION_ENABLED", false),
 		utils.GetBoolEnvValueOrDefault("COMPOSITE_PLATFORM", false),
@@ -193,7 +189,8 @@ func setupReconcilers(mgr manager.Manager, namespace string) {
 		statusUpdater,
 		readyService,
 		commonCRClient,
-		crPriorityService)
+		crPriorityService,
+		gatewayAPIV1Present)
 	facadeServiceReconciler := controllers.NewFacadeServiceReconciler(commonFacadeReconciler)
 	meshGatewayReconciler := controllers.NewGatewayReconciler(commonFacadeReconciler)
 	if err = facadeServiceReconciler.SetupFacadeServiceManager(mgr, maxConcurrentReconciles, client, deploymentClient, commonCRClient); err != nil {
