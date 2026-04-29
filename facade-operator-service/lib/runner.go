@@ -108,8 +108,9 @@ func RunService() {
 		os.Exit(1)
 	}
 
-	setupReconcilers(mgr, namespace)
-	if err = indexes.IndexFields(context.Background(), mgr.GetCache()); err != nil {
+	gatewayAPIV1Present := isGatewayAPIV1Present(mgr.GetConfig())
+	setupReconcilers(mgr, namespace, gatewayAPIV1Present)
+	if err = indexes.IndexFields(context.Background(), mgr.GetCache(), gatewayAPIV1Present); err != nil {
 		setupLog.Error(errs.ToLogFormat(errs.NewError(customerrors.UnknownErrorCode, "Unable to index k8s cache", err)))
 		os.Exit(1)
 	}
@@ -150,14 +151,13 @@ func healthProbe(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON("ok")
 }
 
-func setupReconcilers(mgr manager.Manager, namespace string) {
+func setupReconcilers(mgr manager.Manager, namespace string, gatewayAPIV1Present bool) {
 	maxConcurrentReconciles, err := strconv.Atoi(os.Getenv("MAX_CONCURRENT_RECONCILES"))
 	if err != nil {
 		setupLog.Error(errs.ToLogFormat(errs.NewError(customerrors.InitParamsValidationError, "Can not parse MAX_CONCURRENT_RECONCILES value. Value should be integer", err)))
 		os.Exit(1)
 	}
 	client := mgr.GetClient()
-	gatewayAPIV1Present := isGatewayAPIV1Present(mgr.GetConfig())
 	ingressBuilder := templates.NewIngressTemplateBuilder(
 		utils.GetBoolEnvValueOrDefault("X509_AUTHENTICATION_ENABLED", false),
 		utils.GetBoolEnvValueOrDefault("COMPOSITE_PLATFORM", false),
@@ -208,6 +208,11 @@ func setupReconcilers(mgr manager.Manager, namespace string) {
 }
 
 func isGatewayAPIV1Present(config *rest.Config) bool {
+	// Equivalent to: {{- if and (.Capabilities.APIVersions.Has "gateway.networking.k8s.io/v1") (eq .Values.PAAS_PLATFORM "KUBERNETES") -}}
+	if utils.GetPlatform() != utils.Kubernetes {
+		return false
+	}
+
 	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)
 	if err != nil {
 		setupLog.Warnf("Failed to create discovery client: %v", err)

@@ -183,7 +183,7 @@ func (r *FacadeCommonReconciler) deleteFacadeService(ctx context.Context, req ct
 	if err := r.ingressClient.DeleteOrphaned(ctx, req); err != nil {
 		return err
 	}
-	if utils.GetPlatform() == utils.Kubernetes && r.gwAPIEnabled {
+	if r.gwAPIEnabled {
 		if err := r.httpRouteClient.DeleteOrphaned(ctx, req); err != nil {
 			return err
 		}
@@ -328,7 +328,7 @@ func (r *FacadeCommonReconciler) applyIngresses(ctx context.Context, req ctrl.Re
 	if err := r.ingressClient.DeleteOrphaned(ctx, req); err != nil {
 		return err
 	}
-	if utils.GetPlatform() == utils.Kubernetes && r.gwAPIEnabled {
+	if r.gwAPIEnabled {
 		if err := r.httpRouteClient.DeleteOrphaned(ctx, req); err != nil {
 			return err
 		}
@@ -357,7 +357,7 @@ func (r *FacadeCommonReconciler) applyIngressSpecs(ctx context.Context, req ctrl
 }
 
 func (r *FacadeCommonReconciler) applyHTTPRouteIfEnabled(ctx context.Context, req ctrl.Request, serviceName string, cr facade.MeshGateway, ingressSpec facade.IngressSpec) error {
-	if utils.GetPlatform() == utils.Kubernetes && r.gwAPIEnabled {
+	if r.gwAPIEnabled {
 		httpRouteTemplate, err := r.ingressBuilder.BuildHTTPRouteTemplate(ingressSpec, cr, serviceName)
 		if err != nil {
 			return err
