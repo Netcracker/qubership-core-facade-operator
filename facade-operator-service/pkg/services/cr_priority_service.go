@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
@@ -91,7 +92,7 @@ func (c *crPriorityServiceImpl) isSameType(cr facade.MeshGateway, lastAppliedCr 
 
 func (c *crPriorityServiceImpl) checkByKindPriority(ctx context.Context, req ctrl.Request, cr facade.MeshGateway, lastAppliedCr facade.MeshGateway) bool {
 	if lastAppliedCr != nil && cr.Priority() < lastAppliedCr.Priority() {
-		c.logger.InfoC(ctx, "[%v] Current CR has lower priority '%d' than the last applied one '%d'", req.NamespacedName, cr.Priority(), lastAppliedCr.Priority)
+		c.logger.InfoC(ctx, "[%v] Current CR has lower priority '%d' than the last applied one '%d'", req.NamespacedName, cr.Priority(), lastAppliedCr.Priority())
 		return false
 	}
 
@@ -100,7 +101,7 @@ func (c *crPriorityServiceImpl) checkByKindPriority(ctx context.Context, req ctr
 
 func (c *crPriorityServiceImpl) checkMasterCRByKindPriority(ctx context.Context, req ctrl.Request, cr facade.MeshGateway, lastAppliedCr facade.MeshGateway) bool {
 	if lastAppliedCr != nil && cr.Priority() <= lastAppliedCr.Priority() {
-		c.logger.InfoC(ctx, "[%v] Another master CR has equals or lower priority '%d' than the last applied one '%d'", req.NamespacedName, cr.Priority(), lastAppliedCr.Priority)
+		c.logger.InfoC(ctx, "[%v] Another master CR has equals or lower priority '%d' than the last applied one '%d'", req.NamespacedName, cr.Priority(), lastAppliedCr.Priority())
 		return false
 	}
 

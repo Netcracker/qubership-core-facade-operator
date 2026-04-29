@@ -104,7 +104,7 @@ func RunService() {
 		LeaderElectionID: "a0366e12",
 	})
 	if err != nil {
-		setupLog.Error(errs.ToLogFormat(errs.NewError(customerrors.UnknownErrorCode, "Unable to start manager", err)))
+		setupLog.Error("%s", errs.ToLogFormat(errs.NewError(customerrors.UnknownErrorCode, "Unable to start manager", err)))
 		os.Exit(1)
 	}
 
@@ -132,7 +132,7 @@ func startServer(mgr manager.Manager) {
 		WithApiVersion().
 		Process()
 	if err != nil {
-		setupLog.Error("Error while create app because: " + err.Error())
+		setupLog.Error("Error while create app because: %s", err.Error())
 		return
 	}
 	app.Get("/health", healthProbe)
@@ -142,7 +142,7 @@ func startServer(mgr manager.Manager) {
 	//+kubebuilder:scaffold:builder
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		setupLog.Error(errs.ToLogFormat(errs.NewError(customerrors.UnknownErrorCode, "Can not run manager", err)))
+		setupLog.Error("%s", errs.ToLogFormat(errs.NewError(customerrors.UnknownErrorCode, "Can not run manager", err)))
 		os.Exit(1)
 	}
 }
@@ -154,7 +154,7 @@ func healthProbe(c *fiber.Ctx) error {
 func setupReconcilers(mgr manager.Manager, namespace string, gatewayAPIV1Present bool) {
 	maxConcurrentReconciles, err := strconv.Atoi(os.Getenv("MAX_CONCURRENT_RECONCILES"))
 	if err != nil {
-		setupLog.Error(errs.ToLogFormat(errs.NewError(customerrors.InitParamsValidationError, "Can not parse MAX_CONCURRENT_RECONCILES value. Value should be integer", err)))
+		setupLog.Error("%s", errs.ToLogFormat(errs.NewError(customerrors.InitParamsValidationError, "Can not parse MAX_CONCURRENT_RECONCILES value. Value should be integer", err)))
 		os.Exit(1)
 	}
 	client := mgr.GetClient()
@@ -193,16 +193,16 @@ func setupReconcilers(mgr manager.Manager, namespace string, gatewayAPIV1Present
 	facadeServiceReconciler := controllers.NewFacadeServiceReconciler(commonFacadeReconciler)
 	meshGatewayReconciler := controllers.NewGatewayReconciler(commonFacadeReconciler)
 	if err = facadeServiceReconciler.SetupFacadeServiceManager(mgr, maxConcurrentReconciles, client, deploymentClient, commonCRClient); err != nil {
-		setupLog.Error(errs.ToLogFormat(errs.NewError(customerrors.UnknownErrorCode, "Unable to create FacadeService controller", err)))
+		setupLog.Error("%s", errs.ToLogFormat(errs.NewError(customerrors.UnknownErrorCode, "Unable to create FacadeService controller", err)))
 		os.Exit(1)
 	}
 	if err = meshGatewayReconciler.SetupMeshGatewayManager(mgr, maxConcurrentReconciles, client, deploymentClient, commonCRClient); err != nil {
-		setupLog.Error(errs.ToLogFormat(errs.NewError(customerrors.UnknownErrorCode, "Unable to create MeshGateway controller", err)))
+		setupLog.Error("%s", errs.ToLogFormat(errs.NewError(customerrors.UnknownErrorCode, "Unable to create MeshGateway controller", err)))
 		os.Exit(1)
 	}
 	configMapReconciler := controllers.NewConfigMapReconciller(client, configMapClient)
 	if err = configMapReconciler.SetupWithManager(mgr); err != nil {
-		setupLog.Error(errs.ToLogFormat(errs.NewError(customerrors.UnknownErrorCode, "Unable to create FacadeService controller", err)))
+		setupLog.Error("%s", errs.ToLogFormat(errs.NewError(customerrors.UnknownErrorCode, "Unable to create FacadeService controller", err)))
 		os.Exit(1)
 	}
 }

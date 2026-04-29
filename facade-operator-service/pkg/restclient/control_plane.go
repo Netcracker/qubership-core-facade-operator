@@ -83,7 +83,7 @@ func (c *cpClient) DropGateway(ctx context.Context, gatewayServiceName string) e
 	if resp.StatusCode != http.StatusOK {
 		if resp.StatusCode == http.StatusBadRequest {
 			// it is OK if we could not delete gateway declaration - there can still be some routes associated with this node group
-			c.logger.InfoC(ctx, "Gateway %s will not be dropped in control-plane because this node group still has some associated entities")
+			c.logger.InfoC(ctx, "Gateway %s will not be dropped in control-plane because this node group still has some associated entities", gatewayServiceName)
 			return nil
 		}
 		return errs.NewError(customerrors.ControlPlaneError,

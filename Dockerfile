@@ -1,13 +1,13 @@
-FROM golang:1.25 AS build
+FROM --platform=$BUILDPLATFORM golang:1.26 AS build
 
 WORKDIR /app
 
 COPY facade-operator-service/ .
 
 RUN go mod download
-RUN go build -o facade-operator-service .
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -o facade-operator-service .
 
-FROM ghcr.io/netcracker/qubership-core-base:2.2.4 AS run
+FROM ghcr.io/netcracker/qubership-core-base:2.2.13 AS run
 
 EXPOSE 8080 15010
 
