@@ -111,7 +111,7 @@ func RunService() {
 	gatewayAPIV1Present := isGatewayAPIV1Present(mgr.GetConfig())
 	setupReconcilers(mgr, namespace, gatewayAPIV1Present)
 	if err = indexes.IndexFields(context.Background(), mgr.GetCache(), gatewayAPIV1Present); err != nil {
-		setupLog.Error(errs.ToLogFormat(errs.NewError(customerrors.UnknownErrorCode, "Unable to index k8s cache", err)))
+		setupLog.Error("%s", errs.ToLogFormat(errs.NewError(customerrors.UnknownErrorCode, "Unable to index k8s cache", err)))
 		os.Exit(1)
 	}
 
