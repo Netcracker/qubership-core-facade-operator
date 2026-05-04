@@ -52,14 +52,20 @@ func (h *HTTPRouteClientImpl) Apply(ctx context.Context, req ctrl.Request, httpR
 
 	if httpRoute.BackendTrafficPolicy != nil {
 		h.logger.InfoC(ctx, "[%v] Applying BackendTrafficPolicy for HTTPRoute %s", req.NamespacedName, httpRoute.Name)
-		if err := h.backendPolicyClient.Apply(ctx, req, &unstructured.Unstructured{}, httpRoute.BackendTrafficPolicy, h.mergeUnstructuredPolicies); err != nil {
+		backendPolicy := &unstructured.Unstructured{}
+		backendPolicy.SetAPIVersion(utils.ApiVersionV1AlphaV1)
+		backendPolicy.SetKind("BackendTrafficPolicy")
+		if err := h.backendPolicyClient.Apply(ctx, req, backendPolicy, httpRoute.BackendTrafficPolicy, h.mergeUnstructuredPolicies); err != nil {
 			return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("failed to apply BackendTrafficPolicy for HTTPRoute %s", httpRoute.Name), err)
 		}
 	}
 
 	if httpRoute.ClientTrafficPolicy != nil {
 		h.logger.InfoC(ctx, "[%v] Applying ClientTrafficPolicy for HTTPRoute %s", req.NamespacedName, httpRoute.Name)
-		if err := h.clientPolicyClient.Apply(ctx, req, &unstructured.Unstructured{}, httpRoute.ClientTrafficPolicy, h.mergeUnstructuredPolicies); err != nil {
+		clientPolicy := &unstructured.Unstructured{}
+		clientPolicy.SetAPIVersion(utils.ApiVersionV1AlphaV1)
+		clientPolicy.SetKind("ClientTrafficPolicy")
+		if err := h.clientPolicyClient.Apply(ctx, req, clientPolicy, httpRoute.ClientTrafficPolicy, h.mergeUnstructuredPolicies); err != nil {
 			return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("failed to apply ClientTrafficPolicy for HTTPRoute %s", httpRoute.Name), err)
 		}
 	}
