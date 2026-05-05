@@ -1354,7 +1354,7 @@ func getFacadeServiceReconcilerWithTLS(ctrl *gomock.Controller, tlsEnable bool) 
 	crPriorityService := GetMockCRPriorityService(ctrl)
 	commonCRClient := GetMockCommonCRClient(ctrl)
 	ingressClient := services.NewIngressClientAggregator(k8sClient, ingressBuilder, commonCRClient)
-	commonReconciler := NewFacadeCommonReconciler(k8sClient, serviceClient, deploymentClient, configMapClient, podMinitorClient, hpaClient, ingressClient, controlPlaneClient, ingressBuilder, statusUpdater, readyService, commonCRClient, crPriorityService, false)
+	commonReconciler := NewFacadeCommonReconciler(k8sClient, serviceClient, deploymentClient, configMapClient, podMinitorClient, hpaClient, ingressClient, controlPlaneClient, ingressBuilder, statusUpdater, readyService, commonCRClient, crPriorityService)
 	return NewFacadeServiceReconciler(commonReconciler),
 		deploymentClient, serviceClient, podMinitorClient, configMapClient, k8sClient, statusUpdater, readyService, commonCRClient, crPriorityService, hpaClient
 }

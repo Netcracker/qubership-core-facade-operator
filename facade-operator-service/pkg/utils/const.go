@@ -1,6 +1,9 @@
 package utils
 
-import "os"
+import (
+	"os"
+	"strings"
+)
 
 var DefaultFacadeGatewayReplicas = os.Getenv("FACADE_GATEWAY_REPLICAS")
 var DefaultFacadeGatewayMemoryLimit = os.Getenv("FACADE_GATEWAY_MEMORY_LIMIT")
@@ -23,9 +26,12 @@ var XDSClusterPort = os.Getenv("XDS_CLUSTER_PORT")
 var TlsSecretPath = os.Getenv("TLS_SECRET")
 var TlsPasswordSecretName = os.Getenv("TLS_PASSWORD_SECRET_NAME")
 var TlsPasswordKey = os.Getenv("TLS_PASSWORD_KEY")
-var PaasPlatformKubernetes = "KUBERNETES"
+
+var GatewaySystemType = os.Getenv("GATEWAY_SYSTEM_TYPE")
 var ApiVersionV1AlphaV1 = "gateway.envoyproxy.io/v1alpha1"
 var KubernetesPartOf = "app.kubernetes.io/part-of"
+var LegacyIngressSystemType = "legacy-ingress"
+var GatewayApiSystemType = "gateway-api-default"
 
 // gateway hpa
 var HpaDefaultMinReplicasEnvName = "GATEWAY_HPA_MIN_REPLICAS"
@@ -62,3 +68,24 @@ const Unknown = "unknown"
 
 const MinimumEgressGatewayMemoryLimitInt = 64
 const MinimumEgressGatewayMemoryRequestInt = 64
+
+func GetGatewaySystemType() string {
+	if GatewaySystemType == "" {
+		return LegacyIngressSystemType
+	}
+	return GatewaySystemType
+}
+
+func ContainsGatewaySystemType(value string) bool {
+	gatewaySystemType := strings.ToLower(GetGatewaySystemType())
+	value = strings.ToLower(value)
+	return strings.Contains(gatewaySystemType, value)
+}
+
+func ShouldDeployIngress() bool {
+	return ContainsGatewaySystemType(LegacyIngressSystemType)
+}
+
+func ShouldDeployGatewayAPI() bool {
+	return ContainsGatewaySystemType(GatewayApiSystemType)
+}

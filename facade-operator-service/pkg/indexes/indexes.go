@@ -21,7 +21,7 @@ const ManagedByFieldName = "metadata.annotations.app.kubernetes.io/managed-by"
 const ManagedByAnnotationName = "app.kubernetes.io/managed-by"
 const SpecGatewayTypeFieldName = "spec.gatewayType"
 
-func IndexFields(ctx context.Context, indexer cache.Cache, gatewayAPIV1Present bool) error {
+func IndexFields(ctx context.Context, indexer cache.Cache) error {
 	if utils.GetPlatform() == utils.Kubernetes {
 		// ingress managed-by field index
 
@@ -43,7 +43,7 @@ func IndexFields(ctx context.Context, indexer cache.Cache, gatewayAPIV1Present b
 			}
 		}
 
-		if gatewayAPIV1Present {
+		if utils.ShouldDeployGatewayAPI() {
 			if err := indexer.IndexField(ctx, &gatewayv1.HTTPRoute{}, ManagedByFieldName, func(object client.Object) []string {
 				httpRoute := object.(*gatewayv1.HTTPRoute)
 				val := httpRoute.GetAnnotations()[ManagedByAnnotationName]

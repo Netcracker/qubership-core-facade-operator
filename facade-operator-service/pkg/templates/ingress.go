@@ -25,17 +25,12 @@ type IngressTemplateBuilder struct {
 	isSatellite          bool
 	baselineNamespace    string
 	ingressClassName     *string
-	gatewayAPIV1Present  bool
 }
 
-func NewIngressTemplateBuilder(x509Enable bool, isSatellite bool, baselineNamespace string, gatewayAPIV1Present ...bool) *IngressTemplateBuilder {
+func NewIngressTemplateBuilder(x509Enable bool, isSatellite bool, baselineNamespace string) *IngressTemplateBuilder {
 	peerNamespace := os.Getenv("PEER_NAMESPACE")
 	var ingressClassName *string = nil
 	ingressClassNameString := facade.IngressClassName
-	isGatewayAPIV1Present := false
-	if len(gatewayAPIV1Present) > 0 {
-		isGatewayAPIV1Present = gatewayAPIV1Present[0]
-	}
 	if peerNamespace == "" {
 		ingressClassNameStringFromEnv := os.Getenv("INGRESS_CLASS")
 		if ingressClassNameStringFromEnv != "" {
@@ -51,7 +46,6 @@ func NewIngressTemplateBuilder(x509Enable bool, isSatellite bool, baselineNamesp
 		isSatellite:          isSatellite,
 		baselineNamespace:    baselineNamespace,
 		ingressClassName:     ingressClassName,
-		gatewayAPIV1Present:  isGatewayAPIV1Present,
 	}
 }
 
@@ -277,9 +271,7 @@ func (b *IngressTemplateBuilder) buildIngressAnnotations(gatewayServiceName, nam
 		return annotations
 	}
 
-	// Only add this annotation if Gateway API v1 is available AND platform is Kubernetes
-	// Equivalent to: {{- if and (.Capabilities.APIVersions.Has "gateway.networking.k8s.io/v1") (eq .Values.PAAS_PLATFORM "KUBERNETES") -}}
-	if b.gatewayAPIV1Present && utils.GetPlatform() == utils.Kubernetes {
+	if utils.ContainsGatewaySystemType(utils.GatewayApiSystemType) {
 		annotations["gateway-api-converter.netcracker.com/ignore"] = "true"
 	}
 

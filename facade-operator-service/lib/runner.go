@@ -31,7 +31,6 @@ import (
 	hpav2 "k8s.io/api/autoscaling/v2"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/client-go/discovery"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -108,9 +107,8 @@ func RunService() {
 		os.Exit(1)
 	}
 
-	gatewayAPIV1Present := isGatewayAPIV1Present(mgr.GetConfig())
-	setupReconcilers(mgr, namespace, gatewayAPIV1Present)
-	if err = indexes.IndexFields(context.Background(), mgr.GetCache(), gatewayAPIV1Present); err != nil {
+	setupReconcilers(mgr, namespace)
+	if err = indexes.IndexFields(context.Background(), mgr.GetCache()); err != nil {
 		setupLog.Error("%s", errs.ToLogFormat(errs.NewError(customerrors.UnknownErrorCode, "Unable to index k8s cache", err)))
 		os.Exit(1)
 	}
@@ -151,7 +149,7 @@ func healthProbe(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON("ok")
 }
 
-func setupReconcilers(mgr manager.Manager, namespace string, gatewayAPIV1Present bool) {
+func setupReconcilers(mgr manager.Manager, namespace string) {
 	maxConcurrentReconciles, err := strconv.Atoi(os.Getenv("MAX_CONCURRENT_RECONCILES"))
 	if err != nil {
 		setupLog.Error("%s", errs.ToLogFormat(errs.NewError(customerrors.InitParamsValidationError, "Can not parse MAX_CONCURRENT_RECONCILES value. Value should be integer", err)))
@@ -161,8 +159,7 @@ func setupReconcilers(mgr manager.Manager, namespace string, gatewayAPIV1Present
 	ingressBuilder := templates.NewIngressTemplateBuilder(
 		utils.GetBoolEnvValueOrDefault("X509_AUTHENTICATION_ENABLED", false),
 		utils.GetBoolEnvValueOrDefault("COMPOSITE_PLATFORM", false),
-		os.Getenv("BASELINE_PROJ"),
-		gatewayAPIV1Present)
+		os.Getenv("BASELINE_PROJ"))
 
 	commonCRClient := services.NewCommonCRClient(client)
 	serviceClient := services.NewServiceClient(client)
@@ -188,8 +185,7 @@ func setupReconcilers(mgr manager.Manager, namespace string, gatewayAPIV1Present
 		statusUpdater,
 		readyService,
 		commonCRClient,
-		crPriorityService,
-		gatewayAPIV1Present)
+		crPriorityService)
 	facadeServiceReconciler := controllers.NewFacadeServiceReconciler(commonFacadeReconciler)
 	meshGatewayReconciler := controllers.NewGatewayReconciler(commonFacadeReconciler)
 	if err = facadeServiceReconciler.SetupFacadeServiceManager(mgr, maxConcurrentReconciles, client, deploymentClient, commonCRClient); err != nil {
@@ -205,33 +201,4 @@ func setupReconcilers(mgr manager.Manager, namespace string, gatewayAPIV1Present
 		setupLog.Error("%s", errs.ToLogFormat(errs.NewError(customerrors.UnknownErrorCode, "Unable to create FacadeService controller", err)))
 		os.Exit(1)
 	}
-}
-
-func isGatewayAPIV1Present(config *rest.Config) bool {
-	// Equivalent to: {{- if and (.Capabilities.APIVersions.Has "gateway.networking.k8s.io/v1") (eq .Values.PAAS_PLATFORM "KUBERNETES") -}}
-	if utils.GetPlatform() != utils.Kubernetes {
-		return false
-	}
-
-	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)
-	if err != nil {
-		setupLog.Warnf("Failed to create discovery client: %v", err)
-		return false
-	}
-
-	apiResourceList, err := discoveryClient.ServerResourcesForGroupVersion("gateway.networking.k8s.io/v1")
-	if err != nil {
-		setupLog.Warnf("gateway.networking.k8s.io/v1 is not available: %v", err)
-		return false
-	}
-
-	for _, resource := range apiResourceList.APIResources {
-		if resource.Kind == "HTTPRoute" {
-			setupLog.Info("gateway.networking.k8s.io/v1 HTTPRoute is available")
-			return true
-		}
-	}
-
-	setupLog.Warn("gateway.networking.k8s.io/v1 exists but HTTPRoute resource not found")
-	return false
 }
