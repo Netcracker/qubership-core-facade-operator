@@ -622,6 +622,13 @@
       "type": "string",
       "title": "The GOGC schema",
       "internal": true
+    },
+
+    "GATEWAY_SYSTEM_TYPE": {
+      "$id": "#/properties/GATEWAY_SYSTEM_TYPE",
+      "type": "string",
+      "title": "Gateway System Type",
+      "internal": true
     }
   },
   "additionalProperties": true
