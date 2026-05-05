@@ -6,6 +6,9 @@ import (
 	"runtime/debug"
 
 	"fmt"
+	"strconv"
+	"time"
+
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
 	facadeV1Alpha "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1alpha"
 	customerrors "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/errors"
@@ -16,8 +19,6 @@ import (
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
 	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
-	"strconv"
-	"time"
 
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -42,6 +43,7 @@ type FacadeCommonReconciler struct {
 	podMonitorClient   services.PodMonitorClient
 	hpaClient          services.HPAClient
 	ingressClient      services.IngressClientAggregator
+	httpRouteClient    services.HTTPRouteClient
 	ingressBuilder     *templates.IngressTemplateBuilder
 	namedLock          *utils.NamedResourceLock
 	controlPlaneClient restclient.ControlPlaneClient
@@ -76,6 +78,7 @@ func NewFacadeCommonReconciler(
 		podMonitorClient:   podMonitorClient,
 		hpaClient:          hpaClient,
 		ingressClient:      ingressClient,
+		httpRouteClient:    services.NewHTTPRouteClient(client, ingressBuilder, commonCRClient),
 		ingressBuilder:     ingressBuilder,
 		controlPlaneClient: controlPlaneClient,
 		namedLock:          utils.NewNamedResourceLock(),
@@ -175,8 +178,15 @@ func (r *FacadeCommonReconciler) deleteFacadeService(ctx context.Context, req ct
 		return err
 	}
 
-	if err := r.ingressClient.DeleteOrphaned(ctx, req); err != nil {
-		return err
+	if utils.ShouldDeployIngress() {
+		if err := r.ingressClient.DeleteOrphaned(ctx, req); err != nil {
+			return err
+		}
+	}
+	if utils.ShouldDeployGatewayAPI() {
+		if err := r.httpRouteClient.DeleteOrphaned(ctx, req); err != nil {
+			return err
+		}
 	}
 
 	if err := r.controlPlaneClient.DropGateway(ctx, req.Name); err != nil {
@@ -315,19 +325,49 @@ func (r *FacadeCommonReconciler) applyFacadeService(ctx context.Context, req ctr
 }
 
 func (r *FacadeCommonReconciler) applyIngresses(ctx context.Context, req ctrl.Request, serviceName string, cr facade.MeshGateway) error {
-	if err := r.ingressClient.DeleteOrphaned(ctx, req); err != nil {
-		return err
+	if utils.ShouldDeployIngress() {
+		if err := r.ingressClient.DeleteOrphaned(ctx, req); err != nil {
+			return err
+		}
+	}
+	if utils.ShouldDeployGatewayAPI() {
+		if err := r.httpRouteClient.DeleteOrphaned(ctx, req); err != nil {
+			return err
+		}
 	}
 	if cr.GetGatewayType() != facade.Ingress {
 		return nil
 	}
+	return r.applyIngressSpecs(ctx, req, serviceName, cr)
+}
+
+func (r *FacadeCommonReconciler) applyIngressSpecs(ctx context.Context, req ctrl.Request, serviceName string, cr facade.MeshGateway) error {
 	for _, ingressSpec := range cr.GetSpec().Ingresses {
-		ingressTemplate, err := r.ingressBuilder.BuildIngressTemplate(ingressSpec, cr, serviceName)
+		if utils.ShouldDeployIngress() {
+			ingressTemplate, err := r.ingressBuilder.BuildIngressTemplate(ingressSpec, cr, serviceName)
+			if err != nil {
+				return err
+			}
+			r.logger.InfoC(ctx, "[%v] Applying ingress %+v", req.NamespacedName, ingressSpec)
+			if err = r.ingressClient.Apply(ctx, req, ingressTemplate); err != nil {
+				return err
+			}
+		}
+		if err := r.applyHTTPRouteIfEnabled(ctx, req, serviceName, cr, ingressSpec); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *FacadeCommonReconciler) applyHTTPRouteIfEnabled(ctx context.Context, req ctrl.Request, serviceName string, cr facade.MeshGateway, ingressSpec facade.IngressSpec) error {
+	if utils.ShouldDeployGatewayAPI() {
+		httpRouteTemplate, err := r.ingressBuilder.BuildHTTPRouteTemplate(ingressSpec, cr, serviceName)
 		if err != nil {
 			return err
 		}
-		r.logger.InfoC(ctx, "[%v] Applying ingress %+v", req.NamespacedName, ingressSpec)
-		if err = r.ingressClient.Apply(ctx, req, ingressTemplate); err != nil {
+		r.logger.InfoC(ctx, "[%v] Applying httproute %+v", req.NamespacedName, ingressSpec)
+		if err = r.httpRouteClient.Apply(ctx, req, httpRouteTemplate); err != nil {
 			return err
 		}
 	}

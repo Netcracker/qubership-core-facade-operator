@@ -2,13 +2,14 @@ package templates
 
 import (
 	"fmt"
+	"maps"
+	"os"
+	"strings"
+
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
 	customerrors "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/errors"
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
 	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
-	"maps"
-	"os"
-	"strings"
 
 	v1 "github.com/openshift/api/route/v1"
 	"k8s.io/api/extensions/v1beta1"
@@ -39,7 +40,13 @@ func NewIngressTemplateBuilder(x509Enable bool, isSatellite bool, baselineNamesp
 	} else {
 		ingressClassName = &ingressClassNameString
 	}
-	return &IngressTemplateBuilder{gwIngressAnnotations: buildGwIngressAnnotations(), x509Enable: x509Enable, isSatellite: isSatellite, baselineNamespace: baselineNamespace, ingressClassName: ingressClassName}
+	return &IngressTemplateBuilder{
+		gwIngressAnnotations: buildGwIngressAnnotations(),
+		x509Enable:           x509Enable,
+		isSatellite:          isSatellite,
+		baselineNamespace:    baselineNamespace,
+		ingressClassName:     ingressClassName,
+	}
 }
 
 func buildGwIngressAnnotations() map[string]string {
@@ -262,6 +269,10 @@ func (b *IngressTemplateBuilder) buildIngressAnnotations(gatewayServiceName, nam
 
 	if utils.GetPlatform() == utils.Openshift {
 		return annotations
+	}
+
+	if utils.ContainsGatewaySystemType(utils.GatewayApiSystemType) {
+		annotations["gateway-api-converter.netcracker.com/ignore"] = "true"
 	}
 
 	if isGrpc {
