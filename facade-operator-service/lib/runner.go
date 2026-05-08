@@ -39,6 +39,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -60,6 +61,7 @@ func RunService() {
 	utilruntime.Must(v1cert.AddToScheme(scheme))
 	utilruntime.Must(openshiftv1.Install(scheme))
 	utilruntime.Must(hpav2.AddToScheme(scheme))
+	utilruntime.Must(gatewayv1.Install(scheme))
 
 	//+kubebuilder:scaffold:scheme
 	consulPS := consul.NewLoggingPropertySource()

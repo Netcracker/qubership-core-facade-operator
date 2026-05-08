@@ -134,6 +134,8 @@ spec:
                     value: 'tls-password-secret'
                 -   name: TLS_PASSWORD_KEY
                     value: 'tls-password'
+                -   name: GATEWAY_SYSTEM_TYPE
+                    value: '{{ .Values.GATEWAY_SYSTEM_TYPE }}'
                 -   name: READONLY_CONTAINER_FILE_SYSTEM_ENABLED
                     value: '{{ and .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED (eq .Values.PAAS_PLATFORM "KUBERNETES") }}'
 {{- if .Values.CLOUD_TOPOLOGIES }}
