@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+
 	customerrors "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/errors"
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
 	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
@@ -10,10 +11,13 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+const ignoreAnnotation = "facade-operator.core.qubership.org/ignore"
 
 type ServiceClient interface {
 	Apply(ctx context.Context, req ctrl.Request, service *corev1.Service) error
@@ -49,6 +53,10 @@ func (r *ServiceClientImpl) Apply(ctx context.Context, req ctrl.Request, service
 	}
 
 	if found {
+		if r.isIgnored(foundService) {
+			r.logger.InfoC(ctx, "[%v] Service '%s' has ignore annotation, skipping apply", req.NamespacedName, foundService.Name)
+			return nil
+		}
 		if r.isWrongType(foundService) {
 			r.logger.InfoC(ctx, "[%v] Service '%s' will be recreated. Expected type '%s'. Current clusterIp '%s'", req.NamespacedName, foundService.Name, utils.GetServiceType(), foundService.Spec.ClusterIP)
 			if err = r.Delete(ctx, req, foundService.Name); err != nil {
@@ -97,6 +105,10 @@ func (r *ServiceClientImpl) create(ctx context.Context, req ctrl.Request, servic
 	return nil
 }
 
+func (r *ServiceClientImpl) isIgnored(svc *corev1.Service) bool {
+	return svc.Annotations[ignoreAnnotation] == "true"
+}
+
 func (r *ServiceClientImpl) isWrongType(foundService *corev1.Service) bool {
 	clusterIp := foundService.Spec.ClusterIP
 	serviceType := utils.GetServiceType()
@@ -121,11 +133,25 @@ func (r *ServiceClientImpl) Delete(ctx context.Context, req ctrl.Request, name s
 		return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("Failed to get service %v", name), err)
 	}
 
-	err = r.client.Delete(ctx, foundService)
+	if r.isIgnored(foundService) {
+		r.logger.InfoC(ctx, "[%v] Service '%s' has ignore annotation, skipping delete", req.NamespacedName, name)
+		return nil
+	}
+
+	rv := foundService.ResourceVersion
+	err = r.client.Delete(ctx, foundService, &client.DeleteOptions{
+		Preconditions: &metav1.Preconditions{
+			ResourceVersion: &rv,
+		},
+	})
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
 			r.logger.Debugf("[%v] Service %v already deleted. Error: %v", req.NamespacedName, name, err)
 			return nil
+		}
+		if k8sErrors.IsConflict(err) {
+			r.logger.Debugf("[%v] Service %v conflict on delete. Error: %v", req.NamespacedName, name, err)
+			return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("Failed to delete service %v", foundService.Name), err)
 		}
 		return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("Failed to delete service %v", name), err)
 	}
