@@ -628,7 +628,31 @@
       "$id": "#/properties/GATEWAY_SYSTEM_TYPE",
       "type": "string",
       "title": "Gateway System Type",
-      "internal": true
+      "internal": true,
+      "examples": [
+        "legacy-ingress",
+        "legacy-ingress,gateway-api-default",
+        "gateway-api-default"
+      ],
+      "description": "The mode of Gateway that applications must apply during installation. The value can be \"legacy-ingress\", \"gateway-api-default\" or \"legacy-ingress, gateway-api-default\". \n\nApplications must use contains  helm condition in Helm charts."
+    },
+
+    "GATEWAY_SYSTEM_NAME": {
+      "$id": "#/properties/GATEWAY_SYSTEM_NAME",
+      "type": "string",
+      "title": "Gateway System Name",
+      "internal": true,
+      "examples": ["default-external-gateway"],
+      "description": "The value for spec.parentRefs.name of all Gateway API HttpRoute Custom Resources, that mean the name of gateway controller."
+    },
+
+    "GATEWAY_SYSTEM_NAMESPACE": {
+      "$id": "#/properties/GATEWAY_SYSTEM_NAMESPACE",
+      "type": "string",
+      "title": "Gateway System Namespace",
+      "internal": true,
+      "examples": ["gateway-system"],
+      "description": "The value for spec.parentRefs.namespace of all Gateway API HttpRoute Custom Resources, that mean the namespace of where gateway controller is deployed."
     }
   },
   "additionalProperties": true
