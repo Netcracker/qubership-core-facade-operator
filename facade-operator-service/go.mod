@@ -1,6 +1,6 @@
 module github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2
 
-go 1.26.2
+go 1.26.3
 
 require (
 	github.com/cert-manager/cert-manager v1.20.2
@@ -20,7 +20,7 @@ require (
 	sigs.k8s.io/controller-runtime v0.23.1 // check compatibility table here https://github.com/kubernetes-sigs/controller-runtime AND cannot be updated until client-go is updated in go-security-scripts and paas-mediation-client
 )
 
-require sigs.k8s.io/gateway-api v1.5.0
+require sigs.k8s.io/gateway-api v1.5.1
 
 require (
 	github.com/KimMachineGun/automemlimit v0.7.5 // indirect
