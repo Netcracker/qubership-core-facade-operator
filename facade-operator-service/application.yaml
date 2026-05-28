@@ -5,3 +5,8 @@ log.level: info
 
 pprof:
   port: 6060
+
+security:
+  m2m:
+    kubernetes:
+      enabled: true
