@@ -7,8 +7,8 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.13
 	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.5.3
 	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.5.8
-	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.5.4-0.20260526120136-33695641f3e9
-	github.com/netcracker/qubership-core-lib-go/v3 v3.9.2-0.20260526065219-914c71c88e88
+	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.5.5-0.20260528215157-96912d649aa0
+	github.com/netcracker/qubership-core-lib-go/v3 v3.10.1-0.20260528143816-818ca60ac93f
 	github.com/openshift/api v0.0.0-20260424174501-4f63a40a2970
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
