@@ -136,6 +136,10 @@ spec:
                     value: 'tls-password'
                 -   name: GATEWAY_SYSTEM_TYPE
                     value: '{{ .Values.GATEWAY_SYSTEM_TYPE }}'
+                -   name: GATEWAY_SYSTEM_NAMESPACE
+                    value: '{{ .Values.GATEWAY_SYSTEM_NAMESPACE }}'
+                -   name: GATEWAY_SYSTEM_NAME
+                    value: '{{ .Values.GATEWAY_SYSTEM_NAME }}'
                 -   name: READONLY_CONTAINER_FILE_SYSTEM_ENABLED
                     value: '{{ and .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED (eq .Values.PAAS_PLATFORM "KUBERNETES") }}'
 {{- if .Values.CLOUD_TOPOLOGIES }}
