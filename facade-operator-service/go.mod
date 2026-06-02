@@ -5,10 +5,10 @@ go 1.26.3
 require (
 	github.com/cert-manager/cert-manager v1.20.2
 	github.com/gofiber/fiber/v2 v2.52.13
-	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.5.3
-	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.5.9
-	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.5.4
-	github.com/netcracker/qubership-core-lib-go/v3 v3.10.0
+	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.6.0
+	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.6.0
+	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.6.0
+	github.com/netcracker/qubership-core-lib-go/v3 v3.11.0
 	github.com/openshift/api v0.0.0-20260424174501-4f63a40a2970
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
@@ -33,7 +33,7 @@ require (
 	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
 	github.com/evanphx/json-patch/v5 v5.9.11 // indirect
 	github.com/fatih/color v1.18.0 // indirect
-	github.com/fsnotify/fsnotify v1.9.0 // indirect
+	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -49,7 +49,7 @@ require (
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/hashicorp/consul/api v1.34.2 // indirect
+	github.com/hashicorp/consul/api v1.34.3 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
@@ -75,7 +75,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.6.4 // indirect
+	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.7.0 // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
