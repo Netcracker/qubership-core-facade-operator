@@ -296,8 +296,10 @@ func (r *FacadeCommonReconciler) applyFacadeService(ctx context.Context, req ctr
 	}
 	r.logger.InfoC(ctx, "[%v] Virtual service mode: %v", req.NamespacedName, virtualServiceMode)
 
-	if err := r.controlPlaneClient.RegisterGateway(ctx, gatewayServiceName, cr); err != nil {
-		return err
+	if req.Name != facade.CoreEgressGateway {
+		if err := r.controlPlaneClient.RegisterGateway(ctx, gatewayServiceName, cr); err != nil {
+			return err
+		}
 	}
 
 	gatewayImage, err := r.configMapClient.GetGatewayImage(ctx, req)
@@ -603,8 +605,10 @@ func (r *FacadeCommonReconciler) deleteMeshRouter(ctx context.Context, req ctrl.
 
 func (r *FacadeCommonReconciler) applyMeshRouter(ctx context.Context, req ctrl.Request, gatewayName string, gatewayImage string, cr facade.MeshGateway) error {
 	r.logger.InfoC(ctx, "[%v] Apply virtual service %s", req.NamespacedName, req.Name)
-	if err := r.applyService(ctx, req, req.Name, gatewayName, cr); err != nil {
-		return err
+	if req.Name != facade.CoreEgressGateway {
+		if err := r.applyService(ctx, req, req.Name, gatewayName, cr); err != nil {
+			return err
+		}
 	}
 
 	available, err := r.crPriorityService.UpdateAvailable(ctx, req, gatewayName, cr)
@@ -613,7 +617,9 @@ func (r *FacadeCommonReconciler) applyMeshRouter(ctx context.Context, req ctrl.R
 	}
 
 	serviceName := req.Name
-	if cr.GetGatewayType() == facade.Mesh && req.Name != facade.InternalGatewayService {
+	if req.Name == facade.CoreEgressGateway {
+		serviceName = facade.EgressGateway
+	} else if cr.GetGatewayType() == facade.Mesh && req.Name != facade.InternalGatewayService {
 		// only mesh gateway should have SERVICE_NAME_VARIABLE equal to deployment name; internal gateway is also a mesh gateway, but it is a special case
 		serviceName = gatewayName
 	}

@@ -154,7 +154,7 @@ func ResolveGatewayServiceName(crName string, cr facade.MeshGateway) string {
 func GetResourceRequirements(ctx context.Context, cr facade.MeshGateway) corev1.ResourceRequirements {
 	memoryLimit := GetValueOrDefault(cr.GetSpec().Env.FacadeGatewayMemoryLimit, DefaultFacadeGatewayMemoryLimit)
 	memoryRequest := GetValueOrDefault(cr.GetSpec().Env.FacadeGatewayMemoryRequest, DefaultFacadeGatewayMemoryRequest)
-	if cr.GetName() == facade.EgressGateway {
+	if cr.GetName() == facade.EgressGateway || cr.GetName() == facade.CoreEgressGateway {
 		defaultFacadeGatewayMemoryLimitInt, _ := strconv.Atoi(strings.ReplaceAll(DefaultFacadeGatewayMemoryLimit, "Mi", ""))
 		if defaultFacadeGatewayMemoryLimitInt < MinimumEgressGatewayMemoryLimitInt {
 			memoryLimit = GetValueOrDefault(cr.GetSpec().Env.FacadeGatewayMemoryLimit, strconv.Itoa(MinimumEgressGatewayMemoryLimitInt)+"Mi")
