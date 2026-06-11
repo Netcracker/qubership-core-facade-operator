@@ -14,7 +14,7 @@ kind: FacadeService
 metadata:
   name: core-egress-gateway
 spec:
-  gateway: egress-gateway-gateway
+  gateway: egress-gateway
   gatewayType: egress
   # ... other configuration
 ```
@@ -22,7 +22,7 @@ spec:
 ### Key Fields
 
 - **`metadata.name`**: Must be exactly `core-egress-gateway`
-- **`spec.gateway`**: Must be set to `egress-gateway-gateway`
+- **`spec.gateway`**: Must be set to `egress-gateway`
 - **`spec.gatewayType`**: Should be explicitly set to `egress`
 
 ## Behavior
@@ -31,19 +31,12 @@ spec:
 
 The operator creates the following resources for `core-egress-gateway`:
 
-1. **Deployment**: Named `egress-gateway-gateway`
+1. **Deployment**: Named `egress-gateway`
    - Container environment variable `SERVICE_NAME_VARIABLE` is set to `egress-gateway`
    - Minimum memory requirements: 64Mi limit and request (same as standard `egress-gateway`)
-2. **ConfigMap**: Named `egress-gateway-gateway.monitoring-config`
-3. **HPA**: Named `egress-gateway-gateway`
-4. **PodMonitor**: Named `egress-gateway-gateway-pod-monitor`
-
-### Resources NOT Created
-
-The following resources are **not** created for `core-egress-gateway`:
-
-1. **Service**: No Kubernetes Service is created
-2. **ControlPlane registration**: The gateway is not registered with the external Control Plane API
+2. **ConfigMap**: Named `egress-gateway.monitoring-config`
+3. **HPA**: Named `egress-gateway`
+4. **PodMonitor**: Named `egress-gateway-pod-monitor`
 
 ### Cleanup
 

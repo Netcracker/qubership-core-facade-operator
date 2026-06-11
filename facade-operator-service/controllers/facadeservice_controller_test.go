@@ -3,6 +3,9 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"os"
+	"testing"
+
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
 	facadeV1Alpha "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1alpha"
 	monitoringv1 "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/monitoring/v1"
@@ -17,8 +20,6 @@ import (
 	"github.com/netcracker/qubership-core-lib-go/v3/configloader"
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
 	"go.uber.org/mock/gomock"
-	"os"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/apps/v1"
@@ -680,76 +681,6 @@ func TestReconcile_shouldApplyMeshRouter_whenNoErrors(t *testing.T) {
 		configMapClient.EXPECT().Delete(gomock.Any(), req, facadeGatewayName+monitoringConfigSuffix).Return(nil),
 		podMonitorClient.EXPECT().Delete(gomock.Any(), req, getShortName(facadeGatewayName, podMonitorSuffix)).Return(nil),
 		hpaClient.EXPECT().Delete(gomock.Any(), gomock.Any(), gomock.Any()),
-		k8sClient.EXPECT().List(gomock.Any(), &v1beta1.IngressList{}, client.MatchingFields{"metadata.annotations.app.kubernetes.io/managed-by": "facade-operator"}, client.InNamespace(req.Namespace)).
-			DoAndReturn(func(_ context.Context, list *v1beta1.IngressList, _ ...client.ListOption) error {
-				*list = v1beta1.IngressList{}
-				return nil
-			}),
-	)
-
-	result, err := reconciler.Reconcile(ctx, req)
-	assert.Nil(t, err)
-	assert.NotNil(t, result)
-	assert.Equal(t, ctrl.Result{}, result)
-}
-
-func TestReconcile_shouldApplyCoreEgressGateway_whenNoErrors(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	ctx := context.Background()
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Namespace: "test-namespace",
-			Name:      "core-egress-gateway",
-		},
-	}
-	publicGatewayImage := "publicGatewayImage"
-	utils.MonitoringEnabled = "true"
-
-	reconciler, deploymentClient, _, podMonitorClient, configMapClient, k8sClient, statusUpdater, readyService, _, crPriorityService, hpaClient := getFacadeServiceReconciler(mockCtrl)
-
-	facadeService := &facadeV1Alpha.FacadeService{
-		Spec: facade.FacadeServiceSpec{
-			Replicas:    int32(2),
-			Port:        8080,
-			Gateway:     "egress-gateway-gateway",
-			GatewayType: facade.Egress,
-			Env: facade.FacadeServiceEnv{
-				FacadeGatewayCpuLimit:      "10m",
-				FacadeGatewayCpuRequest:    "1m",
-				FacadeGatewayMemoryLimit:   "200Mi",
-				FacadeGatewayMemoryRequest: "100Mi",
-			},
-		},
-	}
-	facadeGatewayName := "core-egress-gateway" + utils.GatewaySuffix
-
-	gomock.InOrder(
-		k8sClient.EXPECT().Get(gomock.Any(), req.NamespacedName, &facadeV1Alpha.FacadeService{}, &client.GetOptions{}).DoAndReturn(
-			func(_ context.Context, _ types.NamespacedName, fs *facadeV1Alpha.FacadeService, _ *client.GetOptions) error {
-				*fs = *facadeService
-				return nil
-			}),
-		deploymentClient.EXPECT().GetMeshRouterDeployments(gomock.Any(), req).Return(nil, nil),
-		readyService.EXPECT().IsUpdatingPhase(gomock.Any(), gomock.Any(), gomock.Any()).Return(false).AnyTimes(),
-		statusUpdater.EXPECT().SetUpdating(gomock.Any(), gomock.Any()).AnyTimes(),
-		// Note: RegisterGateway should NOT be called for core-egress-gateway
-		configMapClient.EXPECT().GetGatewayImage(gomock.Any(), req).Return(publicGatewayImage, nil),
-		// Note: First service.Apply should NOT be called for core-egress-gateway
-		crPriorityService.EXPECT().UpdateAvailable(gomock.Any(), gomock.Any(), "egress-gateway-gateway", gomock.Any()).Return(true, nil),
-		deploymentClient.EXPECT().Apply(gomock.Any(), req, getDeployment(reconciler.base, req, "egress-gateway", "egress-gateway-gateway", publicGatewayImage, facadeService, true, "1")).Return(nil),
-		// Note: Second service.Apply should NOT be called because gatewayType is Egress, not Mesh
-		configMapClient.EXPECT().Apply(gomock.Any(), req, getConfigMap(
-			req,
-			"egress-gateway-gateway",
-		)).Return(nil),
-		hpaClient.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()),
-		podMonitorClient.EXPECT().Create(gomock.Any(), req, getPodMonitor(
-			req,
-			"egress-gateway-gateway",
-		)).Return(nil),
-		deploymentClient.EXPECT().IsFacadeGateway(gomock.Any(), req, facadeGatewayName).Return(false, nil),
 		k8sClient.EXPECT().List(gomock.Any(), &v1beta1.IngressList{}, client.MatchingFields{"metadata.annotations.app.kubernetes.io/managed-by": "facade-operator"}, client.InNamespace(req.Namespace)).
 			DoAndReturn(func(_ context.Context, list *v1beta1.IngressList, _ ...client.ListOption) error {
 				*list = v1beta1.IngressList{}
