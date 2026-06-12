@@ -613,7 +613,9 @@ func (r *FacadeCommonReconciler) applyMeshRouter(ctx context.Context, req ctrl.R
 	}
 
 	serviceName := req.Name
-	if cr.GetGatewayType() == facade.Mesh && req.Name != facade.InternalGatewayService {
+	if req.Name == facade.CoreEgressGateway {
+		serviceName = facade.EgressGateway
+	} else if cr.GetGatewayType() == facade.Mesh && req.Name != facade.InternalGatewayService {
 		// only mesh gateway should have SERVICE_NAME_VARIABLE equal to deployment name; internal gateway is also a mesh gateway, but it is a special case
 		serviceName = gatewayName
 	}

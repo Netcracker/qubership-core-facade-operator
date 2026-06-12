@@ -14,7 +14,7 @@ kind: FacadeService
 metadata:
   name: core-egress-gateway
 spec:
-  gateway: egress-gateway
+  gateway: egress-gateway-gateway
   gatewayType: egress
   # ... other configuration
 ```
@@ -31,12 +31,13 @@ spec:
 
 The operator creates the following resources for `core-egress-gateway`:
 
-1. **Deployment**: Named `egress-gateway`
+1. **Deployment**: Named `egress-gateway-gateway`
    - Container environment variable `SERVICE_NAME_VARIABLE` is set to `egress-gateway`
    - Minimum memory requirements: 64Mi limit and request (same as standard `egress-gateway`)
-2. **ConfigMap**: Named `egress-gateway.monitoring-config`
-3. **HPA**: Named `egress-gateway`
-4. **PodMonitor**: Named `egress-gateway-pod-monitor`
+2. **ConfigMap**: Named `egress-gateway-gateway.monitoring-config`
+3. **HPA**: Named `egress-gateway-gateway`
+4. **PodMonitor**: Named `egress-gateway-gateway-pod-monitor`
+4. **Service**: Named `core-egress-gateway` - not really needed
 
 ### Cleanup
 
