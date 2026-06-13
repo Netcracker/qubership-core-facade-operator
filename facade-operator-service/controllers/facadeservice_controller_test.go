@@ -910,38 +910,6 @@ func TestReconcile_shouldDelete_whenNoErrors(t *testing.T) {
 	assert.Equal(t, ctrl.Result{}, result)
 }
 
-func TestServiceShouldBeDeleted(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	req := getFacadeServiceRequest()
-	reconciler, _, _, _, _, _, _, _, _, _, _ := getFacadeServiceReconciler(mockCtrl)
-
-	foundDeployment := &v1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Labels: map[string]string{
-				utils.FacadeGateway: "false",
-				utils.MeshRouter:    "false",
-			},
-		},
-	}
-	serviceName := "serviceName"
-	serviceSelector := "serviceSelector"
-
-	result := reconciler.base.serviceShouldBeDeleted(context.Background(), req, foundDeployment, serviceName, serviceSelector)
-	assert.False(t, result)
-
-	result = reconciler.base.serviceShouldBeDeleted(context.Background(), req, nil, serviceName, serviceSelector)
-	assert.True(t, result)
-
-	foundDeployment.SetLabels(map[string]string{
-		utils.FacadeGateway: "true",
-		utils.MeshRouter:    "true",
-	})
-	result = reconciler.base.serviceShouldBeDeleted(context.Background(), req, nil, serviceName, serviceSelector)
-	assert.True(t, result)
-}
-
 func TestReconcile_shouldDeleteFailed_whenUnknownError(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()

@@ -13,7 +13,9 @@ import (
 	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -31,6 +33,8 @@ func TestServiceApply_shouldDeleteAndCreate_whenServiceHaveIncorrectTypeHeadLess
 	}()
 
 	serviceClient, k8sClient := getServiceClient(ctrl)
+	deploymentClient := GetMockDeploymentClient(ctrl)
+	serviceClient = NewServiceClient(k8sClient, deploymentClient)
 	testContext := context.Background()
 
 	req := getRequest()
@@ -43,12 +47,31 @@ func TestServiceApply_shouldDeleteAndCreate_whenServiceHaveIncorrectTypeHeadLess
 			fs.ObjectMeta.ResourceVersion = "testResourceVersion"
 			return nil
 		})
+
+	mockDeployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: facadeService.Spec.Selector["app"],
+			Labels: map[string]string{
+				utils.FacadeGateway: "true",
+			},
+		},
+	}
+	deploymentClient.EXPECT().Get(testContext, req, facadeService.Spec.Selector["app"]).Return(mockDeployment, nil)
+
 	k8sClient.EXPECT().Get(testContext, nameSpacedRequest, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
 		func(_ context.Context, _ types.NamespacedName, fs *corev1.Service, _ *client.GetOptions) error {
 			*fs = *facadeService
+			fs.ObjectMeta.ResourceVersion = "testResourceVersion"
 			return nil
 		})
-	k8sClient.EXPECT().Delete(testContext, gomock.Any(), getDeleteOptions("")).Return(nil)
+	k8sClient.EXPECT().Delete(testContext, gomock.Any(), getDeleteOptions("testResourceVersion")).Return(nil)
+
+	k8sClient.EXPECT().Get(testContext, nameSpacedRequest, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
+		func(_ context.Context, _ types.NamespacedName, fs *corev1.Service, _ *client.GetOptions) error {
+			*fs = *facadeService
+			fs.ObjectMeta.ResourceVersion = ""
+			return nil
+		})
 	k8sClient.EXPECT().Create(testContext, facadeService, getCreateOptions()).Return(nil)
 
 	err := serviceClient.Apply(testContext, req, facadeService)
@@ -67,6 +90,8 @@ func TestServiceApply_shouldDeleteAndCreate_whenServiceHaveIncorrectTypeClusterI
 	}()
 
 	serviceClient, k8sClient := getServiceClient(ctrl)
+	deploymentClient := GetMockDeploymentClient(ctrl)
+	serviceClient = NewServiceClient(k8sClient, deploymentClient)
 	testContext := context.Background()
 
 	req := getRequest()
@@ -79,12 +104,31 @@ func TestServiceApply_shouldDeleteAndCreate_whenServiceHaveIncorrectTypeClusterI
 			fs.ObjectMeta.ResourceVersion = "testResourceVersion"
 			return nil
 		})
+
+	mockDeployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: facadeService.Spec.Selector["app"],
+			Labels: map[string]string{
+				utils.FacadeGateway: "true",
+			},
+		},
+	}
+	deploymentClient.EXPECT().Get(testContext, req, facadeService.Spec.Selector["app"]).Return(mockDeployment, nil)
+
 	k8sClient.EXPECT().Get(testContext, nameSpacedRequest, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
 		func(_ context.Context, _ types.NamespacedName, fs *corev1.Service, _ *client.GetOptions) error {
 			*fs = *facadeService
+			fs.ObjectMeta.ResourceVersion = "testResourceVersion"
 			return nil
 		})
-	k8sClient.EXPECT().Delete(testContext, gomock.Any(), getDeleteOptions("")).Return(nil)
+	k8sClient.EXPECT().Delete(testContext, gomock.Any(), getDeleteOptions("testResourceVersion")).Return(nil)
+
+	k8sClient.EXPECT().Get(testContext, nameSpacedRequest, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
+		func(_ context.Context, _ types.NamespacedName, fs *corev1.Service, _ *client.GetOptions) error {
+			*fs = *facadeService
+			fs.ObjectMeta.ResourceVersion = ""
+			return nil
+		})
 	k8sClient.EXPECT().Create(testContext, facadeService, getCreateOptions()).Return(nil)
 
 	err := serviceClient.Apply(testContext, req, facadeService)
@@ -96,6 +140,8 @@ func TestServiceDelete_shouldNotFailed_whenServiceDeletingFailedWithIsNotFoundEr
 	defer ctrl.Finish()
 
 	serviceClient, k8sClient := getServiceClient(ctrl)
+	deploymentClient := GetMockDeploymentClient(ctrl)
+	serviceClient = NewServiceClient(k8sClient, deploymentClient)
 	testContext := context.Background()
 	notFoundError := getNotFoundError()
 
@@ -108,6 +154,17 @@ func TestServiceDelete_shouldNotFailed_whenServiceDeletingFailedWithIsNotFoundEr
 			fs.ResourceVersion = "testResourceVersion"
 			return nil
 		})
+
+	mockDeployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: facadeService.Spec.Selector["app"],
+			Labels: map[string]string{
+				utils.FacadeGateway: "true",
+			},
+		},
+	}
+	deploymentClient.EXPECT().Get(testContext, req, facadeService.Spec.Selector["app"]).Return(mockDeployment, nil)
+
 	k8sClient.EXPECT().Delete(testContext, gomock.Any(), getDeleteOptions("testResourceVersion")).Return(notFoundError)
 
 	err := serviceClient.Delete(testContext, req, req.Name)
@@ -119,6 +176,8 @@ func TestServiceDelete_shouldFailed_whenServiceDeletingFailedWithUnknownError(t 
 	defer ctrl.Finish()
 
 	serviceClient, k8sClient := getServiceClient(ctrl)
+	deploymentClient := GetMockDeploymentClient(ctrl)
+	serviceClient = NewServiceClient(k8sClient, deploymentClient)
 	testContext := context.Background()
 	unknownErr := getUnknownError()
 
@@ -131,6 +190,17 @@ func TestServiceDelete_shouldFailed_whenServiceDeletingFailedWithUnknownError(t 
 			fs.ResourceVersion = "testResourceVersion"
 			return nil
 		})
+
+	mockDeployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: facadeService.Spec.Selector["app"],
+			Labels: map[string]string{
+				utils.FacadeGateway: "true",
+			},
+		},
+	}
+	deploymentClient.EXPECT().Get(testContext, req, facadeService.Spec.Selector["app"]).Return(mockDeployment, nil)
+
 	k8sClient.EXPECT().Delete(testContext, gomock.Any(), getDeleteOptions("testResourceVersion")).Return(unknownErr)
 
 	err := serviceClient.Delete(testContext, req, req.Name)
@@ -182,6 +252,8 @@ func TestServiceDelete_shouldDelete_whenNoOneErrorFound(t *testing.T) {
 	defer ctrl.Finish()
 
 	serviceClient, k8sClient := getServiceClient(ctrl)
+	deploymentClient := GetMockDeploymentClient(ctrl)
+	serviceClient = NewServiceClient(k8sClient, deploymentClient)
 	testContext := context.Background()
 
 	req := getRequest()
@@ -193,6 +265,17 @@ func TestServiceDelete_shouldDelete_whenNoOneErrorFound(t *testing.T) {
 			fs.ResourceVersion = "testResourceVersion"
 			return nil
 		})
+
+	mockDeployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: facadeService.Spec.Selector["app"],
+			Labels: map[string]string{
+				utils.FacadeGateway: "true",
+			},
+		},
+	}
+	deploymentClient.EXPECT().Get(testContext, req, facadeService.Spec.Selector["app"]).Return(mockDeployment, nil)
+
 	k8sClient.EXPECT().Delete(testContext, gomock.Any(), getDeleteOptions("testResourceVersion")).Return(nil)
 
 	err := serviceClient.Delete(testContext, req, req.Name)
@@ -353,7 +436,7 @@ func TestServiceApply_shouldUpdate_whenServiceExist(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestServiceApply_shouldSkip_whenServiceHasIgnoreAnnotation(t *testing.T) {
+func TestServiceDelete_shouldSkip_whenServiceHasNoAppSelector(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -362,19 +445,55 @@ func TestServiceApply_shouldSkip_whenServiceHasIgnoreAnnotation(t *testing.T) {
 
 	req := getRequest()
 	facadeService, nameSpacedRequest := getFacadeService(req)
+	facadeService.Spec.Selector = map[string]string{}
 
 	k8sClient.EXPECT().Get(testContext, nameSpacedRequest, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
 		func(_ context.Context, _ types.NamespacedName, fs *corev1.Service, _ *client.GetOptions) error {
 			*fs = *facadeService
-			fs.Annotations = map[string]string{ignoreAnnotation: "true"}
 			return nil
 		})
 
-	err := serviceClient.Apply(testContext, req, facadeService)
+	err := serviceClient.Delete(testContext, req, req.Name, "gatewayName")
 	assert.Nil(t, err)
 }
 
-func TestServiceDelete_shouldSkip_whenServiceHasIgnoreAnnotation(t *testing.T) {
+func TestServiceDelete_shouldFallbackToDeploymentValidation_whenSelectorDoesNotMatchExpectedGateway(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	serviceClient, k8sClient := getServiceClient(ctrl)
+	deploymentClient := GetMockDeploymentClient(ctrl)
+	serviceClient = NewServiceClient(k8sClient, deploymentClient)
+	testContext := context.Background()
+
+	req := getRequest()
+	facadeService, nameSpacedRequest := getFacadeService(req)
+	facadeService.Spec.Selector["app"] = "actualGateway"
+
+	k8sClient.EXPECT().Get(testContext, nameSpacedRequest, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
+		func(_ context.Context, _ types.NamespacedName, fs *corev1.Service, _ *client.GetOptions) error {
+			*fs = *facadeService
+			fs.ObjectMeta.ResourceVersion = "testResourceVersion"
+			return nil
+		})
+
+	mockDeployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "actualGateway",
+			Labels: map[string]string{
+				utils.FacadeGateway: "true",
+			},
+		},
+	}
+	deploymentClient.EXPECT().Get(testContext, req, "actualGateway").Return(mockDeployment, nil)
+
+	k8sClient.EXPECT().Delete(testContext, gomock.Any(), getDeleteOptions("testResourceVersion")).Return(nil)
+
+	err := serviceClient.Delete(testContext, req, req.Name, "differentGateway")
+	assert.Nil(t, err)
+}
+
+func TestServiceDelete_shouldDelete_whenSelectorMatchesExpectedGateway(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -387,9 +506,103 @@ func TestServiceDelete_shouldSkip_whenServiceHasIgnoreAnnotation(t *testing.T) {
 	k8sClient.EXPECT().Get(testContext, nameSpacedRequest, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
 		func(_ context.Context, _ types.NamespacedName, fs *corev1.Service, _ *client.GetOptions) error {
 			*fs = *facadeService
-			fs.Annotations = map[string]string{ignoreAnnotation: "true"}
+			fs.ObjectMeta.ResourceVersion = "testResourceVersion"
 			return nil
 		})
+
+	k8sClient.EXPECT().Delete(testContext, gomock.Any(), getDeleteOptions("testResourceVersion")).Return(nil)
+
+	err := serviceClient.Delete(testContext, req, req.Name, facadeService.Spec.Selector["app"])
+	assert.Nil(t, err)
+}
+
+func TestServiceDelete_shouldDelete_whenDeploymentAlreadyDeleted(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	serviceClient, k8sClient := getServiceClient(ctrl)
+	deploymentClient := GetMockDeploymentClient(ctrl)
+	serviceClient = NewServiceClient(k8sClient, deploymentClient)
+	testContext := context.Background()
+
+	req := getRequest()
+	facadeService, nameSpacedRequest := getFacadeService(req)
+
+	k8sClient.EXPECT().Get(testContext, nameSpacedRequest, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
+		func(_ context.Context, _ types.NamespacedName, fs *corev1.Service, _ *client.GetOptions) error {
+			*fs = *facadeService
+			fs.ObjectMeta.ResourceVersion = "testResourceVersion"
+			return nil
+		})
+
+	deploymentClient.EXPECT().Get(testContext, req, facadeService.Spec.Selector["app"]).Return(nil, getNotFoundError())
+
+	k8sClient.EXPECT().Delete(testContext, gomock.Any(), getDeleteOptions("testResourceVersion")).Return(nil)
+
+	err := serviceClient.Delete(testContext, req, req.Name)
+	assert.Nil(t, err)
+}
+
+func TestServiceDelete_shouldSkip_whenServiceSelectsNonFacadeDeployment(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	serviceClient, k8sClient := getServiceClient(ctrl)
+	deploymentClient := GetMockDeploymentClient(ctrl)
+	serviceClient = NewServiceClient(k8sClient, deploymentClient)
+	testContext := context.Background()
+
+	req := getRequest()
+	facadeService, nameSpacedRequest := getFacadeService(req)
+
+	k8sClient.EXPECT().Get(testContext, nameSpacedRequest, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
+		func(_ context.Context, _ types.NamespacedName, fs *corev1.Service, _ *client.GetOptions) error {
+			*fs = *facadeService
+			return nil
+		})
+
+	mockDeployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   facadeService.Spec.Selector["app"],
+			Labels: map[string]string{},
+		},
+	}
+	deploymentClient.EXPECT().Get(testContext, req, facadeService.Spec.Selector["app"]).Return(mockDeployment, nil)
+
+	err := serviceClient.Delete(testContext, req, req.Name)
+	assert.Nil(t, err)
+}
+
+func TestServiceDelete_shouldDelete_whenServiceSelectsFacadeGateway(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	serviceClient, k8sClient := getServiceClient(ctrl)
+	deploymentClient := GetMockDeploymentClient(ctrl)
+	serviceClient = NewServiceClient(k8sClient, deploymentClient)
+	testContext := context.Background()
+
+	req := getRequest()
+	facadeService, nameSpacedRequest := getFacadeService(req)
+
+	k8sClient.EXPECT().Get(testContext, nameSpacedRequest, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
+		func(_ context.Context, _ types.NamespacedName, fs *corev1.Service, _ *client.GetOptions) error {
+			*fs = *facadeService
+			fs.ObjectMeta.ResourceVersion = "testResourceVersion"
+			return nil
+		})
+
+	mockDeployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: facadeService.Spec.Selector["app"],
+			Labels: map[string]string{
+				utils.FacadeGateway: "true",
+			},
+		},
+	}
+	deploymentClient.EXPECT().Get(testContext, req, facadeService.Spec.Selector["app"]).Return(mockDeployment, nil)
+
+	k8sClient.EXPECT().Delete(testContext, gomock.Any(), getDeleteOptions("testResourceVersion")).Return(nil)
 
 	err := serviceClient.Delete(testContext, req, req.Name)
 	assert.Nil(t, err)
@@ -400,6 +613,8 @@ func TestServiceDelete_shouldReturnExpectedError_whenDeleteReturnsConflict(t *te
 	defer ctrl.Finish()
 
 	serviceClient, k8sClient := getServiceClient(ctrl)
+	deploymentClient := GetMockDeploymentClient(ctrl)
+	serviceClient = NewServiceClient(k8sClient, deploymentClient)
 	testContext := context.Background()
 	conflictErr := getConflictError()
 
@@ -412,6 +627,17 @@ func TestServiceDelete_shouldReturnExpectedError_whenDeleteReturnsConflict(t *te
 			fs.ResourceVersion = "testResourceVersion"
 			return nil
 		})
+
+	mockDeployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: facadeService.Spec.Selector["app"],
+			Labels: map[string]string{
+				utils.FacadeGateway: "true",
+			},
+		},
+	}
+	deploymentClient.EXPECT().Get(testContext, req, facadeService.Spec.Selector["app"]).Return(mockDeployment, nil)
+
 	k8sClient.EXPECT().Delete(testContext, gomock.Any(), getDeleteOptions("testResourceVersion")).Return(conflictErr)
 
 	err := serviceClient.Delete(testContext, req, req.Name)
@@ -447,5 +673,6 @@ func getRequest() reconcile.Request {
 
 func getServiceClient(ctrl *gomock.Controller) (ServiceClient, *mock_client.MockClient) {
 	k8sClient := GetMockClient(ctrl)
-	return NewServiceClient(k8sClient), k8sClient
+	deploymentClient := GetMockDeploymentClient(ctrl)
+	return NewServiceClient(k8sClient, deploymentClient), k8sClient
 }
