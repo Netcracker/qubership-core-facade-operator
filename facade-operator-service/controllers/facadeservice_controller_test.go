@@ -702,7 +702,7 @@ func TestReconcile_shouldApplyCoreEgressGatewayMeshRouter_serviceNameIsEgressGat
 	publicGatewayImage := "publicGatewayImage"
 	utils.MonitoringEnabled = "true"
 
-	reconciler, deploymentClient, serviceClient, podMonitorClient, configMapClient, k8sClient, statusUpdater, readyService, _, crPriorityService, hpaClient := getFacadeServiceReconciler(mockCtrl)
+	reconciler, deploymentClient, _, podMonitorClient, configMapClient, k8sClient, statusUpdater, readyService, _, crPriorityService, hpaClient := getFacadeServiceReconciler(mockCtrl)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -740,12 +740,6 @@ func TestReconcile_shouldApplyCoreEgressGatewayMeshRouter_serviceNameIsEgressGat
 		statusUpdater.EXPECT().SetUpdating(gomock.Any(), gomock.Any()).AnyTimes(),
 		reconciler.base.controlPlaneClient.(*mock_restclient.MockControlPlaneClient).EXPECT().RegisterGateway(gomock.Any(), facade.CoreEgressGateway, facadeService).Return(nil),
 		configMapClient.EXPECT().GetGatewayImage(gomock.Any(), req).Return(publicGatewayImage, nil),
-		serviceClient.EXPECT().Apply(gomock.Any(), req, getService(
-			req,
-			facade.CoreEgressGateway,
-			egressGatewayDeploymentName,
-			facadeService.Spec.Port,
-		)).Return(nil),
 		crPriorityService.EXPECT().UpdateAvailable(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil),
 		// SERVICE_NAME_VARIABLE must be "egress-gateway", not "core-egress-gateway"
 		deploymentClient.EXPECT().Apply(gomock.Any(), req, getDeployment(reconciler.base, req, facade.EgressGateway, egressGatewayDeploymentName, publicGatewayImage, facadeService, true, "1")).Return(nil),

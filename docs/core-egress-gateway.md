@@ -37,7 +37,6 @@ The operator creates the following resources for `core-egress-gateway`:
 2. **ConfigMap**: Named `egress-gateway-gateway.monitoring-config`
 3. **HPA**: Named `egress-gateway-gateway`
 4. **PodMonitor**: Named `egress-gateway-gateway-pod-monitor`
-4. **Service**: Named `core-egress-gateway` - not really needed
 
 ### Cleanup
 

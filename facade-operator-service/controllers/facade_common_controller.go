@@ -560,8 +560,10 @@ func (r *FacadeCommonReconciler) deleteMeshRouter(ctx context.Context, req ctrl.
 
 func (r *FacadeCommonReconciler) applyMeshRouter(ctx context.Context, req ctrl.Request, gatewayName string, gatewayImage string, cr facade.MeshGateway) error {
 	r.logger.InfoC(ctx, "[%v] Apply virtual service %s", req.NamespacedName, req.Name)
-	if err := r.applyService(ctx, req, req.Name, gatewayName, cr); err != nil {
-		return err
+	if req.Name != facade.CoreEgressGateway {
+		if err := r.applyService(ctx, req, req.Name, gatewayName, cr); err != nil {
+			return err
+		}
 	}
 
 	available, err := r.crPriorityService.UpdateAvailable(ctx, req, gatewayName, cr)
