@@ -22,7 +22,7 @@ spec:
 ### Key Fields
 
 - **`metadata.name`**: Must be exactly `core-egress-gateway`
-- **`spec.gateway`**: Must be set to `egress-gateway`
+- **`spec.gateway`**: Must be set to `egress-gateway-gateway`
 - **`spec.gatewayType`**: Should be explicitly set to `egress`
 
 ## Behavior
@@ -45,7 +45,8 @@ All created resources have `OwnerReferences` set to the `core-egress-gateway` CR
 
 ## Coexistence with `egress-gateway`
 
-Both `egress-gateway` and `core-egress-gateway` CRs can exist in the same namespace. Since they may target the same deployment name (`egress-gateway-gateway`), the existing `masterCR` mechanism determines which CR controls the deployment:
+Both `egress-gateway` and `core-egress-gateway` CRs can exist in the same namespace. When `core-egress-gateway` CR exists, it **always wins** and controls the egress gateway resources regardless of any `masterCR` settings:
 
-- Set `spec.masterConfiguration: true` in the CR that should control the deployment
-- The `CRPriorityService` handles conflict resolution based on CR type priority (v1 Gateway > v1alpha FacadeService)
+- Any reconciliation event for `egress-gateway` CR is a complete no-op — no resources are created, updated, or deleted.
+- Deleting `egress-gateway` CR while `core-egress-gateway` exists has no effect on the egress gateway resources (deployment, service, etc.).
+- `core-egress-gateway` is the authoritative owner of all egress gateway resources and takes precedence over any other `egress-gateway` CR.

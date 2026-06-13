@@ -1652,3 +1652,65 @@ func TestFacadeServiceReconciler_getFacadeGatewayConcurrency(t *testing.T) {
 	res = rec.getFacadeGatewayConcurrency(context.Background(), facadeService)
 	assert.Equal(t, 0, res)
 }
+
+func TestReconcile_shouldBeNoopOnDelete_whenEgressGatewayDeletedAndCoreEgressGatewayExists(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	ctx := context.Background()
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Namespace: "test-namespace",
+			Name:      facade.EgressGateway,
+		},
+	}
+
+	reconciler, _, _, _, _, k8sClient, _, _, commonCRClient, _, _ := getFacadeServiceReconciler(mockCtrl)
+
+	k8sClient.EXPECT().Get(gomock.Any(), req.NamespacedName, &facadeV1Alpha.FacadeService{}, &client.GetOptions{}).Return(getNotFoundError())
+	commonCRClient.EXPECT().IsCRExistByName(gomock.Any(), req, facade.CoreEgressGateway).Return(true, nil)
+
+	result, err := reconciler.Reconcile(ctx, req)
+	assert.Nil(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, ctrl.Result{}, result)
+}
+
+func TestReconcile_shouldSetSuccessStatusAndSkipApply_whenEgressGatewayExistsAndCoreEgressGatewayExists(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	ctx := context.Background()
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Namespace: "test-namespace",
+			Name:      facade.EgressGateway,
+		},
+	}
+
+	egressGatewayDeploymentName := facade.EgressGateway + utils.GatewaySuffix
+	facadeService := &facadeV1Alpha.FacadeService{
+		Spec: facade.FacadeServiceSpec{
+			Replicas:    int32(1),
+			Gateway:     egressGatewayDeploymentName,
+			GatewayType: facade.Egress,
+		},
+	}
+
+	reconciler, _, _, _, _, k8sClient, statusUpdater, _, commonCRClient, _, _ := getFacadeServiceReconciler(mockCtrl)
+
+	gomock.InOrder(
+		k8sClient.EXPECT().Get(gomock.Any(), req.NamespacedName, &facadeV1Alpha.FacadeService{}, &client.GetOptions{}).DoAndReturn(
+			func(_ context.Context, _ types.NamespacedName, fs *facadeV1Alpha.FacadeService, _ *client.GetOptions) error {
+				*fs = *facadeService
+				return nil
+			}),
+		commonCRClient.EXPECT().IsCRExistByName(gomock.Any(), req, facade.CoreEgressGateway).Return(true, nil),
+		statusUpdater.EXPECT().SetUpdated(gomock.Any(), gomock.Any()).Return(nil),
+	)
+
+	result, err := reconciler.Reconcile(ctx, req)
+	assert.Nil(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, ctrl.Result{}, result)
+}

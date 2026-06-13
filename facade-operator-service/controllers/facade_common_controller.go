@@ -138,6 +138,22 @@ func (r *FacadeCommonReconciler) Reconcile(ctx context.Context, req ctrl.Request
 }
 
 func (r *FacadeCommonReconciler) reconcile(ctx context.Context, req ctrl.Request, cr facade.MeshGateway) (ctrl.Result, error) {
+	if req.Name == facade.EgressGateway {
+		exists, err := r.commonCRClient.IsCRExistByName(ctx, req, facade.CoreEgressGateway)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		if exists {
+			r.logger.InfoC(ctx, "[%v] core-egress-gateway CR exists, egress-gateway reconciliation is no-op", req.NamespacedName)
+			if cr != nil {
+				if err := r.statusUpdater.SetUpdated(ctx, cr); err != nil {
+					return ctrl.Result{}, err
+				}
+			}
+			return ctrl.Result{}, nil
+		}
+	}
+
 	if err := r.deleteNotUsedMeshRouters(ctx, req); err != nil {
 		return ctrl.Result{}, err
 	}
