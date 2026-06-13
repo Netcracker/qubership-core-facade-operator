@@ -40,6 +40,7 @@ func TestServiceApply_shouldDeleteAndCreate_whenServiceHaveIncorrectTypeHeadLess
 	req := getRequest()
 	facadeService, nameSpacedRequest := getFacadeService(req)
 
+	// First Get in Apply - sees wrong type
 	k8sClient.EXPECT().Get(testContext, nameSpacedRequest, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
 		func(_ context.Context, _ types.NamespacedName, fs *corev1.Service, _ *client.GetOptions) error {
 			fs.Name = facadeService.Name
@@ -56,22 +57,18 @@ func TestServiceApply_shouldDeleteAndCreate_whenServiceHaveIncorrectTypeHeadLess
 			},
 		},
 	}
-	deploymentClient.EXPECT().Get(testContext, req, facadeService.Spec.Selector["app"]).Return(mockDeployment, nil)
 
+	// Get in Delete (called from Apply when recreating)
 	k8sClient.EXPECT().Get(testContext, nameSpacedRequest, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
 		func(_ context.Context, _ types.NamespacedName, fs *corev1.Service, _ *client.GetOptions) error {
 			*fs = *facadeService
 			fs.ObjectMeta.ResourceVersion = "testResourceVersion"
 			return nil
 		})
+
+	deploymentClient.EXPECT().Get(testContext, req, facadeService.Spec.Selector["app"]).Return(mockDeployment, nil)
 	k8sClient.EXPECT().Delete(testContext, gomock.Any(), getDeleteOptions("testResourceVersion")).Return(nil)
 
-	k8sClient.EXPECT().Get(testContext, nameSpacedRequest, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
-		func(_ context.Context, _ types.NamespacedName, fs *corev1.Service, _ *client.GetOptions) error {
-			*fs = *facadeService
-			fs.ObjectMeta.ResourceVersion = ""
-			return nil
-		})
 	k8sClient.EXPECT().Create(testContext, facadeService, getCreateOptions()).Return(nil)
 
 	err := serviceClient.Apply(testContext, req, facadeService)
@@ -97,6 +94,7 @@ func TestServiceApply_shouldDeleteAndCreate_whenServiceHaveIncorrectTypeClusterI
 	req := getRequest()
 	facadeService, nameSpacedRequest := getFacadeService(req)
 
+	// First Get in Apply - sees wrong type
 	k8sClient.EXPECT().Get(testContext, nameSpacedRequest, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
 		func(_ context.Context, _ types.NamespacedName, fs *corev1.Service, _ *client.GetOptions) error {
 			fs.Name = facadeService.Name
@@ -113,22 +111,18 @@ func TestServiceApply_shouldDeleteAndCreate_whenServiceHaveIncorrectTypeClusterI
 			},
 		},
 	}
-	deploymentClient.EXPECT().Get(testContext, req, facadeService.Spec.Selector["app"]).Return(mockDeployment, nil)
 
+	// Get in Delete (called from Apply when recreating)
 	k8sClient.EXPECT().Get(testContext, nameSpacedRequest, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
 		func(_ context.Context, _ types.NamespacedName, fs *corev1.Service, _ *client.GetOptions) error {
 			*fs = *facadeService
 			fs.ObjectMeta.ResourceVersion = "testResourceVersion"
 			return nil
 		})
+
+	deploymentClient.EXPECT().Get(testContext, req, facadeService.Spec.Selector["app"]).Return(mockDeployment, nil)
 	k8sClient.EXPECT().Delete(testContext, gomock.Any(), getDeleteOptions("testResourceVersion")).Return(nil)
 
-	k8sClient.EXPECT().Get(testContext, nameSpacedRequest, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
-		func(_ context.Context, _ types.NamespacedName, fs *corev1.Service, _ *client.GetOptions) error {
-			*fs = *facadeService
-			fs.ObjectMeta.ResourceVersion = ""
-			return nil
-		})
 	k8sClient.EXPECT().Create(testContext, facadeService, getCreateOptions()).Return(nil)
 
 	err := serviceClient.Apply(testContext, req, facadeService)
