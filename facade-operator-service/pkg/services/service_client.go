@@ -189,6 +189,10 @@ func (r *ServiceClientImpl) selectsManagedGateway(ctx context.Context, req ctrl.
 		return false, err
 	}
 
+	if deployment == nil {
+		return true, nil
+	}
+
 	if deployment.GetLabels()[utils.FacadeGateway] == "true" {
 		return true, nil
 	}

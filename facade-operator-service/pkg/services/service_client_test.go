@@ -537,6 +537,34 @@ func TestServiceDelete_shouldDelete_whenDeploymentAlreadyDeleted(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestServiceDelete_shouldDelete_whenDeploymentGetReturnsNilWithNilError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	serviceClient, k8sClient := getServiceClient(ctrl)
+	deploymentClient := GetMockDeploymentClient(ctrl)
+	serviceClient = NewServiceClient(k8sClient, deploymentClient)
+	testContext := context.Background()
+
+	req := getRequest()
+	facadeService, nameSpacedRequest := getFacadeService(req)
+
+	k8sClient.EXPECT().Get(testContext, nameSpacedRequest, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
+		func(_ context.Context, _ types.NamespacedName, fs *corev1.Service, _ *client.GetOptions) error {
+			*fs = *facadeService
+			fs.ObjectMeta.ResourceVersion = "testResourceVersion"
+			return nil
+		})
+
+	// Simulate DeploymentClient.Get returning (nil, nil) - this is what happens for NotFound
+	deploymentClient.EXPECT().Get(testContext, req, facadeService.Spec.Selector["app"]).Return(nil, nil)
+
+	k8sClient.EXPECT().Delete(testContext, gomock.Any(), getDeleteOptions("testResourceVersion")).Return(nil)
+
+	err := serviceClient.Delete(testContext, req, req.Name)
+	assert.Nil(t, err)
+}
+
 func TestServiceDelete_shouldSkip_whenServiceSelectsNonFacadeDeployment(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
