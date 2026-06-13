@@ -17,7 +17,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const ignoreAnnotation = "facade-operator.core.qubership.org/ignore"
+const ignoreAnnotation = "facade-operator.core.netcracker.com/ignore"
 
 type ServiceClient interface {
 	Apply(ctx context.Context, req ctrl.Request, service *corev1.Service) error
