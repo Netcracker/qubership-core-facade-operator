@@ -4,8 +4,6 @@ import (
 	"context"
 	"regexp"
 	"runtime/debug"
-
-	"fmt"
 	"strconv"
 	"time"
 
@@ -22,8 +20,6 @@ import (
 
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -138,6 +134,22 @@ func (r *FacadeCommonReconciler) Reconcile(ctx context.Context, req ctrl.Request
 }
 
 func (r *FacadeCommonReconciler) reconcile(ctx context.Context, req ctrl.Request, cr facade.MeshGateway) (ctrl.Result, error) {
+	if req.Name == facade.EgressGateway {
+		exists, err := r.commonCRClient.IsCRExistByName(ctx, req, facade.CoreEgressGateway)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		if exists {
+			r.logger.InfoC(ctx, "[%v] core-egress-gateway CR exists, egress-gateway reconciliation is no-op", req.NamespacedName)
+			if cr != nil {
+				if err := r.statusUpdater.SetUpdated(ctx, cr); err != nil {
+					return ctrl.Result{}, err
+				}
+			}
+			return ctrl.Result{}, nil
+		}
+	}
+
 	if err := r.deleteNotUsedMeshRouters(ctx, req); err != nil {
 		return ctrl.Result{}, err
 	}
@@ -198,64 +210,9 @@ func (r *FacadeCommonReconciler) deleteFacadeService(ctx context.Context, req ct
 }
 
 func (r *FacadeCommonReconciler) deleteService(ctx context.Context, req ctrl.Request, gatewayName string) error {
-	foundService := &corev1.Service{}
-	nameSpacedRequest := types.NamespacedName{
-		Namespace: req.Namespace,
-		Name:      req.Name,
-	}
-	err := r.client.Get(ctx, nameSpacedRequest, foundService, &client.GetOptions{})
-	if err != nil {
-		if k8sErrors.IsNotFound(err) {
-			r.logger.Debugf("[%v] Facade service %v not found", req.NamespacedName, req.Name)
-			return nil
-		}
-		return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("Failed to get service %v", req.Name), err)
-	}
-
-	serviceSelector := foundService.Spec.Selector["app"]
-	r.logger.InfoC(ctx, "[%v] Facade service selector.app '%v'. Gateway name: '%v'", req.NamespacedName, serviceSelector, gatewayName)
-	if serviceSelector == gatewayName {
-		err = r.client.Delete(ctx, foundService)
-		if err != nil {
-			return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("Failed to delete service %v", req.Name), err)
-		}
-	} else {
-		return r.deleteServiceBySelector(ctx, req, foundService, serviceSelector)
-	}
-
-	return nil
+	return r.serviceClient.Delete(ctx, req, req.Name, gatewayName)
 }
 
-func (r *FacadeCommonReconciler) deleteServiceBySelector(ctx context.Context, req ctrl.Request, foundService *corev1.Service, serviceSelector string) error {
-	r.logger.InfoC(ctx, "[%v] Try to find mesh router for service", req.NamespacedName)
-	foundDeployment, err := r.deploymentsClient.Get(ctx, req, serviceSelector)
-	if err != nil {
-		return err
-	}
-
-	if r.serviceShouldBeDeleted(ctx, req, foundDeployment, foundService.Name, serviceSelector) {
-		err = r.client.Delete(ctx, foundService)
-		if err != nil {
-			return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("Failed to delete service %v", req.Name), err)
-		}
-	} else {
-		r.logger.InfoC(ctx, "[%v] Found service %v but it is not mesh router", req.NamespacedName, serviceSelector)
-	}
-
-	return nil
-}
-
-func (r *FacadeCommonReconciler) serviceShouldBeDeleted(ctx context.Context, req ctrl.Request, foundDeployment *v1.Deployment, serviceName string, serviceSelector string) bool {
-	if foundDeployment == nil {
-		r.logger.InfoC(ctx, "[%v] Mesh router %v already deleted. Delete service %v", req.NamespacedName, serviceSelector, serviceName)
-		return true
-	} else if foundDeployment.GetLabels()[utils.FacadeGateway] == "true" && foundDeployment.GetLabels()[utils.MeshRouter] == "true" {
-		r.logger.InfoC(ctx, "[%v] Found mesh router. Delete service %v", req.NamespacedName, serviceName)
-		return true
-	}
-
-	return false
-}
 
 func (r *FacadeCommonReconciler) deleteFacadeGateway(ctx context.Context, req ctrl.Request, name string) error {
 	r.logger.InfoC(ctx, "[%v] Start delete facade gateway %v", req.NamespacedName, name)
@@ -603,8 +560,10 @@ func (r *FacadeCommonReconciler) deleteMeshRouter(ctx context.Context, req ctrl.
 
 func (r *FacadeCommonReconciler) applyMeshRouter(ctx context.Context, req ctrl.Request, gatewayName string, gatewayImage string, cr facade.MeshGateway) error {
 	r.logger.InfoC(ctx, "[%v] Apply virtual service %s", req.NamespacedName, req.Name)
-	if err := r.applyService(ctx, req, req.Name, gatewayName, cr); err != nil {
-		return err
+	if req.Name != facade.CoreEgressGateway {
+		if err := r.applyService(ctx, req, req.Name, gatewayName, cr); err != nil {
+			return err
+		}
 	}
 
 	available, err := r.crPriorityService.UpdateAvailable(ctx, req, gatewayName, cr)
@@ -613,7 +572,9 @@ func (r *FacadeCommonReconciler) applyMeshRouter(ctx context.Context, req ctrl.R
 	}
 
 	serviceName := req.Name
-	if cr.GetGatewayType() == facade.Mesh && req.Name != facade.InternalGatewayService {
+	if req.Name == facade.CoreEgressGateway {
+		serviceName = facade.EgressGateway
+	} else if cr.GetGatewayType() == facade.Mesh && req.Name != facade.InternalGatewayService {
 		// only mesh gateway should have SERVICE_NAME_VARIABLE equal to deployment name; internal gateway is also a mesh gateway, but it is a special case
 		serviceName = gatewayName
 	}

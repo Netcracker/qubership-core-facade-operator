@@ -14,6 +14,7 @@ type GatewayType string
 
 const (
 	EgressGateway          = "egress-gateway"
+	CoreEgressGateway      = "core-egress-gateway"
 	PublicGatewayService   = "public-gateway-service"
 	PrivateGatewayService  = "private-gateway-service"
 	InternalGatewayService = "internal-gateway-service"

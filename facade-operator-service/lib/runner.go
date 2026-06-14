@@ -162,8 +162,8 @@ func setupReconcilers(mgr manager.Manager, namespace string) {
 		os.Getenv("BASELINE_PROJ"))
 
 	commonCRClient := services.NewCommonCRClient(client)
-	serviceClient := services.NewServiceClient(client)
 	deploymentClient := services.NewDeploymentClientImpl(client)
+	serviceClient := services.NewServiceClient(client, deploymentClient)
 	configMapClient := services.NewConfigMapClient(client)
 	podMonitorClient := services.NewPodMonitorClient(client)
 	hpaClient := services.NewHPAClient(client)

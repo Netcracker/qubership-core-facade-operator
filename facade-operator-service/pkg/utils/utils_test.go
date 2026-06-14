@@ -222,6 +222,30 @@ func TestGetResourceRequirementsEgressGatewayMinimumDefaultMemory3(t *testing.T)
 	assert.Equal(t, facadeService.Spec.Env.FacadeGatewayMemoryRequest, resource.Requests.Memory().String())
 }
 
+func TestGetResourceRequirementsCoreEgressGatewayMinimumMemory(t *testing.T) {
+	reflect.ValueOf(&DefaultFacadeGatewayMemoryLimit).Elem().SetString("32Mi")
+	reflect.ValueOf(&DefaultFacadeGatewayMemoryRequest).Elem().SetString("32Mi")
+	minimumEgressGatewayMemoryLimit := strconv.Itoa(MinimumEgressGatewayMemoryLimitInt) + "Mi"
+	minimumEgressGatewayMemoryRequest := strconv.Itoa(MinimumEgressGatewayMemoryRequestInt) + "Mi"
+	facadeService := &facadeV1Alpha.FacadeService{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "core-egress-gateway",
+		},
+		Spec: facade.FacadeServiceSpec{
+			MasterConfiguration: false,
+			Replicas:            int32(1),
+			Port:                8080,
+			Env: facade.FacadeServiceEnv{
+				FacadeGatewayCpuLimit:   "1m",
+				FacadeGatewayCpuRequest: "2m",
+			},
+		},
+	}
+	resource := GetResourceRequirements(context.Background(), facadeService)
+	assert.Equal(t, minimumEgressGatewayMemoryLimit, resource.Limits.Memory().String())
+	assert.Equal(t, minimumEgressGatewayMemoryRequest, resource.Requests.Memory().String())
+}
+
 func TestGetBoolEnvValueOrDefault(t *testing.T) {
 	envName := "TEST"
 	defaultValue := false

@@ -3,6 +3,9 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"os"
+	"testing"
+
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
 	facadeV1Alpha "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1alpha"
 	monitoringv1 "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/monitoring/v1"
@@ -17,8 +20,6 @@ import (
 	"github.com/netcracker/qubership-core-lib-go/v3/configloader"
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
 	"go.uber.org/mock/gomock"
-	"os"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/apps/v1"
@@ -693,14 +694,84 @@ func TestReconcile_shouldApplyMeshRouter_whenNoErrors(t *testing.T) {
 	assert.Equal(t, ctrl.Result{}, result)
 }
 
+func TestReconcile_shouldApplyCoreEgressGatewayMeshRouter_serviceNameIsEgressGateway(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	ctx := context.Background()
+	publicGatewayImage := "publicGatewayImage"
+	utils.MonitoringEnabled = "true"
+
+	reconciler, deploymentClient, _, podMonitorClient, configMapClient, k8sClient, statusUpdater, readyService, _, crPriorityService, hpaClient := getFacadeServiceReconciler(mockCtrl)
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Namespace: "test-namespace",
+			Name:      facade.CoreEgressGateway,
+		},
+	}
+
+	// CR config as documented in docs/core-egress-gateway.md
+	egressGatewayDeploymentName := facade.EgressGateway + utils.GatewaySuffix // "egress-gateway-gateway"
+	facadeService := &facadeV1Alpha.FacadeService{
+		Spec: facade.FacadeServiceSpec{
+			Replicas:    int32(2),
+			Port:        8080,
+			Gateway:     egressGatewayDeploymentName,
+			GatewayType: facade.Egress,
+			Env: facade.FacadeServiceEnv{
+				FacadeGatewayCpuLimit:      "10m",
+				FacadeGatewayCpuRequest:    "1m",
+				FacadeGatewayMemoryLimit:   "200Mi",
+				FacadeGatewayMemoryRequest: "100Mi",
+			},
+		},
+	}
+	coreEgressGatewayFacadeGatewayName := facade.CoreEgressGateway + utils.GatewaySuffix
+
+	gomock.InOrder(
+		k8sClient.EXPECT().Get(gomock.Any(), req.NamespacedName, &facadeV1Alpha.FacadeService{}, &client.GetOptions{}).DoAndReturn(
+			func(_ context.Context, _ types.NamespacedName, fs *facadeV1Alpha.FacadeService, _ *client.GetOptions) error {
+				*fs = *facadeService
+				return nil
+			}),
+		deploymentClient.EXPECT().GetMeshRouterDeployments(gomock.Any(), req).Return(nil, nil),
+		readyService.EXPECT().IsUpdatingPhase(gomock.Any(), gomock.Any(), gomock.Any()).Return(false).AnyTimes(),
+		statusUpdater.EXPECT().SetUpdating(gomock.Any(), gomock.Any()).AnyTimes(),
+		reconciler.base.controlPlaneClient.(*mock_restclient.MockControlPlaneClient).EXPECT().RegisterGateway(gomock.Any(), facade.CoreEgressGateway, facadeService).Return(nil),
+		configMapClient.EXPECT().GetGatewayImage(gomock.Any(), req).Return(publicGatewayImage, nil),
+		crPriorityService.EXPECT().UpdateAvailable(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil),
+		// SERVICE_NAME_VARIABLE must be "egress-gateway", not "core-egress-gateway"
+		deploymentClient.EXPECT().Apply(gomock.Any(), req, getDeployment(reconciler.base, req, facade.EgressGateway, egressGatewayDeploymentName, publicGatewayImage, facadeService, true, "1")).Return(nil),
+		configMapClient.EXPECT().Apply(gomock.Any(), req, getConfigMap(
+			req,
+			egressGatewayDeploymentName,
+		)).Return(nil),
+		hpaClient.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()),
+		podMonitorClient.EXPECT().Create(gomock.Any(), req, getPodMonitor(
+			req,
+			egressGatewayDeploymentName,
+		)).Return(nil),
+		deploymentClient.EXPECT().IsFacadeGateway(gomock.Any(), req, coreEgressGatewayFacadeGatewayName).Return(false, nil),
+		k8sClient.EXPECT().List(gomock.Any(), &v1beta1.IngressList{}, client.MatchingFields{"metadata.annotations.app.kubernetes.io/managed-by": "facade-operator"}, client.InNamespace(req.Namespace)).
+			DoAndReturn(func(_ context.Context, list *v1beta1.IngressList, _ ...client.ListOption) error {
+				*list = v1beta1.IngressList{}
+				return nil
+			}),
+	)
+
+	result, err := reconciler.Reconcile(ctx, req)
+	assert.Nil(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, ctrl.Result{}, result)
+}
+
 func TestReconcile_shouldDelete_whenNoErrors(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
 	ctx := context.Background()
 	req := getFacadeServiceRequest()
-	facadeService := getFacadeService(req)
-	facadeDeployment := getFacadeDeployment(req, "testName", "testImage")
 
 	reconciler, dplClient, serviceClient, podMonitorClient, configMapClient, k8sClient, statusUpdater, _, commonCRClient, _, hpaClient := getFacadeServiceReconciler(mockCtrl)
 
@@ -722,20 +793,9 @@ func TestReconcile_shouldDelete_whenNoErrors(t *testing.T) {
 	dplClient.EXPECT().GetMeshRouterDeployments(gomock.Any(), req).Return(deployments, nil)
 	statusUpdater.EXPECT().SetUpdating(gomock.Any(), gomock.Any()).Times(0)
 
-	k8sClient.EXPECT().Get(gomock.Any(), req.NamespacedName, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
-		func(_ context.Context, _ types.NamespacedName, fs *corev1.Service, _ *client.GetOptions) error {
-			facadeService.Spec.Selector["app"] = req.Name + "-unknown"
-			*fs = *facadeService
-			return nil
-		})
-	k8sClient.EXPECT().Delete(gomock.Any(), facadeService).Return(nil)
+	serviceClient.EXPECT().Delete(gomock.Any(), gomock.Any(), req.Name, gomock.Any()).Return(nil)
 	hpaClient.EXPECT().Delete(gomock.Any(), gomock.Any(), deployments.Items[0].GetName()).Return(nil)
 	hpaClient.EXPECT().Delete(gomock.Any(), gomock.Any(), deployments.Items[1].GetName()).Return(nil)
-
-	labels := facadeDeployment.GetLabels()
-	labels[utils.MeshRouter] = "true"
-	facadeDeployment.SetLabels(labels)
-	dplClient.EXPECT().Get(gomock.Any(), gomock.Any(), req.Name+"-unknown").Return(facadeDeployment, nil)
 
 	commonCRClient.EXPECT().GetAll(gomock.Any(), req).Return(
 		[]facade.MeshGateway{
@@ -755,11 +815,11 @@ func TestReconcile_shouldDelete_whenNoErrors(t *testing.T) {
 
 	utils.MonitoringEnabled = "true"
 
-	serviceClient.EXPECT().Delete(gomock.Any(), gomock.Any(), "test1").Return(nil).Times(1)
+	serviceClient.EXPECT().Delete(gomock.Any(), gomock.Any(), "test1", gomock.Any()).Return(nil).Times(1)
 	configMapClient.EXPECT().Delete(gomock.Any(), gomock.Any(), "test1"+monitoringConfigSuffix).Return(nil)
 	podMonitorClient.EXPECT().Delete(gomock.Any(), gomock.Any(), "test1"+podMonitorSuffix).Return(nil)
 
-	serviceClient.EXPECT().Delete(gomock.Any(), gomock.Any(), "test2").Return(nil).Times(1)
+	serviceClient.EXPECT().Delete(gomock.Any(), gomock.Any(), "test2", gomock.Any()).Return(nil).Times(1)
 	configMapClient.EXPECT().Delete(gomock.Any(), gomock.Any(), "test2"+monitoringConfigSuffix).Return(nil)
 	podMonitorClient.EXPECT().Delete(gomock.Any(), gomock.Any(), "test2"+podMonitorSuffix).Return(nil)
 
@@ -831,38 +891,6 @@ func TestReconcile_shouldDelete_whenNoErrors(t *testing.T) {
 	assert.Equal(t, ctrl.Result{}, result)
 }
 
-func TestServiceShouldBeDeleted(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	req := getFacadeServiceRequest()
-	reconciler, _, _, _, _, _, _, _, _, _, _ := getFacadeServiceReconciler(mockCtrl)
-
-	foundDeployment := &v1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Labels: map[string]string{
-				utils.FacadeGateway: "false",
-				utils.MeshRouter:    "false",
-			},
-		},
-	}
-	serviceName := "serviceName"
-	serviceSelector := "serviceSelector"
-
-	result := reconciler.base.serviceShouldBeDeleted(context.Background(), req, foundDeployment, serviceName, serviceSelector)
-	assert.False(t, result)
-
-	result = reconciler.base.serviceShouldBeDeleted(context.Background(), req, nil, serviceName, serviceSelector)
-	assert.True(t, result)
-
-	foundDeployment.SetLabels(map[string]string{
-		utils.FacadeGateway: "true",
-		utils.MeshRouter:    "true",
-	})
-	result = reconciler.base.serviceShouldBeDeleted(context.Background(), req, nil, serviceName, serviceSelector)
-	assert.True(t, result)
-}
-
 func TestReconcile_shouldDeleteFailed_whenUnknownError(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -872,40 +900,11 @@ func TestReconcile_shouldDeleteFailed_whenUnknownError(t *testing.T) {
 	req := getFacadeServiceRequest()
 	unknownErr := getUnknownError()
 	notFoundErr := getNotFoundError()
-	facadeService := getFacadeService(req)
-	facadeDeployment := getFacadeDeployment(req, "testName", "testImage")
 
 	var testMapper map[string]testStruct
 	testMapper = map[string]testStruct{
-		"WhileGettingGatewayBySelector": {
-			failedFunc: func() {
-				dplClient.EXPECT().Get(gomock.Any(), gomock.Any(), req.Name+"-unknown").Return(nil, unknownErr)
-			},
-			mockFunc: func() {
-				k8sClient.EXPECT().Get(gomock.Any(), req.NamespacedName, &facadeV1Alpha.FacadeService{}, &client.GetOptions{}).Return(notFoundErr)
-				k8sClient.EXPECT().Get(gomock.Any(), req.NamespacedName, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
-					func(_ context.Context, _ types.NamespacedName, fs *corev1.Service, _ *client.GetOptions) error {
-						facadeService.Spec.Selector["app"] = req.Name + "-unknown"
-						*fs = *facadeService
-						return nil
-					})
-				dplClient.EXPECT().GetMeshRouterDeployments(gomock.Any(), req).Return(nil, nil)
-				statusUpdater.EXPECT().SetUpdating(gomock.Any(), gomock.Any()).AnyTimes()
-				statusUpdater.EXPECT().SetUpdated(gomock.Any(), gomock.Any()).AnyTimes()
-			},
-		},
-		"WhileDeletingGatewayBySelector": {
-			failedFunc: func() {
-				k8sClient.EXPECT().Delete(gomock.Any(), facadeService).Return(unknownErr)
-			},
-			mockFunc: func() {
-				testMapper["WhileGettingGatewayBySelector"].mockFunc()
-				labels := facadeDeployment.GetLabels()
-				labels[utils.MeshRouter] = "true"
-				facadeDeployment.SetLabels(labels)
-				dplClient.EXPECT().Get(gomock.Any(), gomock.Any(), req.Name+"-unknown").Return(facadeDeployment, nil)
-			},
-		},
+		// Removed: WhileGettingGatewayBySelector and WhileDeletingGatewayBySelector
+		// These tested the old deleteServiceBySelector implementation which has been removed
 		"WhileGettingMeshRouterDeploymentsNames": {
 			failedFunc: func() {
 				dplClient.EXPECT().GetMeshRouterDeployments(gomock.Any(), req).Return(nil, unknownErr)
@@ -939,7 +938,7 @@ func TestReconcile_shouldDeleteFailed_whenUnknownError(t *testing.T) {
 		},
 		"WhileDeletingMeshRouterService": {
 			failedFunc: func() {
-				serviceClient.EXPECT().Delete(gomock.Any(), gomock.Any(), "test1").Return(unknownErr)
+				serviceClient.EXPECT().Delete(gomock.Any(), gomock.Any(), "test1", gomock.Any()).Return(unknownErr)
 			},
 			mockFunc: func() {
 				testMapper["WhileGettingFacadeServiceList"].mockFunc()
@@ -963,7 +962,7 @@ func TestReconcile_shouldDeleteFailed_whenUnknownError(t *testing.T) {
 			},
 			mockFunc: func() {
 				testMapper["WhileDeletingMeshRouterService"].mockFunc()
-				serviceClient.EXPECT().Delete(gomock.Any(), gomock.Any(), "test1").Return(nil)
+				serviceClient.EXPECT().Delete(gomock.Any(), gomock.Any(), "test1", gomock.Any()).Return(nil)
 			},
 		},
 		"WhileDeletingMeshRouterConfigMap": {
@@ -992,7 +991,7 @@ func TestReconcile_shouldDeleteFailed_whenUnknownError(t *testing.T) {
 			mockFunc: func() {
 				testMapper["WhileGettingMeshRouterDeploymentsNames"].mockFunc()
 				dplClient.EXPECT().GetMeshRouterDeployments(gomock.Any(), req).Return(nil, nil)
-				k8sClient.EXPECT().Get(gomock.Any(), req.NamespacedName, &corev1.Service{}, &client.GetOptions{}).Return(notFoundErr)
+				serviceClient.EXPECT().Delete(gomock.Any(), gomock.Any(), req.Name, gomock.Any()).Return(nil)
 				utils.MonitoringEnabled = "false"
 			},
 		},
@@ -1038,58 +1037,9 @@ func TestReconcile_shouldDeleteFailed_whenUnknownError(t *testing.T) {
 				statusUpdater.EXPECT().SetFail(gomock.Any(), gomock.Any()).AnyTimes()
 			},
 		},
-		{
-			name:      "WhileGettingFacadeService",
-			errorCode: customerrors.UnexpectedKubernetesError,
-			details:   fmt.Sprintf("Failed to get service %v", facadeService.Name),
-			failedFunc: func() {
-				k8sClient.EXPECT().Get(gomock.Any(), req.NamespacedName, &corev1.Service{}, &client.GetOptions{}).Return(unknownErr)
-			},
-			mockFunc: func() {
-				k8sClient.EXPECT().Get(gomock.Any(), req.NamespacedName, &facadeV1Alpha.FacadeService{}, &client.GetOptions{}).Return(notFoundErr)
-				dplClient.EXPECT().GetMeshRouterDeployments(gomock.Any(), req).Return(nil, nil)
-			},
-		},
-		{
-			name:      "WhileDeletingFacadeServiceByGatewayName",
-			errorCode: customerrors.UnexpectedKubernetesError,
-			details:   fmt.Sprintf("Failed to delete service %v", facadeService.Name),
-			failedFunc: func() {
-				k8sClient.EXPECT().Delete(gomock.Any(), facadeService).Return(unknownErr)
-			},
-			mockFunc: func() {
-				k8sClient.EXPECT().Get(gomock.Any(), req.NamespacedName, &facadeV1Alpha.FacadeService{}, &client.GetOptions{}).Return(notFoundErr)
-				k8sClient.EXPECT().Get(gomock.Any(), req.NamespacedName, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
-					func(_ context.Context, _ types.NamespacedName, fs *corev1.Service, _ *client.GetOptions) error {
-						facadeService.Spec.Selector["app"] = req.Name + "-gateway"
-						*fs = *facadeService
-						return nil
-					})
-				dplClient.EXPECT().GetMeshRouterDeployments(gomock.Any(), req).Return(nil, nil)
-			},
-		},
-		{
-			name:      "WhileGettingGatewayBySelector",
-			errorCode: customerrors.UnknownErrorCode,
-			details:   "Unknown error",
-			failedFunc: func() {
-				testMapper["WhileGettingGatewayBySelector"].failedFunc()
-			},
-			mockFunc: func() {
-				testMapper["WhileGettingGatewayBySelector"].mockFunc()
-			},
-		},
-		{
-			name:      "WhileDeletingGatewayBySelector",
-			errorCode: customerrors.UnexpectedKubernetesError,
-			details:   fmt.Sprintf("Failed to delete service %v", facadeService.Name),
-			failedFunc: func() {
-				testMapper["WhileDeletingGatewayBySelector"].failedFunc()
-			},
-			mockFunc: func() {
-				testMapper["WhileDeletingGatewayBySelector"].mockFunc()
-			},
-		},
+		// Removed test cases: WhileGettingFacadeService, WhileDeletingFacadeServiceByGatewayName,
+		// WhileGettingGatewayBySelector, WhileDeletingGatewayBySelector
+		// These tested the old deleteServiceBySelector implementation which has been removed
 		{
 			name:      "WhileGettingMeshRouterDeploymentsNames",
 			errorCode: customerrors.UnknownErrorCode,
@@ -1572,4 +1522,66 @@ func TestFacadeServiceReconciler_getFacadeGatewayConcurrency(t *testing.T) {
 	}
 	res = rec.getFacadeGatewayConcurrency(context.Background(), facadeService)
 	assert.Equal(t, 0, res)
+}
+
+func TestReconcile_shouldBeNoopOnDelete_whenEgressGatewayDeletedAndCoreEgressGatewayExists(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	ctx := context.Background()
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Namespace: "test-namespace",
+			Name:      facade.EgressGateway,
+		},
+	}
+
+	reconciler, _, _, _, _, k8sClient, _, _, commonCRClient, _, _ := getFacadeServiceReconciler(mockCtrl)
+
+	k8sClient.EXPECT().Get(gomock.Any(), req.NamespacedName, &facadeV1Alpha.FacadeService{}, &client.GetOptions{}).Return(getNotFoundError())
+	commonCRClient.EXPECT().IsCRExistByName(gomock.Any(), req, facade.CoreEgressGateway).Return(true, nil)
+
+	result, err := reconciler.Reconcile(ctx, req)
+	assert.Nil(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, ctrl.Result{}, result)
+}
+
+func TestReconcile_shouldSetSuccessStatusAndSkipApply_whenEgressGatewayExistsAndCoreEgressGatewayExists(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	ctx := context.Background()
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Namespace: "test-namespace",
+			Name:      facade.EgressGateway,
+		},
+	}
+
+	egressGatewayDeploymentName := facade.EgressGateway + utils.GatewaySuffix
+	facadeService := &facadeV1Alpha.FacadeService{
+		Spec: facade.FacadeServiceSpec{
+			Replicas:    int32(1),
+			Gateway:     egressGatewayDeploymentName,
+			GatewayType: facade.Egress,
+		},
+	}
+
+	reconciler, _, _, _, _, k8sClient, statusUpdater, _, commonCRClient, _, _ := getFacadeServiceReconciler(mockCtrl)
+
+	gomock.InOrder(
+		k8sClient.EXPECT().Get(gomock.Any(), req.NamespacedName, &facadeV1Alpha.FacadeService{}, &client.GetOptions{}).DoAndReturn(
+			func(_ context.Context, _ types.NamespacedName, fs *facadeV1Alpha.FacadeService, _ *client.GetOptions) error {
+				*fs = *facadeService
+				return nil
+			}),
+		commonCRClient.EXPECT().IsCRExistByName(gomock.Any(), req, facade.CoreEgressGateway).Return(true, nil),
+		statusUpdater.EXPECT().SetUpdated(gomock.Any(), gomock.Any()).Return(nil),
+	)
+
+	result, err := reconciler.Reconcile(ctx, req)
+	assert.Nil(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, ctrl.Result{}, result)
 }

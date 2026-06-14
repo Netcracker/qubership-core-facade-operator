@@ -64,3 +64,11 @@ func getConflictError() error {
 func getUnknownError() error {
 	return errors.New("UnknownError")
 }
+
+func getDeleteOptions(rv string) *client.DeleteOptions {
+	return &client.DeleteOptions{
+		Preconditions: &metav1.Preconditions{
+			ResourceVersion: &rv,
+		},
+	}
+}

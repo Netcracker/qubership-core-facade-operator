@@ -57,15 +57,20 @@ func (mr *MockServiceClientMockRecorder) Apply(ctx, req, service any) *gomock.Ca
 }
 
 // Delete mocks base method.
-func (m *MockServiceClient) Delete(ctx context.Context, req controllerruntime.Request, name string) error {
+func (m *MockServiceClient) Delete(ctx context.Context, req controllerruntime.Request, name string, gatewayName ...string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx, req, name)
+	varargs := []any{ctx, req, name}
+	for _, a := range gatewayName {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Delete", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockServiceClientMockRecorder) Delete(ctx, req, name any) *gomock.Call {
+func (mr *MockServiceClientMockRecorder) Delete(ctx, req, name any, gatewayName ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockServiceClient)(nil).Delete), ctx, req, name)
+	varargs := append([]any{ctx, req, name}, gatewayName...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockServiceClient)(nil).Delete), varargs...)
 }
