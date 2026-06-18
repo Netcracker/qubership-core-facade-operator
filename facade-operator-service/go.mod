@@ -1,14 +1,14 @@
 module github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2
 
-go 1.26.3
+go 1.26.4
 
 require (
 	github.com/cert-manager/cert-manager v1.20.2
 	github.com/gofiber/fiber/v2 v2.52.13
-	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.6.0
-	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.6.0
-	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.6.0
-	github.com/netcracker/qubership-core-lib-go/v3 v3.11.0
+	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.6.1
+	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.9.0
+	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.7.0
+	github.com/netcracker/qubership-core-lib-go/v3 v3.11.1
 	github.com/openshift/api v0.0.0-20260424174501-4f63a40a2970
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
@@ -64,7 +64,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.18.6 // indirect
 	github.com/knadh/koanf v1.5.0 // indirect
-	github.com/knadh/koanf/v2 v2.3.4 // indirect
+	github.com/knadh/koanf/v2 v2.3.5 // indirect
 	github.com/mailru/easyjson v0.9.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -75,7 +75,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.7.0 // indirect
+	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.10.0 // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
