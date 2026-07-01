@@ -33,3 +33,4 @@ CONSUL_URL: ''
 GATEWAY_SYSTEM_TYPE: "legacy-ingress"
 GATEWAY_SYSTEM_NAMESPACE: "gateway-system"
 GATEWAY_SYSTEM_NAME: "default-external-gateway"
+KUBERNETES_M2M_ENABLED: false

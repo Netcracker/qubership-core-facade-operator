@@ -653,6 +653,14 @@
       "internal": true,
       "examples": ["gateway-system"],
       "description": "The value for spec.parentRefs.namespace of all Gateway API HttpRoute Custom Resources, that mean the namespace of where gateway controller is deployed."
+    },
+    "KUBERNETES_M2M_ENABLED": {
+      "$id": "#/properties/KUBERNETES_M2M_ENABLED",
+      "type": "boolean",
+      "title": "The KUBERNETES_M2M_ENABLED schema",
+      "description": "Shows that kubernetes m2m communication is enabled.",
+      "internal": true,
+      "default": false
     }
   },
   "additionalProperties": true

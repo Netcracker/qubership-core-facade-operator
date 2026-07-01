@@ -181,6 +181,8 @@ spec:
                 -   name: CONSUL_URL
                     value: '{{ .Values.CONSUL_URL }}'
                     {{ end }}
+                -   name: KUBERNETES_M2M_ENABLED
+                    value: '{{ .Values.KUBERNETES_M2M_ENABLED }}'
                 resources:
                     requests:
                         cpu: {{ .Values.CPU_REQUEST }}
