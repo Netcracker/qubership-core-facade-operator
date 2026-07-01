@@ -19,6 +19,7 @@ type SimpleRestClient struct {
 func NewSimpleRestClient() *SimpleRestClient {
 	return &SimpleRestClient{
 		logger: logging.GetLogger("SimpleRestClient"),
+		client: rest.NewM2MRestClient(),
 	}
 }
 
