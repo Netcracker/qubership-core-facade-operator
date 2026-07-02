@@ -4,50 +4,38 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/http"
 	"strings"
 
 	"github.com/netcracker/qubership-core-lib-go/v3/context-propagation/ctxhelper"
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
-	"github.com/netcracker/qubership-core-lib-go/v3/security"
-	"github.com/netcracker/qubership-core-lib-go/v3/serviceloader"
+	"github.com/netcracker/qubership-core-lib-go/v3/security/rest"
 )
 
 type SimpleRestClient struct {
-	logger        logging.Logger
-	tokenProvider security.TokenProvider
+	logger logging.Logger
+	client *rest.M2MRestClient
 }
 
 func NewSimpleRestClient() *SimpleRestClient {
 	return &SimpleRestClient{
-		logger:        logging.GetLogger("SimpleRestClient"),
-		tokenProvider: serviceloader.MustLoad[security.TokenProvider](),
+		logger: logging.GetLogger("SimpleRestClient"),
+		client: rest.NewM2MRestClient(),
 	}
 }
 
-func (c SimpleRestClient) DoRequest(ctx context.Context, httpMethod string, url string, body string) (*Response, error) {
+func (c *SimpleRestClient) DoRequest(ctx context.Context, httpMethod string, url string, body string) (*Response, error) {
 	c.logger.InfoC(ctx, "Perform request: %s %s", httpMethod, url)
-	req, err := http.NewRequestWithContext(ctx, httpMethod, url, strings.NewReader(body))
-	if err != nil {
-		return nil, fmt.Errorf("can not create request: %w", err)
-	}
 
 	// dump context
-	err = ctxhelper.AddSerializableContextData(ctx, req.Header.Add)
+	headers := map[string][]string{}
+	err := ctxhelper.AddSerializableContextData(ctx, func(name, vals string) {
+		headers[name] = []string{vals}
+	})
 	if err != nil {
 		return nil, fmt.Errorf("error dump context data to request: %w", err)
 	}
 
-	// add token if it needed
-	m2mToken, err := c.tokenProvider.GetToken(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error getting m2m token from tokenprovider: %w", err)
-	}
-	if m2mToken != "" {
-		req.Header.Add("Authorization", "Bearer "+m2mToken)
-	}
-
-	res, err := http.DefaultClient.Do(req)
+	res, err := c.client.DoRequest(ctx, httpMethod, url, headers, strings.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("can not perform request: %w", err)
 	}
