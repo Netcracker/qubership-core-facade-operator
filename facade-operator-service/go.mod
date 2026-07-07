@@ -3,7 +3,7 @@ module github.com/netcracker/qubership-core-facade-operator/facade-operator-serv
 go 1.26.4
 
 require (
-	github.com/cert-manager/cert-manager v1.20.2
+	github.com/cert-manager/cert-manager v1.20.3
 	github.com/gofiber/fiber/v2 v2.52.14
 	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.6.2
 	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.9.4
@@ -13,9 +13,9 @@ require (
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
 	go.uber.org/zap v1.28.0
-	k8s.io/api v0.36.1
-	k8s.io/apimachinery v0.36.1
-	k8s.io/client-go v0.36.1
+	k8s.io/api v0.36.2
+	k8s.io/apimachinery v0.36.2
+	k8s.io/client-go v0.36.2
 	k8s.io/utils v0.0.0-20260319190234-28399d86e0b5 // indirect
 	sigs.k8s.io/controller-runtime v0.24.1 // check compatibility table here https://github.com/kubernetes-sigs/controller-runtime AND cannot be updated until client-go is updated in go-security-scripts and paas-mediation-client
 )
