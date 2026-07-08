@@ -5,10 +5,10 @@ go 1.26.4
 require (
 	github.com/cert-manager/cert-manager v1.20.3
 	github.com/gofiber/fiber/v2 v2.52.14
-	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.6.2
-	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.9.4
-	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.7.3
-	github.com/netcracker/qubership-core-lib-go/v3 v3.13.0
+	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.6.3
+	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.9.5
+	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.7.4
+	github.com/netcracker/qubership-core-lib-go/v3 v3.13.1
 	github.com/openshift/api v0.0.0-20260424174501-4f63a40a2970
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
@@ -85,7 +85,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.10.4 // indirect
+	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.10.5 // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -97,7 +97,7 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.71.0 // indirect
+	github.com/valyala/fasthttp v1.72.0 // indirect
 	github.com/vibrantbyte/go-antpath v1.1.1 // indirect
 	github.com/viney-shih/go-lock v1.1.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
@@ -112,12 +112,12 @@ require (
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa // indirect
-	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
-	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.45.0 // indirect
-	golang.org/x/term v0.43.0 // indirect
-	golang.org/x/text v0.37.0 // indirect
+	golang.org/x/sync v0.21.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/term v0.44.0 // indirect
+	golang.org/x/text v0.38.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
