@@ -16,6 +16,4 @@ COPY --chown=10001:0 --chmod=444 --from=build app/application.yaml /app/
 
 WORKDIR /app
 
-USER 10001:10001
-
 CMD ["/app/facade-operator-service"]
