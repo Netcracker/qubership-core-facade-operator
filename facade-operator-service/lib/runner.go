@@ -9,7 +9,7 @@ import (
 	"time"
 
 	v1cert "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	facadeV1 "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1"
 	facadeV1Alpha "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1alpha"
 	monitoringV1 "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/monitoring/v1"
@@ -22,8 +22,8 @@ import (
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/templates"
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
 	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
-	fiberserver "github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2"
-	"github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2/server"
+	fiberserver "github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v3"
+	"github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v3/server"
 	"github.com/netcracker/qubership-core-lib-go-rest-utils/v2/consul-propertysource"
 	"github.com/netcracker/qubership-core-lib-go/v3/configloader"
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
@@ -119,10 +119,7 @@ func RunService() {
 func startServer(mgr manager.Manager) {
 	setupLog.Info("Start server...")
 
-	fiberConfig := fiber.Config{
-		Network:     fiber.NetworkTCP,
-		IdleTimeout: 30 * time.Second,
-	}
+	fiberConfig := fiber.Config{IdleTimeout: 30 * time.Second}
 	pprofPort := configloader.GetOrDefaultString("pprof.port", "6060")
 	app, err := fiberserver.New(fiberConfig).
 		WithPprof(pprofPort).
@@ -135,7 +132,7 @@ func startServer(mgr manager.Manager) {
 	}
 	app.Get("/health", healthProbe)
 	app.Get("/ready", healthProbe)
-	go server.StartServer(app, "http.server.bind")
+	go server.StartServer(app, "http.server.bind", fiber.ListenConfig{ListenerNetwork: fiber.NetworkTCP})
 
 	//+kubebuilder:scaffold:builder
 	setupLog.Info("starting manager")
@@ -145,7 +142,7 @@ func startServer(mgr manager.Manager) {
 	}
 }
 
-func healthProbe(c *fiber.Ctx) error {
+func healthProbe(c fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON("ok")
 }
 
