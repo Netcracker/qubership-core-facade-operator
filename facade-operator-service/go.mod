@@ -20,7 +20,7 @@ require (
 	sigs.k8s.io/controller-runtime v0.24.1 // check compatibility table here https://github.com/kubernetes-sigs/controller-runtime AND cannot be updated until client-go is updated in go-security-scripts and paas-mediation-client
 )
 
-require sigs.k8s.io/gateway-api v1.6.0
+require sigs.k8s.io/gateway-api v1.6.1
 
 require (
 	github.com/KimMachineGun/automemlimit v0.7.5 // indirect
