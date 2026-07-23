@@ -19,8 +19,10 @@
       "CPU_REQUEST": "50m",
       "CPU_LIMIT": "200m",
       "MEMORY_LIMIT": "64Mi",
+      "MEMORY_REQUEST": "64Mi",
       "FACADE_GATEWAY_REPLICAS": 1,
       "FACADE_GATEWAY_MEMORY_LIMIT": "32Mi",
+      "FACADE_GATEWAY_MEMORY_REQUEST": "32Mi",
       "FACADE_GATEWAY_CPU_LIMIT": "1",
       "FACADE_GATEWAY_CPU_REQUEST": "100m",
       "ARTIFACT_DESCRIPTOR_VERSION": "",
@@ -155,6 +157,14 @@
       "type": "string",
       "title": "The FACADE_GATEWAY_MEMORY_LIMIT schema",
       "description": "Default memory limit for facade and composite gateways. It is not recommended to configure facade gateways HW resources via deploy parameters, deployment-configuration.yaml or CustomResource should be used instead. Minimal memory limit for egress-gateway is 64Mi.",
+      "internal": true,
+      "envSpecific": true
+    },
+    "FACADE_GATEWAY_MEMORY_REQUEST": {
+      "$id": "#/properties/FACADE_GATEWAY_MEMORY_REQUEST",
+      "type": "string",
+      "title": "The FACADE_GATEWAY_MEMORY_REQUEST schema",
+      "description": "Default memory request for facade and composite gateways. It is not recommended to configure facade gateways HW resources via deploy parameters, deployment-configuration.yaml or CustomResource should be used instead. Minimal memory request for egress-gateway is 64Mi.",
       "internal": true,
       "envSpecific": true
     },
@@ -312,6 +322,13 @@
       "$id": "#/properties/MEMORY_LIMIT",
       "type": "string",
       "title": "The MEMORY_LIMIT schema",
+      "internal": true,
+      "envSpecific": true
+    },
+    "MEMORY_REQUEST": {
+      "$id": "#/properties/MEMORY_REQUEST",
+      "type": "string",
+      "title": "The MEMORY_REQUEST schema",
       "internal": true,
       "envSpecific": true
     },
@@ -623,6 +640,123 @@
       "title": "The GOGC schema",
       "internal": true
     },
+	      "PROBE_STARTUP_INITIAL_DELAY_SECONDS": {
+          "$id": "#/properties/PROBE_STARTUP_INITIAL_DELAY_SECONDS",
+          "description": "Number of seconds after the container has started before startup probes are initiated",
+          "envSpecific": true,
+          "examples": [30],
+          "internal": true,
+          "title": "The PROBE_STARTUP_INITIAL_DELAY_SECONDS scheme",
+          "type": "integer"
+      },
+      "PROBE_STARTUP_TIMEOUT_SECONDS": {
+          "$id": "#/properties/PROBE_STARTUP_TIMEOUT_SECONDS",
+          "description": "Number of seconds after which the probe times out",
+          "envSpecific": true,
+          "examples": [30],
+          "internal": true,
+          "title": "The PROBE_STARTUP_TIMEOUT_SECONDS scheme",
+          "type": "integer"
+      },
+      "PROBE_STARTUP_PERIOD_SECONDS": {
+          "$id": "#/properties/PROBE_STARTUP_PERIOD_SECONDS",
+          "description": "How often to perform the probe",
+          "envSpecific": true,
+          "examples": [30],
+          "internal": true,
+          "title": "The PROBE_STARTUP_PERIOD_SECONDS scheme",
+          "type": "integer"
+      },
+      "PROBE_STARTUP_FAILURE_THRESHOLD": {
+          "$id": "#/properties/PROBE_STARTUP_FAILURE_THRESHOLD",
+          "description": "Number of consecutive failures for the probe to be considered failed.",
+          "envSpecific": true,
+          "examples": [10],
+          "internal": true,
+          "title": "The PROBE_STARTUP_FAILURE_THRESHOLD scheme",
+          "type": "integer"
+      },
+      "PROBE_LIVENESS_INITIAL_DELAY_SECONDS": {
+          "$id": "#/properties/PROBE_LIVENESS_INITIAL_DELAY_SECONDS",
+          "description": "Number of seconds after the container has started before liveness probes are initiated",
+          "envSpecific": true,
+          "examples": [30],
+          "internal": true,
+          "title": "The PROBE_LIVENESS_INITIAL_DELAY_SECONDS scheme",
+          "type": "integer"
+      },
+      "PROBE_LIVENESS_TIMEOUT_SECONDS": {
+          "$id": "#/properties/PROBE_LIVENESS_TIMEOUT_SECONDS",
+          "description": "Number of seconds after which the probe times out",
+          "envSpecific": true,
+          "examples": [30],
+          "internal": true,
+          "title": "The PROBE_LIVENESS_TIMEOUT_SECONDS scheme",
+          "type": "integer"
+      },
+      "PROBE_LIVENESS_PERIOD_SECONDS": {
+          "$id": "#/properties/PROBE_LIVENESS_PERIOD_SECONDS",
+          "description": "How often to perform the probe",
+          "envSpecific": true,
+          "examples": [30],
+          "internal": true,
+          "title": "The PROBE_LIVENESS_PERIOD_SECONDS scheme",
+          "type": "integer"
+      },
+      "PROBE_LIVENESS_FAILURE_THRESHOLD": {
+          "$id": "#/properties/PROBE_LIVENESS_FAILURE_THRESHOLD",
+          "description": "Number of consecutive failures for the probe to be considered failed.",
+          "envSpecific": true,
+          "examples": [10],
+          "internal": true,
+          "title": "The PROBE_LIVENESS_FAILURE_THRESHOLD scheme",
+          "type": "integer"
+      },
+      "PROBE_READINESS_INITIAL_DELAY_SECONDS": {
+          "$id": "#/properties/PROBE_READINESS_INITIAL_DELAY_SECONDS",
+          "description": "Number of seconds after the container has started before readiness probes are initiated",
+          "envSpecific": true,
+          "examples": [30],
+          "internal": true,
+          "title": "The PROBE_READINESS_INITIAL_DELAY_SECONDS scheme",
+          "type": "integer"
+      },
+      "PROBE_READINESS_TIMEOUT_SECONDS": {
+          "$id": "#/properties/PROBE_READINESS_TIMEOUT_SECONDS",
+          "description": "Number of seconds after which the probe times out",
+          "envSpecific": true,
+          "examples": [30],
+          "internal": true,
+          "title": "The PROBE_READINESS_TIMEOUT_SECONDS scheme",
+          "type": "integer"
+      },
+      "PROBE_READINESS_PERIOD_SECONDS": {
+          "$id": "#/properties/PROBE_READINESS_PERIOD_SECONDS",
+          "description": "How often to perform the probe",
+          "envSpecific": true,
+          "examples": [30],
+          "internal": true,
+          "title": "The PROBE_READINESS_PERIOD_SECONDS scheme",
+          "type": "integer"
+      },
+      "PROBE_READINESS_SUCCESS_THRESHOLD": {
+          "$id": "#/properties/PROBE_READINESS_SUCCESS_THRESHOLD",
+          "description": "Minimum consecutive successes for the probe to be considered successful after having failed",
+          "envSpecific": true,
+          "examples": [1],
+          "internal": true,
+          "title": "The PROBE_READINESS_SUCCESS_THRESHOLD scheme",
+          "type": "integer"
+      },
+      "PROBE_READINESS_FAILURE_THRESHOLD": {
+          "$id": "#/properties/PROBE_READINESS_FAILURE_THRESHOLD",
+          "description": "Number of consecutive failures for the probe to be considered failed.",
+          "envSpecific": true,
+          "examples": [10],
+          "internal": true,
+          "title": "The PROBE_READINESS_FAILURE_THRESHOLD scheme",
+          "type": "integer"
+      },
 
     "GATEWAY_SYSTEM_TYPE": {
       "$id": "#/properties/GATEWAY_SYSTEM_TYPE",
