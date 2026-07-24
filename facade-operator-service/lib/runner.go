@@ -9,7 +9,7 @@ import (
 	"time"
 
 	v1cert "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	facadeV1 "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1"
 	facadeV1Alpha "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1alpha"
 	monitoringV1 "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/monitoring/v1"
