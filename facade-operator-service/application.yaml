@@ -1,7 +1,16 @@
 microservice:
   name: facade-operator
+  # overridden by MICROSERVICE_NAMESPACE / CLOUD_NAMESPACE in deployment
+  namespace: unknown
 
 log.level: info
+
+# tracing.* overridden by TRACING_* env (configloader: TRACING_ENABLED → tracing.enabled)
+tracing:
+  enabled: false
+  host: nc-diagnostic-agent
+  sampler:
+    ratelimiting: 10
 
 pprof:
   port: 6060

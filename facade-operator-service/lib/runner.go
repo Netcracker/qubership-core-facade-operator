@@ -21,6 +21,7 @@ import (
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/services"
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/templates"
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
+	"github.com/netcracker/qubership-core-lib-go-actuator-common/v2/tracing"
 	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
 	fiberserver "github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2"
 	"github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2/server"
@@ -124,9 +125,12 @@ func startServer(mgr manager.Manager) {
 		IdleTimeout: 30 * time.Second,
 	}
 	pprofPort := configloader.GetOrDefaultString("pprof.port", "6060")
+	// Zipkin OTel exporter (same as site-management / control-plane):
+	// TRACING_ENABLED / TRACING_HOST / TRACING_SAMPLER_RATELIMITING → :9411
 	app, err := fiberserver.New(fiberConfig).
 		WithPprof(pprofPort).
 		WithPrometheus("/prometheus").
+		WithTracer(tracing.NewZipkinTracer()).
 		WithApiVersion().
 		Process()
 	if err != nil {
