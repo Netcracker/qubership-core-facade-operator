@@ -53,27 +53,41 @@ func NewIngressTemplateBuilder(x509Enable bool, isSatellite bool, baselineNamesp
 }
 
 func buildGwIngressAnnotations() map[string]string {
-	envVal := os.Getenv("GW_INGRESS_ANNOTATIONS")
-	if envVal == "" {
+	envVal := strings.TrimSpace(os.Getenv("GW_INGRESS_ANNOTATIONS"))
+	if envVal == "" || envVal == "[]" || envVal == "null" {
 		return nil
 	}
 	annotations := strings.Split(strings.ReplaceAll(envVal, "\r\n", "\n"), "\n")
-	result := make(map[string]string, len(annotations))
+	result := make(map[string]string)
 	for _, annotationStr := range annotations {
-		result[extractName(annotationStr)] = extractValue(annotationStr)
+		name, value, ok := parseAnnotation(annotationStr)
+		if !ok {
+			continue
+		}
+		result[name] = value
+	}
+	if len(result) == 0 {
+		return nil
 	}
 	return result
 }
 
-func extractName(annotationString string) string {
+func parseAnnotation(annotationString string) (string, string, bool) {
+	annotationString = strings.TrimSpace(annotationString)
+	if annotationString == "" || strings.HasPrefix(annotationString, "#") {
+		return "", "", false
+	}
 	endIdx := strings.Index(annotationString, ":")
-	return annotationString[:endIdx]
-}
-
-func extractValue(annotationString string) string {
-	startIdx := strings.Index(annotationString, "'")
-	endIdx := strings.LastIndex(annotationString, "'")
-	return annotationString[startIdx+1 : endIdx]
+	if endIdx <= 0 {
+		return "", "", false
+	}
+	name := strings.TrimSpace(annotationString[:endIdx])
+	if name == "" {
+		return "", "", false
+	}
+	value := strings.TrimSpace(annotationString[endIdx+1:])
+	value = strings.Trim(value, `"'`)
+	return name, value, true
 }
 
 type Ingress struct {

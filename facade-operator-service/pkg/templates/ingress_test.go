@@ -13,6 +13,27 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
+func TestBuildGwIngressAnnotationsParsesQuotedAndUnquotedValues(t *testing.T) {
+	os.Setenv("GW_INGRESS_ANNOTATIONS", "nginx.ingress.kubernetes.io/proxy-read-timeout: \"2000\"\nnginx.ingress.kubernetes.io/proxy-send-timeout: '1800'\nnginx.ingress.kubernetes.io/proxy-body-size: 10m\n\n")
+	defer os.Unsetenv("GW_INGRESS_ANNOTATIONS")
+
+	annotations := buildGwIngressAnnotations()
+	assert.Equal(t, "2000", annotations["nginx.ingress.kubernetes.io/proxy-read-timeout"])
+	assert.Equal(t, "1800", annotations["nginx.ingress.kubernetes.io/proxy-send-timeout"])
+	assert.Equal(t, "10m", annotations["nginx.ingress.kubernetes.io/proxy-body-size"])
+}
+
+func TestBuildGwIngressAnnotationsIgnoresEmptyAndInvalidValues(t *testing.T) {
+	os.Setenv("GW_INGRESS_ANNOTATIONS", "[]")
+	assert.Nil(t, buildGwIngressAnnotations())
+
+	os.Setenv("GW_INGRESS_ANNOTATIONS", "not-an-annotation")
+	assert.Nil(t, buildGwIngressAnnotations())
+
+	os.Unsetenv("GW_INGRESS_ANNOTATIONS")
+	assert.Nil(t, buildGwIngressAnnotations())
+}
+
 func TestBuildCustomIngress(t *testing.T) {
 	testBuildIngress(t, "test-gw")
 }
