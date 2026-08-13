@@ -407,6 +407,30 @@
       "description": "Blue-green domain peer namespace.",
       "internal": true
     },
+    "CONTROLLER_NAMESPACE": {
+      "$id": "#/properties/CONTROLLER_NAMESPACE",
+      "default": "",
+      "description": "Name of controller namespace of current BG Domain",
+      "internal": true,
+      "title": "The CONTROLLER_NAMESPACE schema",
+      "type": "string"
+    },
+    "HTTP_ROUTE_REQUEST_IDLE_TIMEOUT": {
+      "$id": "#/properties/HTTP_ROUTE_REQUEST_IDLE_TIMEOUT",
+      "default": "",
+      "description": "Idle timeout between backend reads/writes for Gateway API HTTPRoute",
+      "internal": true,
+      "title": "The HTTP_ROUTE_REQUEST_IDLE_TIMEOUT schema",
+      "type": "string"
+    },
+    "HTTP_ROUTE_CUSTOM_FILTERS": {
+      "$id": "#/properties/HTTP_ROUTE_CUSTOM_FILTERS",
+      "default": [],
+      "description": "Additional filters to add to Gateway API HTTPRoute rules. Could be used, for example, to modify response headers",
+      "internal": true,
+      "title": "The HTTP_ROUTE_CUSTOM_FILTERS schema",
+      "type": "array"
+    },
     "INGRESS_CLASS": {
       "$id": "#/properties/INGRESS_CLASS",
       "anyOf": [

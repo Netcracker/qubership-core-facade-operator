@@ -17,14 +17,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
 type IngressTemplateBuilder struct {
-	gwIngressAnnotations map[string]string
-	x509Enable           bool
-	isSatellite          bool
-	baselineNamespace    string
-	ingressClassName     *string
+	gwIngressAnnotations  map[string]string
+	httpRouteCustomFilters []gatewayv1.HTTPRouteFilter
+	x509Enable            bool
+	isSatellite           bool
+	baselineNamespace     string
+	ingressClassName      *string
 }
 
 func NewIngressTemplateBuilder(x509Enable bool, isSatellite bool, baselineNamespace string) *IngressTemplateBuilder {
@@ -41,11 +43,12 @@ func NewIngressTemplateBuilder(x509Enable bool, isSatellite bool, baselineNamesp
 		ingressClassName = &ingressClassNameString
 	}
 	return &IngressTemplateBuilder{
-		gwIngressAnnotations: buildGwIngressAnnotations(),
-		x509Enable:           x509Enable,
-		isSatellite:          isSatellite,
-		baselineNamespace:    baselineNamespace,
-		ingressClassName:     ingressClassName,
+		gwIngressAnnotations:   buildGwIngressAnnotations(),
+		httpRouteCustomFilters: buildHTTPRouteCustomFilters(),
+		x509Enable:             x509Enable,
+		isSatellite:            isSatellite,
+		baselineNamespace:      baselineNamespace,
+		ingressClassName:       ingressClassName,
 	}
 }
 

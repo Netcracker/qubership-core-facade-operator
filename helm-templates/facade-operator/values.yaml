@@ -33,5 +33,10 @@ CONSUL_URL: ''
 GATEWAY_SYSTEM_TYPE: "legacy-ingress"
 GATEWAY_SYSTEM_NAMESPACE: "gateway-system"
 GATEWAY_SYSTEM_NAME: "default-external-gateway"
+CONTROLLER_NAMESPACE: ''
+# Idle timeout between backend reads/writes for Gateway API HTTPRoute, for example, "1800s".
+HTTP_ROUTE_REQUEST_IDLE_TIMEOUT: ''
+# Additional filters to add to Gateway API HTTPRoute rules. Could be used, for example, to modify response headers.
+HTTP_ROUTE_CUSTOM_FILTERS: []
 KUBERNETES_M2M_ENABLED: false
 DEPLOYMENT_STRATEGY_TYPE: recreate

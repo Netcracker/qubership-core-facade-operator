@@ -1,8 +1,10 @@
 package templates
 
 import (
-	"maps"
+	"encoding/json"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
@@ -16,6 +18,12 @@ const (
 	defaultGatewaySystemNamespace = "gateway-system"
 	defaultGatewaySystemName      = "default-external-gateway"
 	edgeRouterName                = "edge-router"
+
+	envHTTPRouteIdleTimeout  = "HTTP_ROUTE_REQUEST_IDLE_TIMEOUT"
+	envHTTPRouteCustomFilters = "HTTP_ROUTE_CUSTOM_FILTERS"
+
+	annotationProxyReadTimeout = "nginx.ingress.kubernetes.io/proxy-read-timeout"
+	annotationProxySendTimeout = "nginx.ingress.kubernetes.io/proxy-send-timeout"
 )
 
 type HTTPRoute struct {
@@ -33,6 +41,7 @@ type HTTPRoute struct {
 	MasterCRVersion       string
 	MasterCRKind          string
 	MasterCRUID           types.UID
+	CustomFilters         []gatewayv1.HTTPRouteFilter
 	BackendTrafficPolicy  *unstructured.Unstructured
 	ClientTrafficPolicy   *unstructured.Unstructured
 	NeedsBackendTLSPolicy bool
@@ -54,7 +63,7 @@ func (b *IngressTemplateBuilder) BuildHTTPRouteTemplate(ingressSpec facade.Ingre
 		Name:                httpRouteName,
 		Namespace:           cr.GetNamespace(),
 		Labels:              b.buildIngressLabels(cr.GetLabels()[utils.KubernetesPartOf]),
-		Annotations:         b.buildHTTPRouteAnnotations(gatewayServiceName, cr.GetNamespace(), ingressSpec.IsGrpc),
+		Annotations:         b.buildHTTPRouteAnnotations(gatewayServiceName),
 		Hostname:            ingressSpec.Hostname,
 		ServiceName:         gatewayServiceName,
 		Port:                gwPort,
@@ -65,12 +74,11 @@ func (b *IngressTemplateBuilder) BuildHTTPRouteTemplate(ingressSpec facade.Ingre
 		MasterCRVersion:     cr.GetAPIVersion(),
 		MasterCRKind:        cr.GetKind(),
 		MasterCRUID:         cr.GetUID(),
+		CustomFilters:       b.httpRouteCustomFilters,
 		X509SecretNamespace: x509SecretNamespace,
 	}
 
-	if ingressSpec.IsGrpc {
-		httpRoute.BackendTrafficPolicy = b.buildBackendTrafficPolicy(httpRouteName, cr)
-	}
+	httpRoute.BackendTrafficPolicy = b.buildBackendTrafficPolicy(httpRouteName, cr, ingressSpec.IsGrpc)
 
 	if b.x509Enable {
 		httpRoute.ClientTrafficPolicy = b.buildClientTrafficPolicy(httpRouteName, cr, x509SecretNamespace)
@@ -84,8 +92,39 @@ func (h HTTPRoute) BuildK8sHTTPRoute() *gatewayv1.HTTPRoute {
 	pathPrefix := gatewayv1.PathMatchPathPrefix
 	hostname := gatewayv1.Hostname(h.Hostname)
 	kindService := gatewayv1.Kind("Service")
+	kindGateway := gatewayv1.Kind("Gateway")
+	groupGateway := gatewayv1.Group(gatewayv1.GroupName)
+	groupCore := gatewayv1.Group("")
 	namespace := gatewayv1.Namespace(h.ParentNamespace)
 	parentName := gatewayv1.ObjectName(h.ParentName)
+	weight := int32(1)
+
+	rule := gatewayv1.HTTPRouteRule{
+		Matches: []gatewayv1.HTTPRouteMatch{
+			{
+				Path: &gatewayv1.HTTPPathMatch{
+					Type:  &pathPrefix,
+					Value: getPathPointer("/"),
+				},
+			},
+		},
+		BackendRefs: []gatewayv1.HTTPBackendRef{
+			{
+				BackendRef: gatewayv1.BackendRef{
+					BackendObjectReference: gatewayv1.BackendObjectReference{
+						Group: &groupCore,
+						Name:  gatewayv1.ObjectName(h.ServiceName),
+						Kind:  &kindService,
+						Port:  getPortPointer(gatewayv1.PortNumber(h.Port)),
+					},
+					Weight: &weight,
+				},
+			},
+		},
+	}
+	if len(h.CustomFilters) > 0 {
+		rule.Filters = h.CustomFilters
+	}
 
 	return &gatewayv1.HTTPRoute{
 		TypeMeta: metav1.TypeMeta{
@@ -111,40 +150,20 @@ func (h HTTPRoute) BuildK8sHTTPRoute() *gatewayv1.HTTPRoute {
 			CommonRouteSpec: gatewayv1.CommonRouteSpec{
 				ParentRefs: []gatewayv1.ParentReference{
 					{
+						Group:     &groupGateway,
+						Kind:      &kindGateway,
 						Name:      parentName,
 						Namespace: &namespace,
 					},
 				},
 			},
 			Hostnames: []gatewayv1.Hostname{hostname},
-			Rules: []gatewayv1.HTTPRouteRule{
-				{
-					Matches: []gatewayv1.HTTPRouteMatch{
-						{
-							Path: &gatewayv1.HTTPPathMatch{
-								Type:  &pathPrefix,
-								Value: getPathPointer("/"),
-							},
-						},
-					},
-					BackendRefs: []gatewayv1.HTTPBackendRef{
-						{
-							BackendRef: gatewayv1.BackendRef{
-								BackendObjectReference: gatewayv1.BackendObjectReference{
-									Name: gatewayv1.ObjectName(h.ServiceName),
-									Kind: &kindService,
-									Port: getPortPointer(gatewayv1.PortNumber(h.Port)),
-								},
-							},
-						},
-					},
-				},
-			},
+			Rules:     []gatewayv1.HTTPRouteRule{rule},
 		},
 	}
 }
 
-func (b *IngressTemplateBuilder) buildHTTPRouteAnnotations(gatewayServiceName, namespace string, isGrpc bool) map[string]string {
+func (b *IngressTemplateBuilder) buildHTTPRouteAnnotations(gatewayServiceName string) map[string]string {
 	annotations := make(map[string]string)
 	annotations["app.kubernetes.io/managed-by"] = "facade-operator"
 	annotations["netcracker.cloud/start.stage"] = "1"
@@ -153,9 +172,6 @@ func (b *IngressTemplateBuilder) buildHTTPRouteAnnotations(gatewayServiceName, n
 		annotations["netcracker.cloud/tenant.service.tenant.id"] = "GENERAL"
 		annotations["netcracker.cloud/tenant.service.show.name"] = "Public Gateway"
 		annotations["netcracker.cloud/tenant.service.show.description"] = "Api Gateway to access public API"
-		maps.Copy(annotations, b.gwIngressAnnotations)
-	} else if gatewayServiceName == facade.PrivateGatewayService {
-		maps.Copy(annotations, b.gwIngressAnnotations)
 	}
 
 	return annotations
@@ -202,8 +218,79 @@ func getPathPointer(path string) *string {
 	return &path
 }
 
-func (b *IngressTemplateBuilder) buildBackendTrafficPolicy(httpRouteName string, cr facade.MeshGateway) *unstructured.Unstructured {
-	policy := &unstructured.Unstructured{
+func buildHTTPRouteCustomFilters() []gatewayv1.HTTPRouteFilter {
+	envVal := strings.TrimSpace(os.Getenv(envHTTPRouteCustomFilters))
+	if envVal == "" || envVal == "[]" || envVal == "null" {
+		return nil
+	}
+	var filters []gatewayv1.HTTPRouteFilter
+	if err := json.Unmarshal([]byte(envVal), &filters); err != nil {
+		return nil
+	}
+	if len(filters) == 0 {
+		return nil
+	}
+	return filters
+}
+
+func (b *IngressTemplateBuilder) resolveStreamIdleTimeout() string {
+	idleTimeout := strings.TrimSpace(os.Getenv(envHTTPRouteIdleTimeout))
+	if idleTimeout != "" {
+		return idleTimeout
+	}
+
+	return deriveIdleTimeoutFromLegacyAnnotations(b.gwIngressAnnotations)
+}
+
+func deriveIdleTimeoutFromLegacyAnnotations(annotations map[string]string) string {
+	if len(annotations) == 0 {
+		return ""
+	}
+	maxSec := -1
+	if read := annotations[annotationProxyReadTimeout]; read != "" {
+		if sec, err := strconv.Atoi(strings.TrimSpace(read)); err == nil {
+			maxSec = sec
+		}
+	}
+	if send := annotations[annotationProxySendTimeout]; send != "" {
+		if sec, err := strconv.Atoi(strings.TrimSpace(send)); err == nil && sec > maxSec {
+			maxSec = sec
+		}
+	}
+	if maxSec < 0 {
+		return ""
+	}
+	return strconv.Itoa(maxSec) + "s"
+}
+
+func (b *IngressTemplateBuilder) buildBackendTrafficPolicy(httpRouteName string, cr facade.MeshGateway, isGrpc bool) *unstructured.Unstructured {
+	streamIdleTimeout := b.resolveStreamIdleTimeout()
+	if !isGrpc && streamIdleTimeout == "" {
+		return nil
+	}
+
+	spec := map[string]interface{}{
+		"mergeType": "StrategicMerge",
+		"targetRefs": []interface{}{
+			map[string]interface{}{
+				"group": "gateway.networking.k8s.io",
+				"kind":  "HTTPRoute",
+				"name":  httpRouteName,
+			},
+		},
+	}
+	if isGrpc {
+		spec["useClientProtocol"] = true
+	}
+	if streamIdleTimeout != "" {
+		spec["timeout"] = map[string]interface{}{
+			"http": map[string]interface{}{
+				"streamIdleTimeout": streamIdleTimeout,
+			},
+		}
+	}
+
+	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": utils.ApiVersionV1AlphaV1,
 			"kind":       "BackendTrafficPolicy",
@@ -221,24 +308,13 @@ func (b *IngressTemplateBuilder) buildBackendTrafficPolicy(httpRouteName string,
 					},
 				},
 			},
-			"spec": map[string]interface{}{
-				"targetRefs": []interface{}{
-					map[string]interface{}{
-						"group": "gateway.networking.k8s.io",
-						"kind":  "HTTPRoute",
-						"name":  httpRouteName,
-					},
-				},
-				"useClientProtocol": true,
-			},
+			"spec": spec,
 		},
 	}
-
-	return policy
 }
 
 func (b *IngressTemplateBuilder) buildClientTrafficPolicy(httpRouteName string, cr facade.MeshGateway, x509SecretNamespace string) *unstructured.Unstructured {
-	policy := &unstructured.Unstructured{
+	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": utils.ApiVersionV1AlphaV1,
 			"kind":       "ClientTrafficPolicy",
@@ -284,6 +360,4 @@ func (b *IngressTemplateBuilder) buildClientTrafficPolicy(httpRouteName string, 
 			},
 		},
 	}
-
-	return policy
 }

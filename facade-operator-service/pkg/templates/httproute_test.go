@@ -146,20 +146,16 @@ func validateHTTPRouteAnnotations(t *testing.T, annotations map[string]string, g
 		assert.Equal(t, "GENERAL", annotations["netcracker.cloud/tenant.service.tenant.id"])
 		assert.Equal(t, "Public Gateway", annotations["netcracker.cloud/tenant.service.show.name"])
 		assert.Equal(t, "Api Gateway to access public API", annotations["netcracker.cloud/tenant.service.show.description"])
-		assert.Equal(t, "annotation-val1", annotations["annotation.name1"])
-		assert.Equal(t, "annotation-val2", annotations["annotation.name2"])
-	} else if gwServiceName == facade.PrivateGatewayService {
-		assert.Equal(t, "annotation-val1", annotations["annotation.name1"])
-		assert.Equal(t, "annotation-val2", annotations["annotation.name2"])
-	} else {
-		_, exists := annotations["annotation.name1"]
-		assert.False(t, exists)
-		_, exists = annotations["annotation.name2"]
-		assert.False(t, exists)
 	}
 
+	// GW_INGRESS_ANNOTATIONS must not be copied onto HTTPRoute
+	_, exists := annotations["annotation.name1"]
+	assert.False(t, exists)
+	_, exists = annotations["annotation.name2"]
+	assert.False(t, exists)
+
 	// Note: GRPC annotations don't exist in HTTPRoute - they are handled by BackendTrafficPolicy
-	_, exists := annotations["nginx.ingress.kubernetes.io/ssl-redirect"]
+	_, exists = annotations["nginx.ingress.kubernetes.io/ssl-redirect"]
 	assert.False(t, exists)
 	_, exists = annotations["nginx.ingress.kubernetes.io/backend-protocol"]
 	assert.False(t, exists)
@@ -233,6 +229,8 @@ func validateHTTPRouteParentRefs(t *testing.T, httpRouteTemplate HTTPRoute, isBG
 
 func validateBackendTrafficPolicy(t *testing.T, httpRouteTemplate HTTPRoute, gwServiceName string, isGrpc bool) {
 	if !isGrpc {
+		// Without explicit idle timeout env, non-grpc routes may still get BTP from GW_INGRESS_ANNOTATIONS fallback.
+		// Default test annotations do not include proxy-read/send timeouts, so expect nil.
 		assert.Nil(t, httpRouteTemplate.BackendTrafficPolicy)
 		return
 	}
@@ -256,6 +254,11 @@ func validateBackendTrafficPolicy(t *testing.T, httpRouteTemplate HTTPRoute, gwS
 	spec, found, err := unstructured.NestedMap(policy.Object, "spec")
 	assert.NoError(t, err)
 	assert.True(t, found)
+
+	mergeType, found, err := unstructured.NestedString(spec, "mergeType")
+	assert.NoError(t, err)
+	assert.True(t, found)
+	assert.Equal(t, "StrategicMerge", mergeType)
 
 	targetRefs, found, err := unstructured.NestedSlice(spec, "targetRefs")
 	assert.NoError(t, err)
@@ -348,4 +351,89 @@ func TestGatewaySystemEnvVariables(t *testing.T) {
 
 	assert.Equal(t, "custom-gateway-ns", getGatewaySystemNamespace())
 	assert.Equal(t, "custom-gateway-name", getGatewaySystemName())
+}
+
+func TestBackendTrafficPolicyIdleTimeoutFromEnv(t *testing.T) {
+	os.Setenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT", "1000s")
+	defer os.Unsetenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT")
+
+	builder := NewIngressTemplateBuilder(false, false, "")
+
+	publicRoute, err := builder.BuildHTTPRouteTemplate(facade.IngressSpec{
+		Hostname:    "public-host.qubership.org",
+		IsGrpc:      false,
+		GatewayPort: 8080,
+	}, buildFacadeServiceForHTTPRoute(facade.PublicGatewayService), facade.PublicGatewayService)
+	assert.Nil(t, err)
+	assert.NotNil(t, publicRoute.BackendTrafficPolicy)
+	timeout, found, err := unstructured.NestedString(publicRoute.BackendTrafficPolicy.Object, "spec", "timeout", "http", "streamIdleTimeout")
+	assert.NoError(t, err)
+	assert.True(t, found)
+	assert.Equal(t, "1000s", timeout)
+
+	privateRoute, err := builder.BuildHTTPRouteTemplate(facade.IngressSpec{
+		Hostname:    "private-host.qubership.org",
+		IsGrpc:      false,
+		GatewayPort: 8080,
+	}, buildFacadeServiceForHTTPRoute(facade.PrivateGatewayService), facade.PrivateGatewayService)
+	assert.Nil(t, err)
+	assert.NotNil(t, privateRoute.BackendTrafficPolicy)
+	timeout, found, err = unstructured.NestedString(privateRoute.BackendTrafficPolicy.Object, "spec", "timeout", "http", "streamIdleTimeout")
+	assert.NoError(t, err)
+	assert.True(t, found)
+	assert.Equal(t, "1000s", timeout)
+}
+
+func TestBackendTrafficPolicyIdleTimeoutFromLegacyAnnotations(t *testing.T) {
+	os.Unsetenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT")
+	os.Setenv("GW_INGRESS_ANNOTATIONS", "nginx.ingress.kubernetes.io/proxy-read-timeout: '2000'\nnginx.ingress.kubernetes.io/proxy-send-timeout: '1800'")
+	defer os.Unsetenv("GW_INGRESS_ANNOTATIONS")
+
+	builder := NewIngressTemplateBuilder(false, false, "")
+	publicRoute, err := builder.BuildHTTPRouteTemplate(facade.IngressSpec{
+		Hostname:    "public-host.qubership.org",
+		IsGrpc:      false,
+		GatewayPort: 8080,
+	}, buildFacadeServiceForHTTPRoute(facade.PublicGatewayService), facade.PublicGatewayService)
+	assert.Nil(t, err)
+	assert.NotNil(t, publicRoute.BackendTrafficPolicy)
+	timeout, found, err := unstructured.NestedString(publicRoute.BackendTrafficPolicy.Object, "spec", "timeout", "http", "streamIdleTimeout")
+	assert.NoError(t, err)
+	assert.True(t, found)
+	assert.Equal(t, "2000s", timeout)
+}
+
+func TestHTTPRouteCustomFilters(t *testing.T) {
+	os.Setenv("HTTP_ROUTE_CUSTOM_FILTERS", `[{"type":"ResponseHeaderModifier","responseHeaderModifier":{"remove":["authorization"]}}]`)
+	defer os.Unsetenv("HTTP_ROUTE_CUSTOM_FILTERS")
+
+	builder := NewIngressTemplateBuilder(false, false, "")
+	httpRoute, err := builder.BuildHTTPRouteTemplate(facade.IngressSpec{
+		Hostname:    "public-host.qubership.org",
+		IsGrpc:      false,
+		GatewayPort: 8080,
+	}, buildFacadeServiceForHTTPRoute(facade.PublicGatewayService), facade.PublicGatewayService)
+	assert.Nil(t, err)
+
+	k8sRoute := httpRoute.BuildK8sHTTPRoute()
+	assert.Equal(t, 1, len(k8sRoute.Spec.Rules[0].Filters))
+	assert.Equal(t, gatewayv1.HTTPRouteFilterResponseHeaderModifier, k8sRoute.Spec.Rules[0].Filters[0].Type)
+	assert.NotNil(t, k8sRoute.Spec.Rules[0].Filters[0].ResponseHeaderModifier)
+	assert.Equal(t, []string{"authorization"}, k8sRoute.Spec.Rules[0].Filters[0].ResponseHeaderModifier.Remove)
+}
+
+func TestHTTPRouteParentRefsIncludeGroupAndKind(t *testing.T) {
+	builder := NewIngressTemplateBuilder(false, false, "")
+	httpRoute, err := builder.BuildHTTPRouteTemplate(facade.IngressSpec{
+		Hostname:    "public-host.qubership.org",
+		IsGrpc:      false,
+		GatewayPort: 8080,
+	}, buildFacadeServiceForHTTPRoute(facade.PublicGatewayService), facade.PublicGatewayService)
+	assert.Nil(t, err)
+
+	parentRef := httpRoute.BuildK8sHTTPRoute().Spec.ParentRefs[0]
+	assert.NotNil(t, parentRef.Group)
+	assert.Equal(t, gatewayv1.Group(gatewayv1.GroupName), *parentRef.Group)
+	assert.NotNil(t, parentRef.Kind)
+	assert.Equal(t, gatewayv1.Kind("Gateway"), *parentRef.Kind)
 }
