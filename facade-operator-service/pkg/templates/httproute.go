@@ -250,42 +250,27 @@ func buildHTTPRouteCustomFilters() []gatewayv1.HTTPRouteFilter {
 	return validFilters
 }
 
+var httpRouteFilterValidators = map[gatewayv1.HTTPRouteFilterType]struct {
+	field   string
+	present func(gatewayv1.HTTPRouteFilter) bool
+}{
+	gatewayv1.HTTPRouteFilterRequestHeaderModifier:  {"requestHeaderModifier", func(f gatewayv1.HTTPRouteFilter) bool { return f.RequestHeaderModifier != nil }},
+	gatewayv1.HTTPRouteFilterResponseHeaderModifier: {"responseHeaderModifier", func(f gatewayv1.HTTPRouteFilter) bool { return f.ResponseHeaderModifier != nil }},
+	gatewayv1.HTTPRouteFilterRequestRedirect:        {"requestRedirect", func(f gatewayv1.HTTPRouteFilter) bool { return f.RequestRedirect != nil }},
+	gatewayv1.HTTPRouteFilterURLRewrite:             {"urlRewrite", func(f gatewayv1.HTTPRouteFilter) bool { return f.URLRewrite != nil }},
+	gatewayv1.HTTPRouteFilterRequestMirror:          {"requestMirror", func(f gatewayv1.HTTPRouteFilter) bool { return f.RequestMirror != nil }},
+	gatewayv1.HTTPRouteFilterCORS:                   {"cors", func(f gatewayv1.HTTPRouteFilter) bool { return f.CORS != nil }},
+	gatewayv1.HTTPRouteFilterExternalAuth:           {"externalAuth", func(f gatewayv1.HTTPRouteFilter) bool { return f.ExternalAuth != nil }},
+	gatewayv1.HTTPRouteFilterExtensionRef:           {"extensionRef", func(f gatewayv1.HTTPRouteFilter) bool { return f.ExtensionRef != nil }},
+}
+
 func validateHTTPRouteFilter(filter gatewayv1.HTTPRouteFilter) error {
-	switch filter.Type {
-	case gatewayv1.HTTPRouteFilterRequestHeaderModifier:
-		if filter.RequestHeaderModifier == nil {
-			return fmt.Errorf("type %q requires requestHeaderModifier", filter.Type)
-		}
-	case gatewayv1.HTTPRouteFilterResponseHeaderModifier:
-		if filter.ResponseHeaderModifier == nil {
-			return fmt.Errorf("type %q requires responseHeaderModifier", filter.Type)
-		}
-	case gatewayv1.HTTPRouteFilterRequestRedirect:
-		if filter.RequestRedirect == nil {
-			return fmt.Errorf("type %q requires requestRedirect", filter.Type)
-		}
-	case gatewayv1.HTTPRouteFilterURLRewrite:
-		if filter.URLRewrite == nil {
-			return fmt.Errorf("type %q requires urlRewrite", filter.Type)
-		}
-	case gatewayv1.HTTPRouteFilterRequestMirror:
-		if filter.RequestMirror == nil {
-			return fmt.Errorf("type %q requires requestMirror", filter.Type)
-		}
-	case gatewayv1.HTTPRouteFilterCORS:
-		if filter.CORS == nil {
-			return fmt.Errorf("type %q requires cors", filter.Type)
-		}
-	case gatewayv1.HTTPRouteFilterExternalAuth:
-		if filter.ExternalAuth == nil {
-			return fmt.Errorf("type %q requires externalAuth", filter.Type)
-		}
-	case gatewayv1.HTTPRouteFilterExtensionRef:
-		if filter.ExtensionRef == nil {
-			return fmt.Errorf("type %q requires extensionRef", filter.Type)
-		}
-	default:
+	validator, ok := httpRouteFilterValidators[filter.Type]
+	if !ok {
 		return fmt.Errorf("unsupported filter type %q", filter.Type)
+	}
+	if !validator.present(filter) {
+		return fmt.Errorf("type %q requires %s", filter.Type, validator.field)
 	}
 	return nil
 }
