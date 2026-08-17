@@ -308,7 +308,8 @@ func deriveIdleTimeoutFromLegacyAnnotations(annotations map[string]string) (stri
 		}
 		sec, err := strconv.Atoi(value)
 		if err != nil {
-			return "", fmt.Errorf("annotation %s value %q is not a number of seconds: %w", annotation, value, err)
+			httpRouteLogger.Warnf("Ignoring annotation %s value %q: expected a number of seconds", annotation, value)
+			continue
 		}
 		if sec > maxSec {
 			maxSec = sec

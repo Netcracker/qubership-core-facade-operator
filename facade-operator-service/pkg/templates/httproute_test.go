@@ -441,19 +441,23 @@ func TestBackendTrafficPolicyIdleTimeoutInvalidEnvFailsTemplate(t *testing.T) {
 	assert.Contains(t, err.Error(), "HTTP_ROUTE_REQUEST_IDLE_TIMEOUT")
 }
 
-func TestBackendTrafficPolicyIdleTimeoutInvalidLegacyAnnotationFailsTemplate(t *testing.T) {
+func TestBackendTrafficPolicyIdleTimeoutInvalidLegacyAnnotationIsIgnored(t *testing.T) {
 	os.Unsetenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT")
-	os.Setenv("GW_INGRESS_ANNOTATIONS", "nginx.ingress.kubernetes.io/proxy-read-timeout: '30m'")
+	os.Setenv("GW_INGRESS_ANNOTATIONS", "nginx.ingress.kubernetes.io/proxy-read-timeout: '30m'\nnginx.ingress.kubernetes.io/proxy-send-timeout: '1800'")
 	defer os.Unsetenv("GW_INGRESS_ANNOTATIONS")
 
 	builder := NewIngressTemplateBuilder(false, false, "")
-	_, err := builder.BuildHTTPRouteTemplate(facade.IngressSpec{
+	publicRoute, err := builder.BuildHTTPRouteTemplate(facade.IngressSpec{
 		Hostname:    "public-host.qubership.org",
 		IsGrpc:      false,
 		GatewayPort: 8080,
 	}, buildFacadeServiceForHTTPRoute(facade.PublicGatewayService), facade.PublicGatewayService)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "proxy-read-timeout")
+	assert.Nil(t, err)
+	assert.NotNil(t, publicRoute.BackendTrafficPolicy)
+	timeout, found, err := unstructured.NestedString(publicRoute.BackendTrafficPolicy.Object, "spec", "timeout", "http", "streamIdleTimeout")
+	assert.NoError(t, err)
+	assert.True(t, found)
+	assert.Equal(t, "1800s", timeout)
 }
 
 func TestHTTPRouteCustomFilters(t *testing.T) {
