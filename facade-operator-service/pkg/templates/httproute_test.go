@@ -403,6 +403,59 @@ func TestBackendTrafficPolicyIdleTimeoutFromLegacyAnnotations(t *testing.T) {
 	assert.Equal(t, "2000s", timeout)
 }
 
+func TestResolveStreamIdleTimeout(t *testing.T) {
+	builder := NewIngressTemplateBuilder(false, false, "")
+
+	for _, value := range []string{"1800s", "30m", "1h30m", "500ms"} {
+		os.Setenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT", value)
+		idleTimeout, err := builder.resolveStreamIdleTimeout()
+		assert.NoError(t, err)
+		assert.Equal(t, value, idleTimeout)
+	}
+
+	for _, value := range []string{"1800", "abc", "-10s", "10sec", "1800000s"} {
+		os.Setenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT", value)
+		_, err := builder.resolveStreamIdleTimeout()
+		assert.Error(t, err, "expected %q to be rejected", value)
+	}
+
+	os.Unsetenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT")
+	idleTimeout, err := builder.resolveStreamIdleTimeout()
+	assert.NoError(t, err)
+	assert.Equal(t, "", idleTimeout)
+}
+
+func TestBackendTrafficPolicyIdleTimeoutInvalidEnvFailsTemplate(t *testing.T) {
+	os.Setenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT", "not-a-duration")
+	os.Setenv("GW_INGRESS_ANNOTATIONS", "nginx.ingress.kubernetes.io/proxy-read-timeout: '2000'")
+	defer os.Unsetenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT")
+	defer os.Unsetenv("GW_INGRESS_ANNOTATIONS")
+
+	builder := NewIngressTemplateBuilder(false, false, "")
+	_, err := builder.BuildHTTPRouteTemplate(facade.IngressSpec{
+		Hostname:    "public-host.qubership.org",
+		IsGrpc:      false,
+		GatewayPort: 8080,
+	}, buildFacadeServiceForHTTPRoute(facade.PublicGatewayService), facade.PublicGatewayService)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "HTTP_ROUTE_REQUEST_IDLE_TIMEOUT")
+}
+
+func TestBackendTrafficPolicyIdleTimeoutInvalidLegacyAnnotationFailsTemplate(t *testing.T) {
+	os.Unsetenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT")
+	os.Setenv("GW_INGRESS_ANNOTATIONS", "nginx.ingress.kubernetes.io/proxy-read-timeout: '30m'")
+	defer os.Unsetenv("GW_INGRESS_ANNOTATIONS")
+
+	builder := NewIngressTemplateBuilder(false, false, "")
+	_, err := builder.BuildHTTPRouteTemplate(facade.IngressSpec{
+		Hostname:    "public-host.qubership.org",
+		IsGrpc:      false,
+		GatewayPort: 8080,
+	}, buildFacadeServiceForHTTPRoute(facade.PublicGatewayService), facade.PublicGatewayService)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "proxy-read-timeout")
+}
+
 func TestHTTPRouteCustomFilters(t *testing.T) {
 	os.Setenv("HTTP_ROUTE_CUSTOM_FILTERS", `[{"type":"ResponseHeaderModifier","responseHeaderModifier":{"remove":["authorization"]}}]`)
 	defer os.Unsetenv("HTTP_ROUTE_CUSTOM_FILTERS")

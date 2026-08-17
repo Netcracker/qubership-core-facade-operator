@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -23,12 +24,16 @@ const (
 	defaultGatewaySystemName      = "default-external-gateway"
 	edgeRouterName                = "edge-router"
 
-	envHTTPRouteIdleTimeout  = "HTTP_ROUTE_REQUEST_IDLE_TIMEOUT"
+	envHTTPRouteIdleTimeout   = "HTTP_ROUTE_REQUEST_IDLE_TIMEOUT"
 	envHTTPRouteCustomFilters = "HTTP_ROUTE_CUSTOM_FILTERS"
 
 	annotationProxyReadTimeout = "nginx.ingress.kubernetes.io/proxy-read-timeout"
 	annotationProxySendTimeout = "nginx.ingress.kubernetes.io/proxy-send-timeout"
 )
+
+// gatewayAPIDuration mirrors the validation pattern of gateway-api v1.Duration (GEP-2257),
+// which is the format accepted by Envoy Gateway timeout fields.
+var gatewayAPIDuration = regexp.MustCompile(`^([0-9]{1,5}(h|m|s|ms)){1,4}$`)
 
 type HTTPRoute struct {
 	Name                  string
@@ -82,7 +87,10 @@ func (b *IngressTemplateBuilder) BuildHTTPRouteTemplate(ingressSpec facade.Ingre
 		X509SecretNamespace: x509SecretNamespace,
 	}
 
-	httpRoute.BackendTrafficPolicy = b.buildBackendTrafficPolicy(httpRouteName, cr, ingressSpec.IsGrpc)
+	httpRoute.BackendTrafficPolicy, err = b.buildBackendTrafficPolicy(httpRouteName, cr, ingressSpec.IsGrpc)
+	if err != nil {
+		return HTTPRoute{}, err
+	}
 
 	if b.x509Enable {
 		httpRoute.ClientTrafficPolicy = b.buildClientTrafficPolicy(httpRouteName, cr, x509SecretNamespace)
@@ -275,40 +283,56 @@ func validateHTTPRouteFilter(filter gatewayv1.HTTPRouteFilter) error {
 	return nil
 }
 
-func (b *IngressTemplateBuilder) resolveStreamIdleTimeout() string {
+func (b *IngressTemplateBuilder) resolveStreamIdleTimeout() (string, error) {
 	idleTimeout := strings.TrimSpace(os.Getenv(envHTTPRouteIdleTimeout))
 	if idleTimeout != "" {
-		return idleTimeout
+		if !gatewayAPIDuration.MatchString(idleTimeout) {
+			return "", fmt.Errorf("%s value %q is not a valid Gateway API duration, expected pattern %s, for example 1800s",
+				envHTTPRouteIdleTimeout, idleTimeout, gatewayAPIDuration.String())
+		}
+		return idleTimeout, nil
 	}
 
 	return deriveIdleTimeoutFromLegacyAnnotations(b.gwIngressAnnotations)
 }
 
-func deriveIdleTimeoutFromLegacyAnnotations(annotations map[string]string) string {
+func deriveIdleTimeoutFromLegacyAnnotations(annotations map[string]string) (string, error) {
 	if len(annotations) == 0 {
-		return ""
+		return "", nil
 	}
 	maxSec := -1
-	if read := annotations[annotationProxyReadTimeout]; read != "" {
-		if sec, err := strconv.Atoi(strings.TrimSpace(read)); err == nil {
-			maxSec = sec
+	for _, annotation := range []string{annotationProxyReadTimeout, annotationProxySendTimeout} {
+		value := strings.TrimSpace(annotations[annotation])
+		if value == "" {
+			continue
 		}
-	}
-	if send := annotations[annotationProxySendTimeout]; send != "" {
-		if sec, err := strconv.Atoi(strings.TrimSpace(send)); err == nil && sec > maxSec {
+		sec, err := strconv.Atoi(value)
+		if err != nil {
+			return "", fmt.Errorf("annotation %s value %q is not a number of seconds: %w", annotation, value, err)
+		}
+		if sec > maxSec {
 			maxSec = sec
 		}
 	}
 	if maxSec < 0 {
-		return ""
+		return "", nil
 	}
-	return strconv.Itoa(maxSec) + "s"
+
+	idleTimeout := strconv.Itoa(maxSec) + "s"
+	if !gatewayAPIDuration.MatchString(idleTimeout) {
+		return "", fmt.Errorf("timeout %s derived from legacy annotations is not a valid Gateway API duration", idleTimeout)
+	}
+	return idleTimeout, nil
 }
 
-func (b *IngressTemplateBuilder) buildBackendTrafficPolicy(httpRouteName string, cr facade.MeshGateway, isGrpc bool) *unstructured.Unstructured {
-	streamIdleTimeout := b.resolveStreamIdleTimeout()
+func (b *IngressTemplateBuilder) buildBackendTrafficPolicy(httpRouteName string, cr facade.MeshGateway, isGrpc bool) (*unstructured.Unstructured, error) {
+	streamIdleTimeout, err := b.resolveStreamIdleTimeout()
+	if err != nil {
+		httpRouteLogger.Errorf("Failed to resolve stream idle timeout for HTTPRoute %s: %v", httpRouteName, err)
+		return nil, err
+	}
 	if !isGrpc && streamIdleTimeout == "" {
-		return nil
+		return nil, nil
 	}
 
 	spec := map[string]interface{}{
@@ -352,7 +376,7 @@ func (b *IngressTemplateBuilder) buildBackendTrafficPolicy(httpRouteName string,
 			},
 			"spec": spec,
 		},
-	}
+	}, nil
 }
 
 func (b *IngressTemplateBuilder) buildClientTrafficPolicy(httpRouteName string, cr facade.MeshGateway, x509SecretNamespace string) *unstructured.Unstructured {
