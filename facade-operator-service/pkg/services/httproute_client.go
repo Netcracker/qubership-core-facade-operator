@@ -58,6 +58,8 @@ func (h *HTTPRouteClientImpl) Apply(ctx context.Context, req ctrl.Request, httpR
 		if err := h.backendPolicyClient.Apply(ctx, req, backendPolicy, httpRoute.BackendTrafficPolicy, h.mergeUnstructuredPolicies); err != nil {
 			return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("failed to apply BackendTrafficPolicy for HTTPRoute %s", httpRoute.Name), err)
 		}
+	} else if err := h.deleteBackendTrafficPolicy(ctx, req, httpRoute.Name); err != nil {
+		return err
 	}
 
 	if httpRoute.ClientTrafficPolicy != nil {
@@ -68,6 +70,8 @@ func (h *HTTPRouteClientImpl) Apply(ctx context.Context, req ctrl.Request, httpR
 		if err := h.clientPolicyClient.Apply(ctx, req, clientPolicy, httpRoute.ClientTrafficPolicy, h.mergeUnstructuredPolicies); err != nil {
 			return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("failed to apply ClientTrafficPolicy for HTTPRoute %s", httpRoute.Name), err)
 		}
+	} else if err := h.deleteClientTrafficPolicy(ctx, req, httpRoute.Name); err != nil {
+		return err
 	}
 
 	return nil
@@ -126,23 +130,35 @@ func (h *HTTPRouteClientImpl) Delete(ctx context.Context, req ctrl.Request, name
 		return err
 	}
 
+	if err := h.deleteBackendTrafficPolicy(ctx, req, name); err != nil {
+		h.logger.WarnC(ctx, "[%v] Failed to delete BackendTrafficPolicy %s: %v", req.NamespacedName, name, err)
+	}
+	if err := h.deleteClientTrafficPolicy(ctx, req, name); err != nil {
+		h.logger.WarnC(ctx, "[%v] Failed to delete ClientTrafficPolicy %s: %v", req.NamespacedName, name, err)
+	}
+
+	return nil
+}
+
+func (h *HTTPRouteClientImpl) deleteBackendTrafficPolicy(ctx context.Context, req ctrl.Request, name string) error {
 	h.logger.InfoC(ctx, "[%v] Deleting BackendTrafficPolicy %s if exists", req.NamespacedName, name)
 	backendPolicy := &unstructured.Unstructured{}
 	backendPolicy.SetAPIVersion(utils.ApiVersionV1AlphaV1)
 	backendPolicy.SetKind("BackendTrafficPolicy")
 	if err := h.backendPolicyClient.Delete(ctx, req, name, backendPolicy); err != nil && !k8sErrors.IsNotFound(err) {
-		h.logger.WarnC(ctx, "[%v] Failed to delete BackendTrafficPolicy %s: %v", req.NamespacedName, name, err)
+		return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("failed to delete BackendTrafficPolicy for HTTPRoute %s", name), err)
 	}
+	return nil
+}
 
-	// Delete associated ClientTrafficPolicy (same name as HTTPRoute)
+func (h *HTTPRouteClientImpl) deleteClientTrafficPolicy(ctx context.Context, req ctrl.Request, name string) error {
 	h.logger.InfoC(ctx, "[%v] Deleting ClientTrafficPolicy %s if exists", req.NamespacedName, name)
 	clientPolicy := &unstructured.Unstructured{}
 	clientPolicy.SetAPIVersion(utils.ApiVersionV1AlphaV1)
 	clientPolicy.SetKind("ClientTrafficPolicy")
 	if err := h.clientPolicyClient.Delete(ctx, req, name, clientPolicy); err != nil && !k8sErrors.IsNotFound(err) {
-		h.logger.WarnC(ctx, "[%v] Failed to delete ClientTrafficPolicy %s: %v", req.NamespacedName, name, err)
+		return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("failed to delete ClientTrafficPolicy for HTTPRoute %s", name), err)
 	}
-
 	return nil
 }
 

@@ -2,17 +2,21 @@ package templates
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
+	"github.com/netcracker/qubership-core-lib-go/v3/logging"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
+
+var httpRouteLogger = logging.GetLogger("templates/httproute")
 
 const (
 	defaultGatewaySystemNamespace = "gateway-system"
@@ -225,12 +229,65 @@ func buildHTTPRouteCustomFilters() []gatewayv1.HTTPRouteFilter {
 	}
 	var filters []gatewayv1.HTTPRouteFilter
 	if err := json.Unmarshal([]byte(envVal), &filters); err != nil {
+		httpRouteLogger.Errorf("Failed to unmarshal %s: %v", envHTTPRouteCustomFilters, err)
 		return nil
 	}
 	if len(filters) == 0 {
 		return nil
 	}
-	return filters
+
+	validFilters := make([]gatewayv1.HTTPRouteFilter, 0, len(filters))
+	for _, filter := range filters {
+		if err := validateHTTPRouteFilter(filter); err != nil {
+			httpRouteLogger.Errorf("Skipping invalid HTTPRoute filter from %s: %v", envHTTPRouteCustomFilters, err)
+			continue
+		}
+		validFilters = append(validFilters, filter)
+	}
+	if len(validFilters) == 0 {
+		return nil
+	}
+	return validFilters
+}
+
+func validateHTTPRouteFilter(filter gatewayv1.HTTPRouteFilter) error {
+	switch filter.Type {
+	case gatewayv1.HTTPRouteFilterRequestHeaderModifier:
+		if filter.RequestHeaderModifier == nil {
+			return fmt.Errorf("type %q requires requestHeaderModifier", filter.Type)
+		}
+	case gatewayv1.HTTPRouteFilterResponseHeaderModifier:
+		if filter.ResponseHeaderModifier == nil {
+			return fmt.Errorf("type %q requires responseHeaderModifier", filter.Type)
+		}
+	case gatewayv1.HTTPRouteFilterRequestRedirect:
+		if filter.RequestRedirect == nil {
+			return fmt.Errorf("type %q requires requestRedirect", filter.Type)
+		}
+	case gatewayv1.HTTPRouteFilterURLRewrite:
+		if filter.URLRewrite == nil {
+			return fmt.Errorf("type %q requires urlRewrite", filter.Type)
+		}
+	case gatewayv1.HTTPRouteFilterRequestMirror:
+		if filter.RequestMirror == nil {
+			return fmt.Errorf("type %q requires requestMirror", filter.Type)
+		}
+	case gatewayv1.HTTPRouteFilterCORS:
+		if filter.CORS == nil {
+			return fmt.Errorf("type %q requires cors", filter.Type)
+		}
+	case gatewayv1.HTTPRouteFilterExternalAuth:
+		if filter.ExternalAuth == nil {
+			return fmt.Errorf("type %q requires externalAuth", filter.Type)
+		}
+	case gatewayv1.HTTPRouteFilterExtensionRef:
+		if filter.ExtensionRef == nil {
+			return fmt.Errorf("type %q requires extensionRef", filter.Type)
+		}
+	default:
+		return fmt.Errorf("unsupported filter type %q", filter.Type)
+	}
+	return nil
 }
 
 func (b *IngressTemplateBuilder) resolveStreamIdleTimeout() string {

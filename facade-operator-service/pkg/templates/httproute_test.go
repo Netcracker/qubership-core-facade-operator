@@ -422,6 +422,40 @@ func TestHTTPRouteCustomFilters(t *testing.T) {
 	assert.Equal(t, []string{"authorization"}, k8sRoute.Spec.Rules[0].Filters[0].ResponseHeaderModifier.Remove)
 }
 
+func TestHTTPRouteCustomFiltersRejectsUnsupportedType(t *testing.T) {
+	os.Setenv("HTTP_ROUTE_CUSTOM_FILTERS", `[{"type":"Something unexpected"}]`)
+	defer os.Unsetenv("HTTP_ROUTE_CUSTOM_FILTERS")
+
+	assert.Nil(t, buildHTTPRouteCustomFilters())
+}
+
+func TestHTTPRouteCustomFiltersRejectsMissingConfig(t *testing.T) {
+	os.Setenv("HTTP_ROUTE_CUSTOM_FILTERS", `[{"type":"ResponseHeaderModifier"}]`)
+	defer os.Unsetenv("HTTP_ROUTE_CUSTOM_FILTERS")
+
+	assert.Nil(t, buildHTTPRouteCustomFilters())
+}
+
+func TestHTTPRouteCustomFiltersSkipsInvalidKeepsValid(t *testing.T) {
+	os.Setenv("HTTP_ROUTE_CUSTOM_FILTERS", `[
+		{"type":"Something unexpected"},
+		{"type":"ResponseHeaderModifier","responseHeaderModifier":{"remove":["authorization"]}},
+		{"type":"RequestHeaderModifier"}
+	]`)
+	defer os.Unsetenv("HTTP_ROUTE_CUSTOM_FILTERS")
+
+	filters := buildHTTPRouteCustomFilters()
+	assert.Equal(t, 1, len(filters))
+	assert.Equal(t, gatewayv1.HTTPRouteFilterResponseHeaderModifier, filters[0].Type)
+}
+
+func TestHTTPRouteCustomFiltersLogsInvalidJSON(t *testing.T) {
+	os.Setenv("HTTP_ROUTE_CUSTOM_FILTERS", `{not-json}`)
+	defer os.Unsetenv("HTTP_ROUTE_CUSTOM_FILTERS")
+
+	assert.Nil(t, buildHTTPRouteCustomFilters())
+}
+
 func TestHTTPRouteParentRefsIncludeGroupAndKind(t *testing.T) {
 	builder := NewIngressTemplateBuilder(false, false, "")
 	httpRoute, err := builder.BuildHTTPRouteTemplate(facade.IngressSpec{
