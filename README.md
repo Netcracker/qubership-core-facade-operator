@@ -57,6 +57,9 @@ The predeploy script for creating CRD supports the following PaaS:
 * Openshift 3.11 or higher
 * Kubernetes 1.15 or higher
 
+Gateway API mode creates `BackendTrafficPolicy` (timeout, `useClientProtocol`, `mergeType`) and `ClientTrafficPolicy` (x509) from `gateway.envoyproxy.io`. These require **Envoy Gateway v1.8.0+** (`spec.timeout.http.streamIdleTimeout` does not exist in 1.6.x/1.7.x). The cluster is expected to run **v1.8.1**.
+
+
 # Description of Facade Operator CR fields
 Example facade operator CR
 ```yaml
