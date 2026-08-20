@@ -9,10 +9,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// Paths that must not be exported to Jaeger (platform tracing contract:
-// probes, metrics and management endpoints are excluded).
-// actuator-common RateLimitingSampler already drops /health and /static*,
-// but not /ready — which is hit by readiness/startup probes every few seconds.
 var excludedTracePaths = map[string]struct{}{
 	"/health":      {},
 	"/ready":       {},
