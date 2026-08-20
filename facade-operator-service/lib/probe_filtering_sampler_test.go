@@ -40,9 +40,36 @@ func TestProbeFilteringSamplerKeepsBusinessPaths(t *testing.T) {
 	assert.Equal(t, sdktrace.RecordAndSample, decision)
 }
 
+func TestProbeFilteringSamplerDescription(t *testing.T) {
+	sampler := newProbeFilteringSampler(10)
+	assert.Contains(t, sampler.Description(), "ProbeFilteringSampler")
+	assert.Contains(t, sampler.Description(), "RateLimitingSampler")
+}
+
+func TestHttpTargetFromSamplingParamsIgnoresEmptyAndMissing(t *testing.T) {
+	assert.Equal(t, "", httpTargetFromSamplingParams(sdktrace.SamplingParameters{}))
+	assert.Equal(t, "", httpTargetFromSamplingParams(sdktrace.SamplingParameters{
+		Attributes: []attribute.KeyValue{
+			semconv.HTTPTargetKey.String(""),
+			semconv.HTTPMethodKey.String("GET"),
+		},
+	}))
+	assert.Equal(t, "/ready", httpTargetFromSamplingParams(sdktrace.SamplingParameters{
+		Attributes: []attribute.KeyValue{
+			semconv.HTTPMethodKey.String("GET"),
+			semconv.HTTPTargetKey.String("/ready"),
+		},
+	}))
+}
+
 func TestIsExcludedTracePath(t *testing.T) {
 	assert.True(t, isExcludedTracePath("/ready"))
 	assert.True(t, isExcludedTracePath("/ready?foo=bar"))
+	assert.True(t, isExcludedTracePath("/liveness"))
+	assert.True(t, isExcludedTracePath("/readiness"))
+	assert.True(t, isExcludedTracePath("/livez"))
+	assert.True(t, isExcludedTracePath("/readyz"))
+	assert.True(t, isExcludedTracePath("/healthz"))
 	assert.False(t, isExcludedTracePath("/api/facades"))
 	assert.False(t, isExcludedTracePath(""))
 }

@@ -124,14 +124,7 @@ func startServer(mgr manager.Manager) {
 		IdleTimeout: 30 * time.Second,
 	}
 	pprofPort := configloader.GetOrDefaultString("pprof.port", "6060")
-	// Zipkin OTel exporter (same as site-management / control-plane):
-	// TRACING_ENABLED / TRACING_HOST / TRACING_SAMPLER_RATELIMITING → :9411
-	app, err := fiberserver.New(fiberConfig).
-		WithPprof(pprofPort).
-		WithPrometheus("/prometheus").
-		WithTracer(newProbeFilteringZipkinTracer()).
-		WithApiVersion().
-		Process()
+	app, err := newFiberServerApp(fiberConfig, pprofPort)
 	if err != nil {
 		setupLog.Error("Error while create app because: %s", err.Error())
 		return
@@ -146,6 +139,18 @@ func startServer(mgr manager.Manager) {
 		setupLog.Error("%s", errs.ToLogFormat(errs.NewError(customerrors.UnknownErrorCode, "Can not run manager", err)))
 		os.Exit(1)
 	}
+}
+
+// newFiberServerApp builds the Fiber actuator app with Zipkin tracing.
+// Probe/management paths are dropped from export via probeFilteringZipkinTracer
+// (platform tracing contract; actuator-common only excludes /health by default).
+func newFiberServerApp(fiberConfig fiber.Config, pprofPort string) (*fiber.App, error) {
+	return fiberserver.New(fiberConfig).
+		WithPprof(pprofPort).
+		WithPrometheus("/prometheus").
+		WithTracer(newProbeFilteringZipkinTracer()).
+		WithApiVersion().
+		Process()
 }
 
 func healthProbe(c *fiber.Ctx) error {
