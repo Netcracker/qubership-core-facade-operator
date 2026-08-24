@@ -67,7 +67,7 @@ func (t *probeFilteringZipkinTracer) RegisterTracerProvider() (bool, error) {
 	}
 
 	tp := sdktrace.NewTracerProvider(
-		sdktrace.WithSpanProcessor(sdktrace.NewSimpleSpanProcessor(exporter)),
+		sdktrace.WithSpanProcessor(sdktrace.NewBatchSpanProcessor(exporter)),
 		sdktrace.WithResource(resource.NewWithAttributes(semconv.SchemaURL,
 			semconv.ServiceNameKey.String(t.serviceName+"-"+t.namespace),
 			semconv.ServiceNamespaceKey.String(t.namespace))),
