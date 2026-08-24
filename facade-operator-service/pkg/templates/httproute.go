@@ -58,6 +58,10 @@ type HTTPRoute struct {
 }
 
 func (b *IngressTemplateBuilder) BuildHTTPRouteTemplate(ingressSpec facade.IngressSpec, cr facade.MeshGateway, gatewayServiceName string) (HTTPRoute, error) {
+	if err := b.ValidateGatewayAPIConfig(); err != nil {
+		return HTTPRoute{}, err
+	}
+
 	httpRouteName, gwPort, err := b.BuildNameAndPort(ingressSpec, cr, gatewayServiceName)
 	if err != nil {
 		return HTTPRoute{}, err
@@ -230,32 +234,39 @@ func getPathPointer(path string) *string {
 	return &path
 }
 
-func buildHTTPRouteCustomFilters() []gatewayv1.HTTPRouteFilter {
+func buildHTTPRouteCustomFilters() ([]gatewayv1.HTTPRouteFilter, error) {
 	envVal := strings.TrimSpace(os.Getenv(envHTTPRouteCustomFilters))
 	if envVal == "" || envVal == "[]" || envVal == "null" {
-		return nil
+		return nil, nil
 	}
 	var filters []gatewayv1.HTTPRouteFilter
 	if err := json.Unmarshal([]byte(envVal), &filters); err != nil {
-		httpRouteLogger.Errorf("Failed to unmarshal %s: %v", envHTTPRouteCustomFilters, err)
-		return nil
+		return nil, fmt.Errorf("failed to unmarshal %s: %w", envHTTPRouteCustomFilters, err)
 	}
 	if len(filters) == 0 {
-		return nil
+		return nil, nil
 	}
 
-	validFilters := make([]gatewayv1.HTTPRouteFilter, 0, len(filters))
-	for _, filter := range filters {
+	for i, filter := range filters {
 		if err := validateHTTPRouteFilter(filter); err != nil {
-			httpRouteLogger.Errorf("Skipping invalid HTTPRoute filter from %s: %v", envHTTPRouteCustomFilters, err)
-			continue
+			return nil, fmt.Errorf("invalid HTTPRoute filter at index %d in %s: %w", i, envHTTPRouteCustomFilters, err)
 		}
-		validFilters = append(validFilters, filter)
 	}
-	if len(validFilters) == 0 {
-		return nil
+	return filters, nil
+}
+
+// ValidateGatewayAPIConfig checks Gateway API-related env vars that do not change at runtime.
+// Call at operator startup; BuildHTTPRouteTemplate also invokes it so misconfiguration fails reconcile.
+func (b *IngressTemplateBuilder) ValidateGatewayAPIConfig() error {
+	if b.httpRouteCustomFiltersErr != nil {
+		return b.httpRouteCustomFiltersErr
 	}
-	return validFilters
+	idleTimeout := strings.TrimSpace(os.Getenv(envHTTPRouteIdleTimeout))
+	if idleTimeout != "" && !gatewayAPIDuration.MatchString(idleTimeout) {
+		return fmt.Errorf("%s value %q is not a valid Gateway API duration, expected pattern %s, for example 1800s",
+			envHTTPRouteIdleTimeout, idleTimeout, gatewayAPIDuration.String())
+	}
+	return nil
 }
 
 var httpRouteFilterValidators = map[gatewayv1.HTTPRouteFilterType]struct {
@@ -309,6 +320,11 @@ func deriveIdleTimeoutFromLegacyAnnotations(annotations map[string]string) (stri
 		sec, err := strconv.Atoi(value)
 		if err != nil {
 			httpRouteLogger.Warnf("Ignoring annotation %s value %q: expected a number of seconds", annotation, value)
+			continue
+		}
+		// nginx "0" is not mapped: Envoy "0s" disables the idle timeout, which is easy to misread as "use default".
+		if sec <= 0 {
+			httpRouteLogger.Warnf("Ignoring annotation %s value %q: non-positive timeouts are not converted to streamIdleTimeout", annotation, value)
 			continue
 		}
 		if sec > maxSec {

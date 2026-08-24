@@ -1,7 +1,6 @@
 package templates
 
 import (
-	"os"
 	"testing"
 
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
@@ -25,8 +24,7 @@ func TestBuildPrivateHTTPRoute(t *testing.T) {
 }
 
 func testBuildHTTPRoute(t *testing.T, gwServiceName string) {
-	os.Setenv("GW_INGRESS_ANNOTATIONS", "annotation.name1: 'annotation-val1'\nannotation.name2: 'annotation-val2'")
-	defer os.Unsetenv("GW_INGRESS_ANNOTATIONS")
+	t.Setenv("GW_INGRESS_ANNOTATIONS", "annotation.name1: 'annotation-val1'\nannotation.name2: 'annotation-val2'")
 
 	builder := NewIngressTemplateBuilder(true, false, "")
 
@@ -55,10 +53,8 @@ func testBuildHTTPRoute(t *testing.T, gwServiceName string) {
 	validateClientTrafficPolicy(t, httpRouteTemplate, gwServiceName, false)
 
 	// Test BGD2 scenario with PEER_NAMESPACE
-	os.Setenv("PEER_NAMESPACE", "test-peer-namespace")
-	os.Setenv("CONTROLLER_NAMESPACE", "test-controller-namespace")
-	defer os.Unsetenv("PEER_NAMESPACE")
-	defer os.Unsetenv("CONTROLLER_NAMESPACE")
+	t.Setenv("PEER_NAMESPACE", "test-peer-namespace")
+	t.Setenv("CONTROLLER_NAMESPACE", "test-controller-namespace")
 
 	builder = NewIngressTemplateBuilder(true, false, "")
 
@@ -71,8 +67,8 @@ func testBuildHTTPRoute(t *testing.T, gwServiceName string) {
 	validateHTTPRouteParentRefs(t, httpRouteTemplate, true)
 
 	// Test satellite scenario with different x509 secret namespace
-	os.Unsetenv("PEER_NAMESPACE")
-	os.Unsetenv("CONTROLLER_NAMESPACE")
+	t.Setenv("PEER_NAMESPACE", "")
+	t.Setenv("CONTROLLER_NAMESPACE", "")
 
 	builder = NewIngressTemplateBuilder(true, true, "baseline-namespace")
 
@@ -344,18 +340,15 @@ func TestGatewaySystemEnvVariables(t *testing.T) {
 	assert.Equal(t, "gateway-system", getGatewaySystemNamespace())
 	assert.Equal(t, "default-external-gateway", getGatewaySystemName())
 
-	os.Setenv("GATEWAY_SYSTEM_NAMESPACE", "custom-gateway-ns")
-	os.Setenv("GATEWAY_SYSTEM_NAME", "custom-gateway-name")
-	defer os.Unsetenv("GATEWAY_SYSTEM_NAMESPACE")
-	defer os.Unsetenv("GATEWAY_SYSTEM_NAME")
+	t.Setenv("GATEWAY_SYSTEM_NAMESPACE", "custom-gateway-ns")
+	t.Setenv("GATEWAY_SYSTEM_NAME", "custom-gateway-name")
 
 	assert.Equal(t, "custom-gateway-ns", getGatewaySystemNamespace())
 	assert.Equal(t, "custom-gateway-name", getGatewaySystemName())
 }
 
 func TestBackendTrafficPolicyIdleTimeoutFromEnv(t *testing.T) {
-	os.Setenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT", "1000s")
-	defer os.Unsetenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT")
+	t.Setenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT", "1000s")
 
 	builder := NewIngressTemplateBuilder(false, false, "")
 
@@ -385,9 +378,8 @@ func TestBackendTrafficPolicyIdleTimeoutFromEnv(t *testing.T) {
 }
 
 func TestBackendTrafficPolicyIdleTimeoutFromLegacyAnnotations(t *testing.T) {
-	os.Unsetenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT")
-	os.Setenv("GW_INGRESS_ANNOTATIONS", "nginx.ingress.kubernetes.io/proxy-read-timeout: '2000'\nnginx.ingress.kubernetes.io/proxy-send-timeout: '1800'")
-	defer os.Unsetenv("GW_INGRESS_ANNOTATIONS")
+	t.Setenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT", "")
+	t.Setenv("GW_INGRESS_ANNOTATIONS", "nginx.ingress.kubernetes.io/proxy-read-timeout: '2000'\nnginx.ingress.kubernetes.io/proxy-send-timeout: '1800'")
 
 	builder := NewIngressTemplateBuilder(false, false, "")
 	publicRoute, err := builder.BuildHTTPRouteTemplate(facade.IngressSpec{
@@ -407,29 +399,27 @@ func TestResolveStreamIdleTimeout(t *testing.T) {
 	builder := NewIngressTemplateBuilder(false, false, "")
 
 	for _, value := range []string{"1800s", "30m", "1h30m", "500ms"} {
-		os.Setenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT", value)
+		t.Setenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT", value)
 		idleTimeout, err := builder.resolveStreamIdleTimeout()
 		assert.NoError(t, err)
 		assert.Equal(t, value, idleTimeout)
 	}
 
 	for _, value := range []string{"1800", "abc", "-10s", "10sec", "1800000s"} {
-		os.Setenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT", value)
+		t.Setenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT", value)
 		_, err := builder.resolveStreamIdleTimeout()
 		assert.Error(t, err, "expected %q to be rejected", value)
 	}
 
-	os.Unsetenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT")
+	t.Setenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT", "")
 	idleTimeout, err := builder.resolveStreamIdleTimeout()
 	assert.NoError(t, err)
 	assert.Equal(t, "", idleTimeout)
 }
 
 func TestBackendTrafficPolicyIdleTimeoutInvalidEnvFailsTemplate(t *testing.T) {
-	os.Setenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT", "not-a-duration")
-	os.Setenv("GW_INGRESS_ANNOTATIONS", "nginx.ingress.kubernetes.io/proxy-read-timeout: '2000'")
-	defer os.Unsetenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT")
-	defer os.Unsetenv("GW_INGRESS_ANNOTATIONS")
+	t.Setenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT", "not-a-duration")
+	t.Setenv("GW_INGRESS_ANNOTATIONS", "nginx.ingress.kubernetes.io/proxy-read-timeout: '2000'")
 
 	builder := NewIngressTemplateBuilder(false, false, "")
 	_, err := builder.BuildHTTPRouteTemplate(facade.IngressSpec{
@@ -442,9 +432,8 @@ func TestBackendTrafficPolicyIdleTimeoutInvalidEnvFailsTemplate(t *testing.T) {
 }
 
 func TestBackendTrafficPolicyIdleTimeoutInvalidLegacyAnnotationIsIgnored(t *testing.T) {
-	os.Unsetenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT")
-	os.Setenv("GW_INGRESS_ANNOTATIONS", "nginx.ingress.kubernetes.io/proxy-read-timeout: '30m'\nnginx.ingress.kubernetes.io/proxy-send-timeout: '1800'")
-	defer os.Unsetenv("GW_INGRESS_ANNOTATIONS")
+	t.Setenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT", "")
+	t.Setenv("GW_INGRESS_ANNOTATIONS", "nginx.ingress.kubernetes.io/proxy-read-timeout: '30m'\nnginx.ingress.kubernetes.io/proxy-send-timeout: '1800'")
 
 	builder := NewIngressTemplateBuilder(false, false, "")
 	publicRoute, err := builder.BuildHTTPRouteTemplate(facade.IngressSpec{
@@ -460,9 +449,22 @@ func TestBackendTrafficPolicyIdleTimeoutInvalidLegacyAnnotationIsIgnored(t *test
 	assert.Equal(t, "1800s", timeout)
 }
 
+func TestBackendTrafficPolicyIdleTimeoutZeroLegacyAnnotationIsIgnored(t *testing.T) {
+	t.Setenv("HTTP_ROUTE_REQUEST_IDLE_TIMEOUT", "")
+	t.Setenv("GW_INGRESS_ANNOTATIONS", "nginx.ingress.kubernetes.io/proxy-read-timeout: '0'\nnginx.ingress.kubernetes.io/proxy-send-timeout: '0'")
+
+	builder := NewIngressTemplateBuilder(false, false, "")
+	publicRoute, err := builder.BuildHTTPRouteTemplate(facade.IngressSpec{
+		Hostname:    "public-host.qubership.org",
+		IsGrpc:      false,
+		GatewayPort: 8080,
+	}, buildFacadeServiceForHTTPRoute(facade.PublicGatewayService), facade.PublicGatewayService)
+	assert.Nil(t, err)
+	assert.Nil(t, publicRoute.BackendTrafficPolicy)
+}
+
 func TestHTTPRouteCustomFilters(t *testing.T) {
-	os.Setenv("HTTP_ROUTE_CUSTOM_FILTERS", `[{"type":"ResponseHeaderModifier","responseHeaderModifier":{"remove":["authorization"]}}]`)
-	defer os.Unsetenv("HTTP_ROUTE_CUSTOM_FILTERS")
+	t.Setenv("HTTP_ROUTE_CUSTOM_FILTERS", `[{"type":"ResponseHeaderModifier","responseHeaderModifier":{"remove":["authorization"]}}]`)
 
 	builder := NewIngressTemplateBuilder(false, false, "")
 	httpRoute, err := builder.BuildHTTPRouteTemplate(facade.IngressSpec{
@@ -480,37 +482,49 @@ func TestHTTPRouteCustomFilters(t *testing.T) {
 }
 
 func TestHTTPRouteCustomFiltersRejectsUnsupportedType(t *testing.T) {
-	os.Setenv("HTTP_ROUTE_CUSTOM_FILTERS", `[{"type":"Something unexpected"}]`)
-	defer os.Unsetenv("HTTP_ROUTE_CUSTOM_FILTERS")
+	t.Setenv("HTTP_ROUTE_CUSTOM_FILTERS", `[{"type":"Something unexpected"}]`)
 
-	assert.Nil(t, buildHTTPRouteCustomFilters())
+	filters, err := buildHTTPRouteCustomFilters()
+	assert.Error(t, err)
+	assert.Nil(t, filters)
+
+	builder := NewIngressTemplateBuilder(false, false, "")
+	_, buildErr := builder.BuildHTTPRouteTemplate(facade.IngressSpec{
+		Hostname:    "public-host.qubership.org",
+		IsGrpc:      false,
+		GatewayPort: 8080,
+	}, buildFacadeServiceForHTTPRoute(facade.PublicGatewayService), facade.PublicGatewayService)
+	assert.Error(t, buildErr)
+	assert.Contains(t, buildErr.Error(), "HTTP_ROUTE_CUSTOM_FILTERS")
 }
 
 func TestHTTPRouteCustomFiltersRejectsMissingConfig(t *testing.T) {
-	os.Setenv("HTTP_ROUTE_CUSTOM_FILTERS", `[{"type":"ResponseHeaderModifier"}]`)
-	defer os.Unsetenv("HTTP_ROUTE_CUSTOM_FILTERS")
+	t.Setenv("HTTP_ROUTE_CUSTOM_FILTERS", `[{"type":"ResponseHeaderModifier"}]`)
 
-	assert.Nil(t, buildHTTPRouteCustomFilters())
+	filters, err := buildHTTPRouteCustomFilters()
+	assert.Error(t, err)
+	assert.Nil(t, filters)
 }
 
-func TestHTTPRouteCustomFiltersSkipsInvalidKeepsValid(t *testing.T) {
-	os.Setenv("HTTP_ROUTE_CUSTOM_FILTERS", `[
+func TestHTTPRouteCustomFiltersRejectsAnyInvalidInList(t *testing.T) {
+	t.Setenv("HTTP_ROUTE_CUSTOM_FILTERS", `[
 		{"type":"Something unexpected"},
 		{"type":"ResponseHeaderModifier","responseHeaderModifier":{"remove":["authorization"]}},
 		{"type":"RequestHeaderModifier"}
 	]`)
-	defer os.Unsetenv("HTTP_ROUTE_CUSTOM_FILTERS")
 
-	filters := buildHTTPRouteCustomFilters()
-	assert.Equal(t, 1, len(filters))
-	assert.Equal(t, gatewayv1.HTTPRouteFilterResponseHeaderModifier, filters[0].Type)
+	filters, err := buildHTTPRouteCustomFilters()
+	assert.Error(t, err)
+	assert.Nil(t, filters)
+	assert.Contains(t, err.Error(), "index 0")
 }
 
-func TestHTTPRouteCustomFiltersLogsInvalidJSON(t *testing.T) {
-	os.Setenv("HTTP_ROUTE_CUSTOM_FILTERS", `{not-json}`)
-	defer os.Unsetenv("HTTP_ROUTE_CUSTOM_FILTERS")
+func TestHTTPRouteCustomFiltersRejectsInvalidJSON(t *testing.T) {
+	t.Setenv("HTTP_ROUTE_CUSTOM_FILTERS", `{not-json}`)
 
-	assert.Nil(t, buildHTTPRouteCustomFilters())
+	filters, err := buildHTTPRouteCustomFilters()
+	assert.Error(t, err)
+	assert.Nil(t, filters)
 }
 
 func TestHTTPRouteParentRefsIncludeGroupAndKind(t *testing.T) {
@@ -522,9 +536,10 @@ func TestHTTPRouteParentRefsIncludeGroupAndKind(t *testing.T) {
 	}, buildFacadeServiceForHTTPRoute(facade.PublicGatewayService), facade.PublicGatewayService)
 	assert.Nil(t, err)
 
-	parentRef := httpRoute.BuildK8sHTTPRoute().Spec.ParentRefs[0]
-	assert.NotNil(t, parentRef.Group)
-	assert.Equal(t, gatewayv1.Group(gatewayv1.GroupName), *parentRef.Group)
-	assert.NotNil(t, parentRef.Kind)
-	assert.Equal(t, gatewayv1.Kind("Gateway"), *parentRef.Kind)
+	k8sRoute := httpRoute.BuildK8sHTTPRoute()
+	assert.Equal(t, 1, len(k8sRoute.Spec.ParentRefs))
+	assert.NotNil(t, k8sRoute.Spec.ParentRefs[0].Group)
+	assert.Equal(t, gatewayv1.Group(gatewayv1.GroupName), *k8sRoute.Spec.ParentRefs[0].Group)
+	assert.NotNil(t, k8sRoute.Spec.ParentRefs[0].Kind)
+	assert.Equal(t, gatewayv1.Kind("Gateway"), *k8sRoute.Spec.ParentRefs[0].Kind)
 }

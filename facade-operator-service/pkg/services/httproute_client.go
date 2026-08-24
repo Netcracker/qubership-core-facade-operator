@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
@@ -11,6 +12,7 @@ import (
 	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -145,7 +147,11 @@ func (h *HTTPRouteClientImpl) deleteBackendTrafficPolicy(ctx context.Context, re
 	backendPolicy := &unstructured.Unstructured{}
 	backendPolicy.SetAPIVersion(utils.ApiVersionV1AlphaV1)
 	backendPolicy.SetKind("BackendTrafficPolicy")
-	if err := h.backendPolicyClient.Delete(ctx, req, name, backendPolicy); err != nil && !k8sErrors.IsNotFound(err) {
+	if err := h.backendPolicyClient.Delete(ctx, req, name, backendPolicy); err != nil {
+		if isIgnorablePolicyAbsence(err) {
+			h.logger.WarnC(ctx, "[%v] Skipping BackendTrafficPolicy delete for %s: %v", req.NamespacedName, name, err)
+			return nil
+		}
 		return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("failed to delete BackendTrafficPolicy for HTTPRoute %s", name), err)
 	}
 	return nil
@@ -156,10 +162,31 @@ func (h *HTTPRouteClientImpl) deleteClientTrafficPolicy(ctx context.Context, req
 	clientPolicy := &unstructured.Unstructured{}
 	clientPolicy.SetAPIVersion(utils.ApiVersionV1AlphaV1)
 	clientPolicy.SetKind("ClientTrafficPolicy")
-	if err := h.clientPolicyClient.Delete(ctx, req, name, clientPolicy); err != nil && !k8sErrors.IsNotFound(err) {
+	if err := h.clientPolicyClient.Delete(ctx, req, name, clientPolicy); err != nil {
+		if isIgnorablePolicyAbsence(err) {
+			h.logger.WarnC(ctx, "[%v] Skipping ClientTrafficPolicy delete for %s: %v", req.NamespacedName, name, err)
+			return nil
+		}
 		return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("failed to delete ClientTrafficPolicy for HTTPRoute %s", name), err)
 	}
 	return nil
+}
+
+// isIgnorablePolicyAbsence is true when Envoy Gateway CRDs are missing or the resource is already gone.
+// GenericClient wraps API errors, so checks use errors.As / k8s helpers that unwrap.
+func isIgnorablePolicyAbsence(err error) bool {
+	if err == nil {
+		return true
+	}
+	if k8sErrors.IsNotFound(err) || k8sErrors.IsMethodNotSupported(err) {
+		return true
+	}
+	var noKind *meta.NoKindMatchError
+	if errors.As(err, &noKind) {
+		return true
+	}
+	var noResource *meta.NoResourceMatchError
+	return errors.As(err, &noResource)
 }
 
 func (h *HTTPRouteClientImpl) deleteOrphanedPolicies(ctx context.Context, req ctrl.Request, validNames map[string]bool, policyKind string) error {
@@ -169,7 +196,7 @@ func (h *HTTPRouteClientImpl) deleteOrphanedPolicies(ctx context.Context, req ct
 
 	err := h.policyClient.List(ctx, policyList, client.InNamespace(req.Namespace))
 	if err != nil {
-		if k8sErrors.IsNotFound(err) || k8sErrors.IsMethodNotSupported(err) {
+		if isIgnorablePolicyAbsence(err) {
 			return nil
 		}
 		return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("Failed to list %s in namespace %s", policyKind, req.Namespace), err)

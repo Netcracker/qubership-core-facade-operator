@@ -21,12 +21,13 @@ import (
 )
 
 type IngressTemplateBuilder struct {
-	gwIngressAnnotations  map[string]string
-	httpRouteCustomFilters []gatewayv1.HTTPRouteFilter
-	x509Enable            bool
-	isSatellite           bool
-	baselineNamespace     string
-	ingressClassName      *string
+	gwIngressAnnotations      map[string]string
+	httpRouteCustomFilters    []gatewayv1.HTTPRouteFilter
+	httpRouteCustomFiltersErr error
+	x509Enable                bool
+	isSatellite               bool
+	baselineNamespace         string
+	ingressClassName          *string
 }
 
 func NewIngressTemplateBuilder(x509Enable bool, isSatellite bool, baselineNamespace string) *IngressTemplateBuilder {
@@ -42,13 +43,15 @@ func NewIngressTemplateBuilder(x509Enable bool, isSatellite bool, baselineNamesp
 	} else {
 		ingressClassName = &ingressClassNameString
 	}
+	filters, filtersErr := buildHTTPRouteCustomFilters()
 	return &IngressTemplateBuilder{
-		gwIngressAnnotations:   buildGwIngressAnnotations(),
-		httpRouteCustomFilters: buildHTTPRouteCustomFilters(),
-		x509Enable:             x509Enable,
-		isSatellite:            isSatellite,
-		baselineNamespace:      baselineNamespace,
-		ingressClassName:       ingressClassName,
+		gwIngressAnnotations:      buildGwIngressAnnotations(),
+		httpRouteCustomFilters:    filters,
+		httpRouteCustomFiltersErr: filtersErr,
+		x509Enable:                x509Enable,
+		isSatellite:               isSatellite,
+		baselineNamespace:         baselineNamespace,
+		ingressClassName:          ingressClassName,
 	}
 }
 

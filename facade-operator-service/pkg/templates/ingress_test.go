@@ -14,8 +14,7 @@ import (
 )
 
 func TestBuildGwIngressAnnotationsParsesQuotedAndUnquotedValues(t *testing.T) {
-	os.Setenv("GW_INGRESS_ANNOTATIONS", "nginx.ingress.kubernetes.io/proxy-read-timeout: \"2000\"\nnginx.ingress.kubernetes.io/proxy-send-timeout: '1800'\nnginx.ingress.kubernetes.io/proxy-body-size: 10m\n\n")
-	defer os.Unsetenv("GW_INGRESS_ANNOTATIONS")
+	t.Setenv("GW_INGRESS_ANNOTATIONS", "nginx.ingress.kubernetes.io/proxy-read-timeout: \"2000\"\nnginx.ingress.kubernetes.io/proxy-send-timeout: '1800'\nnginx.ingress.kubernetes.io/proxy-body-size: 10m\n\n")
 
 	annotations := buildGwIngressAnnotations()
 	assert.Equal(t, "2000", annotations["nginx.ingress.kubernetes.io/proxy-read-timeout"])
@@ -24,13 +23,13 @@ func TestBuildGwIngressAnnotationsParsesQuotedAndUnquotedValues(t *testing.T) {
 }
 
 func TestBuildGwIngressAnnotationsIgnoresEmptyAndInvalidValues(t *testing.T) {
-	os.Setenv("GW_INGRESS_ANNOTATIONS", "[]")
+	t.Setenv("GW_INGRESS_ANNOTATIONS", "[]")
 	assert.Nil(t, buildGwIngressAnnotations())
 
-	os.Setenv("GW_INGRESS_ANNOTATIONS", "not-an-annotation")
+	t.Setenv("GW_INGRESS_ANNOTATIONS", "not-an-annotation")
 	assert.Nil(t, buildGwIngressAnnotations())
 
-	os.Unsetenv("GW_INGRESS_ANNOTATIONS")
+	t.Setenv("GW_INGRESS_ANNOTATIONS", "")
 	assert.Nil(t, buildGwIngressAnnotations())
 }
 
@@ -47,8 +46,7 @@ func TestBuildPrivateIngress(t *testing.T) {
 }
 
 func testBuildIngress(t *testing.T, gwServiceName string) {
-	os.Setenv("GW_INGRESS_ANNOTATIONS", "annotation.name1: 'annotation-val1'\nannotation.name2: 'annotation-val2'")
-	defer os.Unsetenv("GW_INGRESS_ANNOTATIONS")
+	t.Setenv("GW_INGRESS_ANNOTATIONS", "annotation.name1: 'annotation-val1'\nannotation.name2: 'annotation-val2'")
 
 	builder := NewIngressTemplateBuilder(true, false, "")
 
@@ -63,8 +61,7 @@ func testBuildIngress(t *testing.T, gwServiceName string) {
 	validateK8sBetaIngress(t, ingressTemplate, gwServiceName, false)
 	validateOpenshiftRoute(t, ingressTemplate, gwServiceName)
 
-	os.Setenv("INGRESS_CLASS", "test.ingress.class")
-	defer os.Unsetenv("INGRESS_CLASS")
+	t.Setenv("INGRESS_CLASS", "test.ingress.class")
 
 	builder = NewIngressTemplateBuilder(true, false, "")
 
@@ -75,8 +72,7 @@ func testBuildIngress(t *testing.T, gwServiceName string) {
 	}, buildFacadeService(gwServiceName), gwServiceName)
 	validateK8sIngress(t, ingressTemplate, gwServiceName, true)
 
-	os.Setenv("PEER_NAMESPACE", "test-peer-namespace")
-	defer os.Unsetenv("PEER_NAMESPACE")
+	t.Setenv("PEER_NAMESPACE", "test-peer-namespace")
 
 	builder = NewIngressTemplateBuilder(true, false, "")
 
