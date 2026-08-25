@@ -160,6 +160,10 @@ func setupReconcilers(mgr manager.Manager, namespace string) {
 		utils.GetBoolEnvValueOrDefault("X509_AUTHENTICATION_ENABLED", false),
 		utils.GetBoolEnvValueOrDefault("COMPOSITE_PLATFORM", false),
 		os.Getenv("BASELINE_PROJ"))
+	if err := ingressBuilder.ValidateGatewayAPIConfig(); err != nil {
+		setupLog.Error("%s", errs.ToLogFormat(errs.NewError(customerrors.InitParamsValidationError, "Invalid Gateway API configuration", err)))
+		os.Exit(1)
+	}
 
 	commonCRClient := services.NewCommonCRClient(client)
 	deploymentClient := services.NewDeploymentClientImpl(client)

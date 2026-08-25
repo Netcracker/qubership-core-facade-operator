@@ -121,8 +121,22 @@ spec:
               value: '0'
             - name: PEER_NAMESPACE
               value: {{ .Values.PEER_NAMESPACE }}
+            - name: CONTROLLER_NAMESPACE
+              value: '{{ .Values.CONTROLLER_NAMESPACE }}'
             - name: INGRESS_CLASS
               value: {{ .Values.INGRESS_CLASS }}
+            - name: GW_INGRESS_ANNOTATIONS
+              value: {{ .Values.GW_INGRESS_ANNOTATIONS | quote }}
+            - name: GATEWAY_SYSTEM_TYPE
+              value: '{{ .Values.GATEWAY_SYSTEM_TYPE }}'
+            - name: GATEWAY_SYSTEM_NAMESPACE
+              value: '{{ .Values.GATEWAY_SYSTEM_NAMESPACE }}'
+            - name: GATEWAY_SYSTEM_NAME
+              value: '{{ .Values.GATEWAY_SYSTEM_NAME }}'
+            - name: HTTP_ROUTE_REQUEST_IDLE_TIMEOUT
+              value: '{{ .Values.HTTP_ROUTE_REQUEST_IDLE_TIMEOUT }}'
+            - name: HTTP_ROUTE_CUSTOM_FILTERS
+              value: {{ .Values.HTTP_ROUTE_CUSTOM_FILTERS | toJson | quote }}
             - name: FACADE_GATEWAY_TERMINATION_GRACE_PERIOD_S
               value: '{{ .Values.FACADE_GATEWAY_TERMINATION_GRACE_PERIOD_S }}'
             - name: ARTIFACT_DESCRIPTOR_VERSION
@@ -176,8 +190,6 @@ spec:
                     {{ if .Values.CONSUL_ENABLED }}
             - name: CONSUL_URL
               value: '{{ .Values.CONSUL_URL }}'
-            - name: GATEWAY_SYSTEM_TYPE
-              value: '{{ .Values.GATEWAY_SYSTEM_TYPE  }}'
                     {{ end }}
           resources:
             requests:
