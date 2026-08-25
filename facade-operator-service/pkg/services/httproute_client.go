@@ -26,6 +26,8 @@ type HTTPRouteClient interface {
 	DeleteOrphaned(ctx context.Context, req ctrl.Request) error
 }
 
+const FacadeOperatorLabel = "facade-operator"
+
 type HTTPRouteClientImpl struct {
 	GenericClient[*gatewayv1.HTTPRoute]
 	ingressBuilder      *templates.IngressTemplateBuilder
@@ -92,7 +94,7 @@ func (h *HTTPRouteClientImpl) mergeUnstructuredPolicies(existingResReceiver, new
 
 func (h *HTTPRouteClientImpl) DeleteOrphaned(ctx context.Context, req ctrl.Request) error {
 	httpRoutes := &gatewayv1.HTTPRouteList{}
-	err := h.GetClient().List(ctx, httpRoutes, client.MatchingFields{"metadata.annotations.app.kubernetes.io/managed-by": "facade-operator"}, client.InNamespace(req.Namespace))
+	err := h.GetClient().List(ctx, httpRoutes, client.MatchingFields{"metadata.annotations.app.kubernetes.io/managed-by": FacadeOperatorLabel}, client.InNamespace(req.Namespace))
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
 			return nil
@@ -165,7 +167,7 @@ func (h *HTTPRouteClientImpl) deleteOwnedPolicy(ctx context.Context, req ctrl.Re
 		return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("failed to get %s for HTTPRoute %s", policyKind, name), err)
 	}
 
-	if policy.GetLabels()["app.kubernetes.io/managed-by-operator"] != "facade-operator" {
+	if policy.GetLabels()["app.kubernetes.io/managed-by-operator"] != FacadeOperatorLabel {
 		h.logger.WarnC(ctx, "[%v] Skipping delete of %s %s: not managed by facade-operator", req.NamespacedName, policyKind, name)
 		return nil
 	}
@@ -212,7 +214,7 @@ func (h *HTTPRouteClientImpl) deleteOrphanedPolicies(ctx context.Context, req ct
 
 	for _, policy := range policyList.Items {
 		labels := policy.GetLabels()
-		if labels["app.kubernetes.io/managed-by-operator"] == "facade-operator" {
+		if labels["app.kubernetes.io/managed-by-operator"] == FacadeOperatorLabel {
 			if !validNames[policy.GetName()] {
 				h.logger.InfoC(ctx, "[%v] Deleting orphaned %s: %s", req.NamespacedName, policyKind, policy.GetName())
 				if err := h.policyClient.Delete(ctx, &policy); err != nil && !k8sErrors.IsNotFound(err) {
