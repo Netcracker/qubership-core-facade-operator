@@ -57,8 +57,27 @@ The predeploy script for creating CRD supports the following PaaS:
 * Openshift 3.11 or higher
 * Kubernetes 1.15 or higher
 
-Gateway API mode creates `BackendTrafficPolicy` (timeout, `useClientProtocol`, `mergeType`) and `ClientTrafficPolicy` (x509) from `gateway.envoyproxy.io`. These require **Envoy Gateway v1.8.0+** (`spec.timeout.http.streamIdleTimeout` does not exist in 1.6.x/1.7.x). The cluster is expected to run **v1.8.1**.
+Gateway API mode (`GATEWAY_SYSTEM_TYPE` contains `gateway-api-default`) creates `HTTPRoute` plus Envoy Gateway policies: `BackendTrafficPolicy` (idle timeout, gRPC `useClientProtocol`, `mergeType: StrategicMerge`) and `ClientTrafficPolicy` (x509). Requires **Envoy Gateway v1.8.0+** (cluster expected **v1.8.1**). Nginx ingress annotations such as `proxy-read-timeout` / `configuration-snippet` are not applied to `HTTPRoute`; use the variables below instead.
 
+### Gateway API environment variables
+
+* `HTTP_ROUTE_REQUEST_IDLE_TIMEOUT` — idle timeout for backend reads/writes → `BackendTrafficPolicy.spec.timeout.http.streamIdleTimeout` (Gateway API duration, e.g. `1800s`, `30m`). Invalid values fail operator startup. When empty, max of `nginx.ingress.kubernetes.io/proxy-read-timeout` and `proxy-send-timeout` from `GW_INGRESS_ANNOTATIONS` is used (seconds). Values `0` / negative are ignored (Envoy `0s` means “disabled”, not nginx default).
+* `HTTP_ROUTE_CUSTOM_FILTERS` — list of [HTTPRouteFilter] objects (Helm YAML → JSON in the pod). Applied to **all** facade HTTPRoutes (public, private, internal, custom); there is no per-gateway filter split yet. Invalid JSON or an invalid filter fails operator startup (no silent skip). Typical replacement for `configuration-snippet` header edits:
+
+```yaml
+HTTP_ROUTE_CUSTOM_FILTERS:
+  - type: ResponseHeaderModifier
+    responseHeaderModifier:
+      remove:
+        - authorization
+      set:
+        - name: X-Custom-Header
+          value: value
+```
+
+* `GW_INGRESS_ANNOTATIONS` — legacy Ingress annotations and idle-timeout fallback in Gateway API mode. Keys are **not** copied onto `HTTPRoute`. On upgrade, if this value already contains proxy read/send timeouts and `HTTP_ROUTE_REQUEST_IDLE_TIMEOUT` is empty, the operator starts creating `BackendTrafficPolicy` for those routes.
+
+`mergeType: StrategicMerge` lets route-level `BackendTrafficPolicy` merge with gateway-level Envoy Gateway policies instead of replacing them.
 
 # Description of Facade Operator CR fields
 Example facade operator CR

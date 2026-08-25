@@ -34,9 +34,16 @@ GATEWAY_SYSTEM_TYPE: "legacy-ingress"
 GATEWAY_SYSTEM_NAMESPACE: "gateway-system"
 GATEWAY_SYSTEM_NAME: "default-external-gateway"
 CONTROLLER_NAMESPACE: ''
-# Idle timeout between backend reads/writes for Gateway API HTTPRoute, for example, "1800s".
+# Idle timeout for Gateway API (e.g. "1800s", "30m"). Empty → fallback from GW_INGRESS_ANNOTATIONS proxy-read/send-timeout.
 HTTP_ROUTE_REQUEST_IDLE_TIMEOUT: ''
-# Additional filters to add to Gateway API HTTPRoute rules. Could be used, for example, to modify response headers.
+# HTTPRoute filters for all facade routes (YAML list). Example:
+# HTTP_ROUTE_CUSTOM_FILTERS:
+#   - type: ResponseHeaderModifier
+#     responseHeaderModifier:
+#       remove: [authorization]
+#       set:
+#         - name: X-Custom-Header
+#           value: value
 HTTP_ROUTE_CUSTOM_FILTERS: []
 KUBERNETES_M2M_ENABLED: false
 DEPLOYMENT_STRATEGY_TYPE: recreate

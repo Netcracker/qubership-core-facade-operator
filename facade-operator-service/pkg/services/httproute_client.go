@@ -14,6 +14,7 @@ import (
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -143,31 +144,38 @@ func (h *HTTPRouteClientImpl) Delete(ctx context.Context, req ctrl.Request, name
 }
 
 func (h *HTTPRouteClientImpl) deleteBackendTrafficPolicy(ctx context.Context, req ctrl.Request, name string) error {
-	h.logger.InfoC(ctx, "[%v] Deleting BackendTrafficPolicy %s if exists", req.NamespacedName, name)
-	backendPolicy := &unstructured.Unstructured{}
-	backendPolicy.SetAPIVersion(utils.ApiVersionV1AlphaV1)
-	backendPolicy.SetKind("BackendTrafficPolicy")
-	if err := h.backendPolicyClient.Delete(ctx, req, name, backendPolicy); err != nil {
-		if isIgnorablePolicyAbsence(err) {
-			h.logger.WarnC(ctx, "[%v] Skipping BackendTrafficPolicy delete for %s: %v", req.NamespacedName, name, err)
-			return nil
-		}
-		return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("failed to delete BackendTrafficPolicy for HTTPRoute %s", name), err)
-	}
-	return nil
+	return h.deleteOwnedPolicy(ctx, req, name, "BackendTrafficPolicy")
 }
 
 func (h *HTTPRouteClientImpl) deleteClientTrafficPolicy(ctx context.Context, req ctrl.Request, name string) error {
-	h.logger.InfoC(ctx, "[%v] Deleting ClientTrafficPolicy %s if exists", req.NamespacedName, name)
-	clientPolicy := &unstructured.Unstructured{}
-	clientPolicy.SetAPIVersion(utils.ApiVersionV1AlphaV1)
-	clientPolicy.SetKind("ClientTrafficPolicy")
-	if err := h.clientPolicyClient.Delete(ctx, req, name, clientPolicy); err != nil {
+	return h.deleteOwnedPolicy(ctx, req, name, "ClientTrafficPolicy")
+}
+
+func (h *HTTPRouteClientImpl) deleteOwnedPolicy(ctx context.Context, req ctrl.Request, name, policyKind string) error {
+	h.logger.InfoC(ctx, "[%v] Deleting %s %s if exists and owned", req.NamespacedName, policyKind, name)
+	policy := &unstructured.Unstructured{}
+	policy.SetAPIVersion(utils.ApiVersionV1AlphaV1)
+	policy.SetKind(policyKind)
+
+	err := h.policyClient.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: name}, policy, &client.GetOptions{})
+	if err != nil {
 		if isIgnorablePolicyAbsence(err) {
-			h.logger.WarnC(ctx, "[%v] Skipping ClientTrafficPolicy delete for %s: %v", req.NamespacedName, name, err)
 			return nil
 		}
-		return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("failed to delete ClientTrafficPolicy for HTTPRoute %s", name), err)
+		return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("failed to get %s for HTTPRoute %s", policyKind, name), err)
+	}
+
+	if policy.GetLabels()["app.kubernetes.io/managed-by-operator"] != "facade-operator" {
+		h.logger.WarnC(ctx, "[%v] Skipping delete of %s %s: not managed by facade-operator", req.NamespacedName, policyKind, name)
+		return nil
+	}
+
+	if err := h.policyClient.Delete(ctx, policy); err != nil {
+		if isIgnorablePolicyAbsence(err) {
+			h.logger.WarnC(ctx, "[%v] Skipping %s delete for %s: %v", req.NamespacedName, policyKind, name, err)
+			return nil
+		}
+		return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("failed to delete %s for HTTPRoute %s", policyKind, name), err)
 	}
 	return nil
 }
