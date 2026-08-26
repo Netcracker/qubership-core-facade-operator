@@ -22,6 +22,7 @@ import (
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/templates"
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
 	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
+	"github.com/netcracker/qubership-core-lib-go-actuator-common/v2/tracing"
 	fiberserver "github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2"
 	"github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2/server"
 	"github.com/netcracker/qubership-core-lib-go-rest-utils/v2/consul-propertysource"
@@ -142,13 +143,13 @@ func startServer(mgr manager.Manager) {
 }
 
 // newFiberServerApp builds the Fiber actuator app with Zipkin tracing.
-// Probe/management paths are dropped from export via probeFilteringZipkinTracer
-// (platform tracing contract; actuator-common only excludes /health by default).
+// Probe/management paths are dropped via actuator-common PathFilteringSampler defaults
+// (overridable through tracing.ZipkinOptions.ExcludedPaths / ExcludedPathPrefixes).
 func newFiberServerApp(fiberConfig fiber.Config, pprofPort string) (*fiber.App, error) {
 	return fiberserver.New(fiberConfig).
 		WithPprof(pprofPort).
 		WithPrometheus("/prometheus").
-		WithTracer(newProbeFilteringZipkinTracer()).
+		WithTracer(tracing.NewZipkinTracer()).
 		WithApiVersion().
 		Process()
 }
