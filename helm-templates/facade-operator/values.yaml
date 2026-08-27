@@ -33,3 +33,15 @@ CONSUL_URL: ''
 GATEWAY_SYSTEM_TYPE: "legacy-ingress"
 GATEWAY_SYSTEM_NAMESPACE: "gateway-system"
 GATEWAY_SYSTEM_NAME: "default-external-gateway"
+CONTROLLER_NAMESPACE: ''
+# Idle timeout for Gateway API (e.g. "1800s", "30m"). Empty -> fallback from GW_INGRESS_ANNOTATIONS proxy-read/send-timeout.
+HTTP_ROUTE_REQUEST_IDLE_TIMEOUT: ''
+# HTTPRoute filters for all facade routes (YAML list). Example:
+# HTTP_ROUTE_CUSTOM_FILTERS:
+#   - type: ResponseHeaderModifier
+#     responseHeaderModifier:
+#       remove: [authorization]
+#       set:
+#         - name: X-Custom-Header
+#           value: value
+HTTP_ROUTE_CUSTOM_FILTERS: []

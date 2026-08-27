@@ -53,6 +53,7 @@ func TestHTTPRouteClientImpl_Apply(t *testing.T) {
 
 	k8sClient.EXPECT().Get(context.Background(), httpRouteReq, &gatewayv1.HTTPRoute{}, &client.GetOptions{}).Return(getNotFoundError())
 	k8sClient.EXPECT().Create(context.Background(), httpRoute, &client.CreateOptions{FieldManager: "facadeOperator"}).Return(nil)
+	k8sClient.EXPECT().Get(context.Background(), httpRouteReq, gomock.Any(), &client.GetOptions{}).Return(getNotFoundError()).Times(2)
 	err := httpRouteClient.Apply(context.Background(), req, httpRouteTemplate)
 	assert.Nil(t, err)
 
