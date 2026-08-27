@@ -213,7 +213,6 @@ func (r *FacadeCommonReconciler) deleteService(ctx context.Context, req ctrl.Req
 	return r.serviceClient.Delete(ctx, req, req.Name, gatewayName)
 }
 
-
 func (r *FacadeCommonReconciler) deleteFacadeGateway(ctx context.Context, req ctrl.Request, name string) error {
 	r.logger.InfoC(ctx, "[%v] Start delete facade gateway %v", req.NamespacedName, name)
 	isFacade, err := r.deploymentsClient.IsFacadeGateway(ctx, req, name)
@@ -558,9 +557,33 @@ func (r *FacadeCommonReconciler) deleteMeshRouter(ctx context.Context, req ctrl.
 	return nil
 }
 
+func (r *FacadeCommonReconciler) ensureSharedService(ctx context.Context, req ctrl.Request, name string, gatewayName string, cr facade.MeshGateway) error {
+	tpl := r.buildServiceTemplate(req, name, gatewayName, cr)
+	return r.serviceClient.EnsureShared(ctx, req, tpl.GetSharedService())
+}
+
+func (r *FacadeCommonReconciler) buildServiceTemplate(req ctrl.Request, name string, gatewayName string, cr facade.MeshGateway) templates.FacadeService {
+	return templates.FacadeService{
+		Name:            name,
+		Namespace:       req.Namespace,
+		Labels:          cr.GetLabels(),
+		NameSelector:    gatewayName,
+		Port:            cr.GetSpec().Port,
+		GatewayPorts:    cr.GetSpec().GatewayPorts,
+		MasterCR:        cr.GetName(),
+		MasterCRVersion: cr.GetAPIVersion(),
+		MasterCRKind:    cr.GetKind(),
+		MasterCRUID:     cr.GetUID(),
+	}
+}
+
 func (r *FacadeCommonReconciler) applyMeshRouter(ctx context.Context, req ctrl.Request, gatewayName string, gatewayImage string, cr facade.MeshGateway) error {
 	r.logger.InfoC(ctx, "[%v] Apply virtual service %s", req.NamespacedName, req.Name)
-	if req.Name != facade.CoreEgressGateway {
+	if req.Name == facade.CoreEgressGateway {
+		if err := r.ensureSharedService(ctx, req, facade.EgressGateway, gatewayName, cr); err != nil {
+			return err
+		}
+	} else {
 		if err := r.applyService(ctx, req, req.Name, gatewayName, cr); err != nil {
 			return err
 		}
@@ -730,19 +753,7 @@ func (r *FacadeCommonReconciler) deleteConfigMap(ctx context.Context, req ctrl.R
 }
 
 func (r *FacadeCommonReconciler) applyService(ctx context.Context, req ctrl.Request, name string, gatewayName string, cr facade.MeshGateway) error {
-	service := templates.FacadeService{
-		Name:            name,
-		Namespace:       req.Namespace,
-		Labels:          cr.GetLabels(),
-		NameSelector:    gatewayName,
-		Port:            cr.GetSpec().Port,
-		GatewayPorts:    cr.GetSpec().GatewayPorts,
-		MasterCR:        cr.GetName(),
-		MasterCRVersion: cr.GetAPIVersion(),
-		MasterCRKind:    cr.GetKind(),
-		MasterCRUID:     cr.GetUID(),
-	}
-
+	service := r.buildServiceTemplate(req, name, gatewayName, cr)
 	return r.serviceClient.Apply(ctx, req, service.GetService())
 }
 

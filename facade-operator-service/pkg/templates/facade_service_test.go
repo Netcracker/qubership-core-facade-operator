@@ -1,9 +1,11 @@
 package templates
 
 import (
+	"os"
+	"testing"
+
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade"
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -72,6 +74,103 @@ func TestServiceDefaultLabels(t *testing.T) {
 	kubService := facadeService.GetService()
 	assert.Equal(t, kubService.Labels["app.kubernetes.io/name"], fsName)
 	assert.Equal(t, kubService.Labels["app.kubernetes.io/part-of"], utils.Unknown)
+}
+
+func TestGetSharedService_selectorIsApp_whenCoreMeshType(t *testing.T) {
+	defer func() {
+		os.Unsetenv("SERVICE_MESH_TYPE")
+		utils.ReloadServiceMeshType()
+	}()
+	os.Unsetenv("SERVICE_MESH_TYPE")
+	utils.ReloadServiceMeshType()
+
+	fs := &FacadeService{
+		Name:         "egress-gateway",
+		Namespace:    "test-ns",
+		NameSelector: "egress-gateway-gateway",
+		Port:         8080,
+	}
+	svc := fs.GetSharedService()
+	assert.Equal(t, map[string]string{"app": "egress-gateway-gateway"}, svc.Spec.Selector)
+	assert.Nil(t, svc.OwnerReferences)
+	assert.Empty(t, svc.Spec.ClusterIP)
+}
+
+func TestGetSharedService_selectorIsGatewayName_whenIstioMeshType(t *testing.T) {
+	defer func() {
+		os.Unsetenv("SERVICE_MESH_TYPE")
+		utils.ReloadServiceMeshType()
+	}()
+	os.Setenv("SERVICE_MESH_TYPE", "Istio")
+	utils.ReloadServiceMeshType()
+
+	fs := &FacadeService{
+		Name:         "egress-gateway",
+		Namespace:    "test-ns",
+		NameSelector: "egress-gateway-gateway",
+		Port:         8080,
+	}
+	svc := fs.GetSharedService()
+	assert.Equal(t, map[string]string{"gateway.networking.k8s.io/gateway-name": "egress-gateway"}, svc.Spec.Selector)
+	assert.Nil(t, svc.OwnerReferences)
+	assert.Empty(t, svc.Spec.ClusterIP)
+}
+
+func TestGetSharedService_clusterIPEmptyEvenWhenHeadless(t *testing.T) {
+	defer func() {
+		os.Unsetenv("K8S_SERVICE_TYPE")
+		os.Unsetenv("SERVICE_MESH_TYPE")
+		utils.ReloadServiceType()
+		utils.ReloadServiceMeshType()
+	}()
+	os.Setenv("K8S_SERVICE_TYPE", "HEADLESS")
+	os.Unsetenv("SERVICE_MESH_TYPE")
+	utils.ReloadServiceType()
+	utils.ReloadServiceMeshType()
+
+	fs := &FacadeService{
+		Name:         "egress-gateway",
+		Namespace:    "test-ns",
+		NameSelector: "egress-gateway-gateway",
+		Port:         8080,
+	}
+	shared := fs.GetSharedService()
+	assert.Empty(t, shared.Spec.ClusterIP)
+
+	// GetService still returns "None" for HEADLESS
+	regular := fs.GetService()
+	assert.Equal(t, "None", regular.Spec.ClusterIP)
+}
+
+func TestGetSharedService_noOwnerReferences(t *testing.T) {
+	fs := &FacadeService{
+		Name:            "egress-gateway",
+		Namespace:       "test-ns",
+		NameSelector:    "egress-gateway-gateway",
+		Port:            8080,
+		MasterCR:        "core-egress-gateway",
+		MasterCRVersion: "netcracker.com/v1alpha",
+		MasterCRKind:    "FacadeService",
+	}
+	svc := fs.GetSharedService()
+	assert.Nil(t, svc.OwnerReferences)
+}
+
+func TestGetSharedService_gatewayPortsHonoured(t *testing.T) {
+	fs := &FacadeService{
+		Name:         "egress-gateway",
+		Namespace:    "test-ns",
+		NameSelector: "egress-gateway-gateway",
+		Port:         8080,
+		GatewayPorts: []facade.GatewayPorts{
+			{Name: "http", Port: 8080, Protocol: "TCP"},
+			{Name: "grpc", Port: 9090, Protocol: "TCP"},
+		},
+	}
+	svc := fs.GetSharedService()
+	assert.Equal(t, 2, len(svc.Spec.Ports))
+	assert.Equal(t, int32(8080), svc.Spec.Ports[0].Port)
+	assert.Equal(t, int32(9090), svc.Spec.Ports[1].Port)
 }
 
 func TestServiceCustomLabels(t *testing.T) {

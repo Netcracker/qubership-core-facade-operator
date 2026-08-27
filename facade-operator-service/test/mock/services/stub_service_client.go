@@ -56,6 +56,20 @@ func (mr *MockServiceClientMockRecorder) Apply(ctx, req, service any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Apply", reflect.TypeOf((*MockServiceClient)(nil).Apply), ctx, req, service)
 }
 
+// EnsureShared mocks base method.
+func (m *MockServiceClient) EnsureShared(ctx context.Context, req controllerruntime.Request, service *v1.Service) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnsureShared", ctx, req, service)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EnsureShared indicates an expected call of EnsureShared.
+func (mr *MockServiceClientMockRecorder) EnsureShared(ctx, req, service any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureShared", reflect.TypeOf((*MockServiceClient)(nil).EnsureShared), ctx, req, service)
+}
+
 // Delete mocks base method.
 func (m *MockServiceClient) Delete(ctx context.Context, req controllerruntime.Request, name string, gatewayName ...string) error {
 	m.ctrl.T.Helper()

@@ -23,6 +23,11 @@ const (
 	Egress  GatewayType = "egress"
 	Ingress GatewayType = "ingress"
 	Mesh    GatewayType = "mesh"
+
+	// FacadeServiceGroupV1Alpha is the API group for FacadeService CRs.
+	FacadeServiceGroupV1Alpha = "netcracker.com"
+	// GatewayGroupV1 is the API group for Gateway CRs managed by the facade operator.
+	GatewayGroupV1 = "core.netcracker.com"
 )
 
 // +kubebuilder:object:root=true

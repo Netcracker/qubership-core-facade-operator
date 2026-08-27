@@ -108,6 +108,33 @@ func GetPointer[T any](v T) *T {
 	return &v
 }
 
+// FilterOutFacadeOwnerReferences removes ownerReferences whose API group belongs to the
+// facade-operator (netcracker.com for FacadeService, core.netcracker.com for Gateway).
+// References from other groups — including gateway.networking.k8s.io — are kept.
+// Returns nil when all refs are removed, so a merge-patch clears the field entirely.
+func FilterOutFacadeOwnerReferences(refs []metav1.OwnerReference) []metav1.OwnerReference {
+	kept := refs[:0:0]
+	for _, ref := range refs {
+		group := groupFromAPIVersion(ref.APIVersion)
+		if group == facade.FacadeServiceGroupV1Alpha || group == facade.GatewayGroupV1 {
+			continue
+		}
+		kept = append(kept, ref)
+	}
+	if len(kept) == 0 {
+		return nil
+	}
+	return kept
+}
+
+// groupFromAPIVersion extracts the group from an APIVersion string ("group/version" or just "version").
+func groupFromAPIVersion(apiVersion string) string {
+	if idx := strings.Index(apiVersion, "/"); idx >= 0 {
+		return apiVersion[:idx]
+	}
+	return ""
+}
+
 func MergeOwnerReferences(array1, array2 []metav1.OwnerReference) []metav1.OwnerReference {
 	result := make([]metav1.OwnerReference, 0)
 	result = append(result, array1...)
