@@ -845,6 +845,15 @@
       "description": "Shows that kubernetes m2m communication is enabled.",
       "internal": true,
       "default": false
+    },
+    "SERVICE_MESH_TYPE": {
+      "$id": "#/properties/SERVICE_MESH_TYPE",
+      "type": "string",
+      "title": "The SERVICE_MESH_TYPE schema",
+      "description": "Service mesh type. Use `Core` for Cloud Core Mesh or `Istio` for Istio Ambient Mesh.",
+      "enum": ["Istio", "Core"],
+      "default": "Core",
+      "internal": true
     }
   },
   "additionalProperties": true

@@ -182,6 +182,8 @@ spec:
 {{- end }}
             - name: K8S_SERVICE_TYPE
               value: '{{ .Values.K8S_SERVICE_TYPE }}'
+            - name: SERVICE_MESH_TYPE
+              value: '{{ .Values.SERVICE_MESH_TYPE }}'
             - name: CONSUL_ENABLED
               value: '{{ .Values.CONSUL_ENABLED }}'
                     {{ if .Values.CONSUL_ENABLED }}
