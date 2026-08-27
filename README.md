@@ -46,7 +46,7 @@ If facade serves a family (facade replaces non-blue-green version of a microserv
 facade gateway microservice (deployment config) name is automatically created as `<family-name>-gateway`.
 
 # Requirement
-A requirement to deploy Facade Operator is described in [Facade Operator Prerequisites](/docs/prerequisites.md).
+A requirement to deploy Facade Operator is described in [Facade Operator Prerequisites](docs/prerequisites.md).
 
 # Important
 Currently, Facade Operator supports two CRD creation modes:  
