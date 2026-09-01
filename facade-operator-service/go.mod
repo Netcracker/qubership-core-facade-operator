@@ -136,8 +136,3 @@ require (
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.2 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
-
-// Local development against unpublished tracing filter changes.
-replace github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 => ../../qubership-core-lib-go-fiber-server-utils
-
-replace github.com/netcracker/qubership-core-lib-go-actuator-common/v2 => ../../qubership-core-lib-go-actuator-common
