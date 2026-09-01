@@ -143,13 +143,13 @@ func startServer(mgr manager.Manager) {
 }
 
 // newFiberServerApp builds the Fiber actuator app with Zipkin tracing.
-// Probe/management paths are dropped via actuator-common PathFilteringSampler defaults
-// (overridable through tracing.ZipkinOptions.ExcludedPaths / ExcludedPathPrefixes).
+// Probe/management paths are skipped in fiber-server-utils middleware
+// (platform actuators automatically; custom probes via SkipTracing).
 func newFiberServerApp(fiberConfig fiber.Config, pprofPort string) (*fiber.App, error) {
 	return fiberserver.New(fiberConfig).
 		WithPprof(pprofPort).
 		WithPrometheus("/prometheus").
-		WithTracer(tracing.NewZipkinTracer()).
+		WithTracer(tracing.NewZipkinTracer(), fiberserver.SkipTracing("/health", "/ready")).
 		WithApiVersion().
 		Process()
 }

@@ -4,11 +4,11 @@ go 1.26.5
 
 require (
 	github.com/cert-manager/cert-manager v1.20.3
-	github.com/gofiber/fiber/v2 v2.52.14
-	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.6.4
-	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.9.6
+	github.com/gofiber/fiber/v2 v2.52.15
+	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.7.0
+	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.10.1-0.20260901124918-b2ee85924baf
 	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.7.5
-	github.com/netcracker/qubership-core-lib-go/v3 v3.13.5
+	github.com/netcracker/qubership-core-lib-go/v3 v3.14.0
 	github.com/openshift/api v0.0.0-20260724095150-18550f1a6d13
 	github.com/stretchr/testify v1.12.1
 	go.uber.org/mock v0.6.0
@@ -21,13 +21,15 @@ require (
 )
 
 require (
-	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.10.7-0.20260826175259-bdc9ac1fe217
+	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.11.1-0.20260901123101-ba9b1df2a800
+	go.opentelemetry.io/otel v1.45.0
+	go.opentelemetry.io/otel/sdk v1.45.0
 	sigs.k8s.io/gateway-api v1.6.1
 )
 
 require (
 	github.com/KimMachineGun/automemlimit v0.7.5 // indirect
-	github.com/andybalholm/brotli v1.2.1 // indirect
+	github.com/andybalholm/brotli v1.2.2 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/avast/retry-go/v4 v4.7.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -55,7 +57,7 @@ require (
 	github.com/go-openapi/swag/stringutils v0.26.0 // indirect
 	github.com/go-openapi/swag/typeutils v0.26.0 // indirect
 	github.com/go-openapi/swag/yamlutils v0.26.0 // indirect
-	github.com/go-pkgz/expirable-cache/v3 v3.1.0 // indirect
+	github.com/go-pkgz/expirable-cache/v3 v3.1.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/gofiber/adaptor/v2 v2.2.1 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
@@ -73,11 +75,11 @@ require (
 	github.com/hashicorp/serf v0.10.4 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.19.1 // indirect
-	github.com/knadh/koanf/maps v0.1.2 // indirect
-	github.com/knadh/koanf/parsers/yaml v1.1.0 // indirect
-	github.com/knadh/koanf/providers/env/v2 v2.0.0 // indirect
+	github.com/knadh/koanf/maps v0.1.3 // indirect
+	github.com/knadh/koanf/parsers/yaml v1.1.1 // indirect
+	github.com/knadh/koanf/providers/env/v2 v2.0.1 // indirect
 	github.com/knadh/koanf/providers/file v1.2.1 // indirect
-	github.com/knadh/koanf/v2 v2.3.5 // indirect
+	github.com/knadh/koanf/v2 v2.3.6 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
@@ -98,16 +100,14 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.72.0 // indirect
+	github.com/valyala/fasthttp v1.73.0 // indirect
 	github.com/vibrantbyte/go-antpath v1.1.1 // indirect
 	github.com/viney-shih/go-lock v1.1.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/contrib/propagators/b3 v1.44.0 // indirect
-	go.opentelemetry.io/otel v1.45.0 // indirect
+	go.opentelemetry.io/contrib/propagators/b3 v1.45.0 // indirect
 	go.opentelemetry.io/otel/exporters/zipkin v1.45.0 // indirect
 	go.opentelemetry.io/otel/metric v1.45.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.45.0 // indirect
 	go.opentelemetry.io/otel/trace v1.45.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
@@ -133,3 +133,8 @@ require (
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.0 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
+
+// Local development against unpublished tracing filter changes.
+replace github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 => ../../qubership-core-lib-go-fiber-server-utils
+
+replace github.com/netcracker/qubership-core-lib-go-actuator-common/v2 => ../../qubership-core-lib-go-actuator-common
