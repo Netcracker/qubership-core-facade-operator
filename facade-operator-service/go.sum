@@ -27,6 +27,8 @@ github.com/bits-and-blooms/bitset v1.24.4 h1:95H15Og1clikBrKr/DuzMXkQzECs1M6hhoG
 github.com/bits-and-blooms/bitset v1.24.4/go.mod h1:7hO7Gc7Pp1vODcmWvKMRA9BNmbv6a/7QIWpPxHddWR8=
 github.com/cert-manager/cert-manager v1.20.3 h1:7zgThbjfRBNjN2/cM/Wdo/vl/oeFQybIMNzxd1Ocipc=
 github.com/cert-manager/cert-manager v1.20.3/go.mod h1:Aqf5P0xRh9aey1p10m2c3UAk/Vb/FBPyH3WQxJRm+7Y=
+github.com/cert-manager/cert-manager v1.21.1 h1:0LttV37Q5c2CBNoHkjuI8sLKTXWZDC2SwQkxrBMKV9w=
+github.com/cert-manager/cert-manager v1.21.1/go.mod h1:sVwmLBWoiB1BRd0rJElBGQuiu94z4k7p3Kd0FRQyfgw=
 github.com/cespare/xxhash/v2 v2.1.1/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
@@ -448,6 +450,8 @@ k8s.io/api v0.36.2 h1:TF6YDLIzKfccK7cq9YpTcGX8TJmEkHVRv78DM51fRYY=
 k8s.io/api v0.36.2/go.mod h1:F4LbMO4brjZYh7yFkXWhynSvtB7YauxV4c+HHkNRGNg=
 k8s.io/apiextensions-apiserver v0.36.1 h1:6JfYmPUsuUIHuN+3QxutXYWj492RqF5fBSx67GYK5Ks=
 k8s.io/apiextensions-apiserver v0.36.1/go.mod h1:pLzZin90riwisdzKwv/GoTwENooytoIx5zWJb4Hkby8=
+k8s.io/apiextensions-apiserver v0.36.2 h1:3O5gqOj/dt2XWWbpMe+TXWpE9yU6pjM/tXxtHHJT/K4=
+k8s.io/apiextensions-apiserver v0.36.2/go.mod h1:cL1tBWe8XSaP1H30iWKGo7hf6iAUUUJPEU70dskmAnA=
 k8s.io/apimachinery v0.36.2 h1:0PE/W/WNy1UX61NLbXY5TMbJ6UwLL6E6lAPkYrKFxbQ=
 k8s.io/apimachinery v0.36.2/go.mod h1:fvf/HOLXq9RId0rnDIbN1OEBvHXdQbLMM8nu0LcBUf4=
 k8s.io/client-go v0.36.2 h1:bfgxmFKc9CgqsgX4xKLAAdmTQlWee7Ob/HlDOrJ5TBI=
@@ -458,6 +462,8 @@ k8s.io/kube-openapi v0.0.0-20260519202549-bbf5c5577288 h1:A7Lby6ekC6nv+6oO38huCM
 k8s.io/kube-openapi v0.0.0-20260519202549-bbf5c5577288/go.mod h1:V/QaCUYDa+0QpcHhVVc5l99Uz56wEMEXBSj9oCDkNDY=
 k8s.io/utils v0.0.0-20260319190234-28399d86e0b5 h1:kBawHLSnx/mYHmRnNUf9d4CpjREbeZuxoSGOX/J+aYM=
 k8s.io/utils v0.0.0-20260319190234-28399d86e0b5/go.mod h1:xDxuJ0whA3d0I4mf/C4ppKHxXynQ+fxnkmQH0vTHnuk=
+k8s.io/utils v0.0.0-20260626114624-be93311217bd h1:Ea7fgQ5we8Y9T0OX5o0dAHzQOBRI07D/dEYRaB9ZZEs=
+k8s.io/utils v0.0.0-20260626114624-be93311217bd/go.mod h1:xDxuJ0whA3d0I4mf/C4ppKHxXynQ+fxnkmQH0vTHnuk=
 sigs.k8s.io/controller-runtime v0.24.1 h1:miPEwrmirImAvgME1L9qebGHrOnGJoVmVdtOU9fRfo4=
 sigs.k8s.io/controller-runtime v0.24.1/go.mod h1:vFkfY5fGt5xAC/sKb8IBFKgWPNKG9OUG29dR8Y2wImw=
 sigs.k8s.io/gateway-api v1.6.1 h1:mock6phZbI6rvZerwrVNk7hVNymQgHo+6sJ81Ia7ftY=
