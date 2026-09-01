@@ -5,26 +5,21 @@ go 1.27.0
 require (
 	github.com/cert-manager/cert-manager v1.21.1
 	github.com/gofiber/fiber/v2 v2.52.15
+	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.11.1-0.20260901123101-ba9b1df2a800
 	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.7.0
 	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.10.1-0.20260901124918-b2ee85924baf
 	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.8.0
 	github.com/netcracker/qubership-core-lib-go/v3 v3.14.0
 	github.com/openshift/api v0.0.0-20260827203510-c7d4aa14a764
 	github.com/stretchr/testify v1.12.1
+	go.opentelemetry.io/otel v1.45.0
+	go.opentelemetry.io/otel/sdk v1.45.0
 	go.uber.org/mock v0.6.0
 	go.uber.org/zap v1.28.0
 	k8s.io/api v0.37.0
 	k8s.io/apimachinery v0.37.0
 	k8s.io/client-go v0.37.0
-	k8s.io/utils v0.0.0-20260626114624-be93311217bd // indirect
 	sigs.k8s.io/controller-runtime v0.24.1 // check compatibility table here https://github.com/kubernetes-sigs/controller-runtime AND cannot be updated until client-go is updated in go-security-scripts and paas-mediation-client
-	sigs.k8s.io/gateway-api v1.6.1
-)
-
-require (
-	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.11.1-0.20260901123101-ba9b1df2a800
-	go.opentelemetry.io/otel v1.45.0
-	go.opentelemetry.io/otel/sdk v1.45.0
 	sigs.k8s.io/gateway-api v1.6.1
 )
 
@@ -51,7 +46,6 @@ require (
 	github.com/go-openapi/swag/cmdutils v0.29.1 // indirect
 	github.com/go-openapi/swag/conv v0.29.1 // indirect
 	github.com/go-openapi/swag/fileutils v0.29.1 // indirect
-	github.com/go-openapi/swag/jsonname v0.29.1 // indirect
 	github.com/go-openapi/swag/jsonutils v0.29.1 // indirect
 	github.com/go-openapi/swag/loading v0.29.1 // indirect
 	github.com/go-openapi/swag/mangling v0.29.1 // indirect
@@ -100,7 +94,6 @@ require (
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.70.1 // indirect
 	github.com/prometheus/procfs v0.21.1 // indirect
-	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.73.0 // indirect
@@ -131,6 +124,7 @@ require (
 	k8s.io/apiextensions-apiserver v0.36.2 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260721132016-d427ff9ee9ad // indirect
+	k8s.io/utils v0.0.0-20260626114624-be93311217bd // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.2 // indirect
