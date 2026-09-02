@@ -22,6 +22,7 @@ import (
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/templates"
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
 	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
+	"github.com/netcracker/qubership-core-lib-go-actuator-common/v2/tracing"
 	fiberserver "github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2"
 	"github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2/server"
 	"github.com/netcracker/qubership-core-lib-go-rest-utils/v2/consul-propertysource"
@@ -124,11 +125,7 @@ func startServer(mgr manager.Manager) {
 		IdleTimeout: 30 * time.Second,
 	}
 	pprofPort := configloader.GetOrDefaultString("pprof.port", "6060")
-	app, err := fiberserver.New(fiberConfig).
-		WithPprof(pprofPort).
-		WithPrometheus("/prometheus").
-		WithApiVersion().
-		Process()
+	app, err := newFiberServerApp(fiberConfig, pprofPort)
 	if err != nil {
 		setupLog.Error("Error while create app because: %s", err.Error())
 		return
@@ -143,6 +140,18 @@ func startServer(mgr manager.Manager) {
 		setupLog.Error("%s", errs.ToLogFormat(errs.NewError(customerrors.UnknownErrorCode, "Can not run manager", err)))
 		os.Exit(1)
 	}
+}
+
+// newFiberServerApp builds the Fiber actuator app with Zipkin tracing.
+// Probe/management paths are skipped in fiber-server-utils middleware
+// (platform actuators automatically; custom probes via SkipTracing).
+func newFiberServerApp(fiberConfig fiber.Config, pprofPort string) (*fiber.App, error) {
+	return fiberserver.New(fiberConfig).
+		WithPprof(pprofPort).
+		WithPrometheus("/prometheus").
+		WithTracer(tracing.NewZipkinTracer(), fiberserver.SkipTracing("/health", "/ready")).
+		WithApiVersion().
+		Process()
 }
 
 func healthProbe(c *fiber.Ctx) error {
