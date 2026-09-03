@@ -235,12 +235,12 @@ github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee/go.mod h1:yWu
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 h1:C3w9PqII01/Oq1c1nUAm88MOHcQC9l5mIlSMApZMrHA=
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=
 github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
-github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.11.1-0.20260901123101-ba9b1df2a800 h1:biO1z+hjYnUDXVZ132+c5MOk6UHnKcpBuV95EC4W3x0=
-github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.11.1-0.20260901123101-ba9b1df2a800/go.mod h1:k2/K3e9QMGAJVGS5w0VipRAdWWaZZ0YP9GyNpAfnFwg=
+github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.11.1-0.20260902081526-3c598c2636ff h1:AQs1NdiPhSeYTcV9A228M7pNO2qGxk2pkJ1JVPuTWL4=
+github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.11.1-0.20260902081526-3c598c2636ff/go.mod h1:k2/K3e9QMGAJVGS5w0VipRAdWWaZZ0YP9GyNpAfnFwg=
 github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.7.0 h1:KZc6lnTdM7bZbTFKyoAfwTfNdunIJybYtha0D0dH1vw=
 github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.7.0/go.mod h1:ZmKo44dyn5MYBv0mZgTVr6CxjZUltFraXMNudweMuYI=
-github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.10.1-0.20260901124918-b2ee85924baf h1:e32Z66190o+aWl6A8J8c0CLIV45cX3KcRgSTiCGjQss=
-github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.10.1-0.20260901124918-b2ee85924baf/go.mod h1:4UU1Rrxeh7O/FFtaDit25vbmtcac3rNHmZl3F4OuV5Y=
+github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.10.1-0.20260902081540-6ade1534db49 h1:pTVw1vavcTxkCkJM/XIA9mQPrTYvPRkGBR/MR8ScV4o=
+github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.10.1-0.20260902081540-6ade1534db49/go.mod h1:4UU1Rrxeh7O/FFtaDit25vbmtcac3rNHmZl3F4OuV5Y=
 github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.8.0 h1:0jJeD4UVDtOk4ukUJ5hCDSei6DC4giCzrEdUou23O+Y=
 github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.8.0/go.mod h1:QrtjOqmYlTcKROjZ8iCq33FG4MaA3A2R5QxoS+yc5WY=
 github.com/netcracker/qubership-core-lib-go/v3 v3.14.0 h1:OmuVCWCiD3y+gAZdjwW0RWtllZFKve7eY0fm4MzKV/c=
