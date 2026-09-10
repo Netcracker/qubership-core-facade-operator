@@ -1,6 +1,6 @@
 module github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2
 
-go 1.27.0
+go 1.26.5
 
 require (
 	github.com/cert-manager/cert-manager v1.21.1
