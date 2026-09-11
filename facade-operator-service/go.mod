@@ -3,7 +3,7 @@ module github.com/netcracker/qubership-core-facade-operator/facade-operator-serv
 go 1.26.5
 
 require (
-	github.com/cert-manager/cert-manager v1.21.1
+	github.com/cert-manager/cert-manager v1.21.2
 	github.com/gofiber/fiber/v2 v2.52.15
 	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.11.1-0.20260901123101-ba9b1df2a800
 	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.7.0
@@ -20,7 +20,7 @@ require (
 	k8s.io/apimachinery v0.37.0
 	k8s.io/client-go v0.37.0
 	sigs.k8s.io/controller-runtime v0.24.1 // check compatibility table here https://github.com/kubernetes-sigs/controller-runtime AND cannot be updated until client-go is updated in go-security-scripts and paas-mediation-client
-	sigs.k8s.io/gateway-api v1.6.1
+	sigs.k8s.io/gateway-api v1.6.2
 )
 
 require (
@@ -109,12 +109,12 @@ require (
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa // indirect
-	golang.org/x/net v0.57.0 // indirect
+	golang.org/x/net v0.58.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/term v0.45.0 // indirect
-	golang.org/x/text v0.40.0 // indirect
+	golang.org/x/text v0.41.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
