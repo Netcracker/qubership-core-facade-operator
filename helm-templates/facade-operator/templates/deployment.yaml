@@ -14,9 +14,6 @@ metadata:
     app.kubernetes.io/technology: 'go'
     deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
   annotations:
-    helm.sh/hook: "pre-install, pre-upgrade"
-    helm.sh/hook-weight: "100"
-    helm.sh/hook-delete-policy: "before-hook-creation"
     netcracker.cloud/start.stage: '1'
 spec:
   replicas: 1
@@ -185,6 +182,8 @@ spec:
 {{- end }}
             - name: K8S_SERVICE_TYPE
               value: '{{ .Values.K8S_SERVICE_TYPE }}'
+            - name: SERVICE_MESH_TYPE
+              value: '{{ .Values.SERVICE_MESH_TYPE }}'
             - name: CONSUL_ENABLED
               value: '{{ .Values.CONSUL_ENABLED }}'
                     {{ if .Values.CONSUL_ENABLED }}

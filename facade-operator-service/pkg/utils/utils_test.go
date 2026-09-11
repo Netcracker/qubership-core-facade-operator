@@ -376,3 +376,75 @@ func TestMergeOwnerReferences(t *testing.T) {
 	mergedReferences = MergeOwnerReferences(array4, array2)
 	assert.Equal(t, array2, mergedReferences)
 }
+
+func TestFilterOutFacadeOwnerReferences(t *testing.T) {
+	facadeServiceRef := metav1.OwnerReference{
+		APIVersion: "netcracker.com/v1alpha",
+		Kind:       "FacadeService",
+		Name:       "egress-gateway",
+	}
+	gatewayV1Ref := metav1.OwnerReference{
+		APIVersion: "core.netcracker.com/v1",
+		Kind:       "Gateway",
+		Name:       "some-gateway",
+	}
+	istioGatewayRef := metav1.OwnerReference{
+		APIVersion: "gateway.networking.k8s.io/v1",
+		Kind:       "Gateway",
+		Name:       "egress-gateway",
+	}
+	deploymentRef := metav1.OwnerReference{
+		APIVersion: "apps/v1",
+		Kind:       "Deployment",
+		Name:       "some-deployment",
+	}
+
+	tests := []struct {
+		name     string
+		input    []metav1.OwnerReference
+		expected []metav1.OwnerReference
+	}{
+		{
+			name:     "FacadeService ref is stripped",
+			input:    []metav1.OwnerReference{facadeServiceRef},
+			expected: nil,
+		},
+		{
+			name:     "core.netcracker.com Gateway ref is stripped",
+			input:    []metav1.OwnerReference{gatewayV1Ref},
+			expected: nil,
+		},
+		{
+			name:     "istio gateway.networking.k8s.io ref is kept",
+			input:    []metav1.OwnerReference{istioGatewayRef},
+			expected: []metav1.OwnerReference{istioGatewayRef},
+		},
+		{
+			name:     "apps Deployment ref is kept",
+			input:    []metav1.OwnerReference{deploymentRef},
+			expected: []metav1.OwnerReference{deploymentRef},
+		},
+		{
+			name:     "mixed: facade refs stripped, others kept",
+			input:    []metav1.OwnerReference{facadeServiceRef, gatewayV1Ref, istioGatewayRef, deploymentRef},
+			expected: []metav1.OwnerReference{istioGatewayRef, deploymentRef},
+		},
+		{
+			name:     "empty input returns nil",
+			input:    []metav1.OwnerReference{},
+			expected: nil,
+		},
+		{
+			name:     "nil input returns nil",
+			input:    nil,
+			expected: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := FilterOutFacadeOwnerReferences(tt.input)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}

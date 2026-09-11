@@ -15,6 +15,7 @@ import (
 	"go.uber.org/mock/gomock"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -697,4 +698,182 @@ func getServiceClient(ctrl *gomock.Controller) (ServiceClient, *mock_client.Mock
 	k8sClient := GetMockClient(ctrl)
 	deploymentClient := GetMockDeploymentClient(ctrl)
 	return NewServiceClient(k8sClient, deploymentClient), k8sClient
+}
+
+func getSharedService(req reconcile.Request) (*corev1.Service, types.NamespacedName) {
+	tpl := &templates.FacadeService{
+		Name:         "egress-gateway",
+		Namespace:    req.Namespace,
+		NameSelector: "egress-gateway-gateway",
+		Port:         8080,
+	}
+	svc := tpl.GetSharedService()
+	return svc, types.NamespacedName{Namespace: req.Namespace, Name: tpl.Name}
+}
+
+func getPatchOptions() *client.PatchOptions {
+	return &client.PatchOptions{FieldManager: "facadeOperator"}
+}
+
+func TestEnsureShared_shouldCreate_whenServiceNotFound(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	serviceClient, k8sClient := getServiceClient(ctrl)
+	ctx := context.Background()
+	req := getRequest()
+	svc, namespacedName := getSharedService(req)
+
+	k8sClient.EXPECT().Get(ctx, namespacedName, &corev1.Service{}, &client.GetOptions{}).Return(getNotFoundError())
+	k8sClient.EXPECT().Create(ctx, gomock.AssignableToTypeOf(svc), getCreateOptions()).DoAndReturn(
+		func(_ context.Context, created *corev1.Service, _ *client.CreateOptions) error {
+			assert.Nil(t, created.OwnerReferences)
+			return nil
+		})
+
+	err := serviceClient.EnsureShared(ctx, req, svc)
+	assert.Nil(t, err)
+}
+
+func TestEnsureShared_shouldStripFacadeOwnerRef_whenFacadeRefPresent(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	serviceClient, k8sClient := getServiceClient(ctrl)
+	ctx := context.Background()
+	req := getRequest()
+	svc, namespacedName := getSharedService(req)
+
+	facadeRef := metav1.OwnerReference{
+		APIVersion: "netcracker.com/v1alpha",
+		Kind:       "FacadeService",
+		Name:       "egress-gateway",
+		UID:        "uid-1",
+	}
+	foreignRef := metav1.OwnerReference{
+		APIVersion: "apps/v1",
+		Kind:       "Deployment",
+		Name:       "some-deployment",
+		UID:        "uid-2",
+	}
+	// the live service is chart-shaped: istio selector and an assigned clusterIP, both
+	// different from the template argument, so we can prove the spec is not overwritten
+	foundSvc := svc.DeepCopy()
+	foundSvc.OwnerReferences = []metav1.OwnerReference{facadeRef, foreignRef}
+	foundSvc.ResourceVersion = "rv1"
+	foundSvc.Spec.Selector = map[string]string{"gateway.networking.k8s.io/gateway-name": "egress-gateway"}
+	foundSvc.Spec.ClusterIP = "10.96.0.42"
+	chartSelector := foundSvc.Spec.Selector
+
+	k8sClient.EXPECT().Get(ctx, namespacedName, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
+		func(_ context.Context, _ types.NamespacedName, s *corev1.Service, _ *client.GetOptions) error {
+			*s = *foundSvc
+			return nil
+		})
+	k8sClient.EXPECT().Patch(ctx, gomock.AssignableToTypeOf(svc), gomock.Any(), getPatchOptions()).DoAndReturn(
+		func(_ context.Context, patched *corev1.Service, _ client.Patch, _ *client.PatchOptions) error {
+			assert.Equal(t, []metav1.OwnerReference{foreignRef}, patched.OwnerReferences)
+			// the live spec must survive: we patch metadata only, never the chart's fields
+			assert.Equal(t, chartSelector, patched.Spec.Selector)
+			assert.Equal(t, "10.96.0.42", patched.Spec.ClusterIP)
+			assert.NotEqual(t, svc.Spec.Selector, patched.Spec.Selector)
+			return nil
+		})
+
+	err := serviceClient.EnsureShared(ctx, req, svc)
+	assert.Nil(t, err)
+}
+
+func TestEnsureShared_shouldNoop_whenNoFacadeOwnerRefs(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	serviceClient, k8sClient := getServiceClient(ctrl)
+	ctx := context.Background()
+	req := getRequest()
+	svc, namespacedName := getSharedService(req)
+
+	foundSvc := svc.DeepCopy()
+	foundSvc.OwnerReferences = nil
+
+	k8sClient.EXPECT().Get(ctx, namespacedName, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
+		func(_ context.Context, _ types.NamespacedName, s *corev1.Service, _ *client.GetOptions) error {
+			*s = *foundSvc
+			return nil
+		})
+	// No Create or Patch expected — gomock will fail the test if called.
+
+	err := serviceClient.EnsureShared(ctx, req, svc)
+	assert.Nil(t, err)
+}
+
+func TestEnsureShared_shouldReturnExpectedError_whenPatchConflict(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	serviceClient, k8sClient := getServiceClient(ctrl)
+	ctx := context.Background()
+	req := getRequest()
+	svc, namespacedName := getSharedService(req)
+
+	foundSvc := svc.DeepCopy()
+	foundSvc.OwnerReferences = []metav1.OwnerReference{
+		{APIVersion: "netcracker.com/v1alpha", Kind: "FacadeService", Name: "egress-gateway", UID: "uid-1"},
+	}
+	foundSvc.ResourceVersion = "rv1"
+
+	conflictErr := &k8serrors.StatusError{ErrStatus: metav1.Status{Status: "409", Code: 409, Reason: metav1.StatusReasonConflict}}
+
+	k8sClient.EXPECT().Get(ctx, namespacedName, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
+		func(_ context.Context, _ types.NamespacedName, s *corev1.Service, _ *client.GetOptions) error {
+			*s = *foundSvc
+			return nil
+		})
+	k8sClient.EXPECT().Patch(ctx, gomock.Any(), gomock.Any(), getPatchOptions()).Return(conflictErr)
+
+	err := serviceClient.EnsureShared(ctx, req, svc)
+	assert.NotNil(t, err)
+	assert.IsType(t, &customerrors.ExpectedError{}, err)
+}
+
+func TestEnsureShared_shouldReturnNil_whenPatchNotFound(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	serviceClient, k8sClient := getServiceClient(ctrl)
+	ctx := context.Background()
+	req := getRequest()
+	svc, namespacedName := getSharedService(req)
+
+	foundSvc := svc.DeepCopy()
+	foundSvc.OwnerReferences = []metav1.OwnerReference{
+		{APIVersion: "netcracker.com/v1alpha", Kind: "FacadeService", Name: "egress-gateway", UID: "uid-1"},
+	}
+
+	k8sClient.EXPECT().Get(ctx, namespacedName, &corev1.Service{}, &client.GetOptions{}).DoAndReturn(
+		func(_ context.Context, _ types.NamespacedName, s *corev1.Service, _ *client.GetOptions) error {
+			*s = *foundSvc
+			return nil
+		})
+	k8sClient.EXPECT().Patch(ctx, gomock.Any(), gomock.Any(), getPatchOptions()).Return(getNotFoundError())
+
+	err := serviceClient.EnsureShared(ctx, req, svc)
+	assert.Nil(t, err)
+}
+
+func TestEnsureShared_shouldReturnError_whenGetFails(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	serviceClient, k8sClient := getServiceClient(ctrl)
+	ctx := context.Background()
+	req := getRequest()
+	svc, namespacedName := getSharedService(req)
+
+	k8sClient.EXPECT().Get(ctx, namespacedName, &corev1.Service{}, &client.GetOptions{}).Return(fmt.Errorf("unexpected error"))
+
+	err := serviceClient.EnsureShared(ctx, req, svc)
+	assert.NotNil(t, err)
+	assert.IsType(t, &errs.ErrCodeError{}, err)
+	assert.Equal(t, customerrors.UnexpectedKubernetesError, err.(*errs.ErrCodeError).ErrorCode)
 }

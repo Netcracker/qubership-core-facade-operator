@@ -24,7 +24,37 @@ type FacadeService struct {
 	MasterCRUID     types.UID
 }
 
-func (f FacadeService) GetService() *corev1.Service {
+// GetSharedService returns the service shaped exactly as the helm chart declares it:
+// selector driven by SERVICE_MESH_TYPE, ClusterIP service type regardless of K8S_SERVICE_TYPE,
+// and no ownerReferences — the chart owns it permanently.
+func (f FacadeService) GetSharedService() *corev1.Service {
+	selector := map[string]string{
+		"app": f.NameSelector,
+	}
+	if utils.IsIstioMeshType() {
+		// f.Name doubles as the istio Gateway name: the chart keeps ISTIO_EGRESS_GATEWAY_NAME
+		// and EGRESS_GATEWAY_SERVICE_NAME both equal to "egress-gateway". If they ever diverge
+		// the gateway name needs its own env var.
+		selector = map[string]string{
+			"gateway.networking.k8s.io/gateway-name": f.Name,
+		}
+	}
+
+	return &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      f.Name,
+			Namespace: f.Namespace,
+			Labels:    f.getLabels(),
+		},
+		Spec: corev1.ServiceSpec{
+			Selector:  selector,
+			Ports:     f.getPorts(),
+			ClusterIP: "",
+		},
+	}
+}
+
+func (f FacadeService) getLabels() map[string]string {
 	labels := map[string]string{
 		"name":                                  f.Name,
 		"app.kubernetes.io/managed-by":          "operator",
@@ -40,12 +70,16 @@ func (f FacadeService) GetService() *corev1.Service {
 	} else {
 		labels["app.kubernetes.io/part-of"] = utils.Unknown
 	}
+	return labels
+}
+
+func (f FacadeService) GetService() *corev1.Service {
 	controller := false
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      f.Name,
 			Namespace: f.Namespace,
-			Labels:    labels,
+			Labels:    f.getLabels(),
 			OwnerReferences: []metav1.OwnerReference{
 				{
 					APIVersion: f.MasterCRVersion,

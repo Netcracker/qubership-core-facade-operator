@@ -20,6 +20,11 @@ import (
 type ServiceClient interface {
 	Apply(ctx context.Context, req ctrl.Request, service *corev1.Service) error
 	Delete(ctx context.Context, req ctrl.Request, name string, gatewayName ...string) error
+	// EnsureShared makes sure the service exists without taking ownership: it is created when
+	// absent (with no ownerReferences), and facade CR ownerReferences are stripped from an
+	// existing one so no CR deletion can garbage-collect it. The spec and labels of an existing
+	// service are never touched — the helm chart owns them.
+	EnsureShared(ctx context.Context, req ctrl.Request, service *corev1.Service) error
 }
 
 type ServiceClientImpl struct {
@@ -66,6 +71,44 @@ func (r *ServiceClientImpl) Apply(ctx context.Context, req ctrl.Request, service
 	} else {
 		return r.create(ctx, req, service)
 	}
+}
+
+func (r *ServiceClientImpl) EnsureShared(ctx context.Context, req ctrl.Request, service *corev1.Service) error {
+	found := &corev1.Service{}
+	namespacedName := types.NamespacedName{Namespace: service.Namespace, Name: service.Name}
+	err := r.client.Get(ctx, namespacedName, found, &client.GetOptions{})
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			r.logger.InfoC(ctx, "[%v] Shared service %v not found, creating", req.NamespacedName, service.Name)
+			// never take ownership: a CR deletion must not be able to garbage-collect it
+			service.OwnerReferences = nil
+			return r.create(ctx, req, service)
+		}
+		return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("Failed to get service %v", service.Name), err)
+	}
+
+	kept := utils.FilterOutFacadeOwnerReferences(found.OwnerReferences)
+	if len(kept) == len(found.OwnerReferences) {
+		r.logger.InfoC(ctx, "[%v] Shared service %v has no facade ownerReferences, nothing to patch", req.NamespacedName, service.Name)
+		return nil
+	}
+
+	r.logger.InfoC(ctx, "[%v] Stripping facade ownerReferences from shared service %v", req.NamespacedName, service.Name)
+	patch := client.MergeFromWithOptions(found.DeepCopy(), client.MergeFromWithOptimisticLock{})
+	found.OwnerReferences = kept
+	patchErr := r.client.Patch(ctx, found, patch, &client.PatchOptions{FieldManager: "facadeOperator"})
+	if patchErr != nil {
+		if k8sErrors.IsNotFound(patchErr) {
+			r.logger.Debugf("[%v] Shared service %v deleted concurrently, skipping patch", req.NamespacedName, service.Name)
+			return nil
+		}
+		if k8sErrors.IsConflict(patchErr) {
+			r.logger.Debugf("[%v] Shared service %v conflict on patch, will retry", req.NamespacedName, service.Name)
+			return &customerrors.ExpectedError{Message: patchErr.Error()}
+		}
+		return errs.NewError(customerrors.UnexpectedKubernetesError, fmt.Sprintf("Failed to patch service %v", service.Name), patchErr)
+	}
+	return nil
 }
 
 func (r *ServiceClientImpl) update(ctx context.Context, req ctrl.Request, service, foundService *corev1.Service) error {

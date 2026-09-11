@@ -702,7 +702,7 @@ func TestReconcile_shouldApplyCoreEgressGatewayMeshRouter_serviceNameIsEgressGat
 	publicGatewayImage := "publicGatewayImage"
 	utils.MonitoringEnabled = "true"
 
-	reconciler, deploymentClient, _, podMonitorClient, configMapClient, k8sClient, statusUpdater, readyService, _, crPriorityService, hpaClient := getFacadeServiceReconciler(mockCtrl)
+	reconciler, deploymentClient, serviceClient, podMonitorClient, configMapClient, k8sClient, statusUpdater, readyService, _, crPriorityService, hpaClient := getFacadeServiceReconciler(mockCtrl)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -740,6 +740,8 @@ func TestReconcile_shouldApplyCoreEgressGatewayMeshRouter_serviceNameIsEgressGat
 		statusUpdater.EXPECT().SetUpdating(gomock.Any(), gomock.Any()).AnyTimes(),
 		reconciler.base.controlPlaneClient.(*mock_restclient.MockControlPlaneClient).EXPECT().RegisterGateway(gomock.Any(), facade.CoreEgressGateway, facadeService).Return(nil),
 		configMapClient.EXPECT().GetGatewayImage(gomock.Any(), req).Return(publicGatewayImage, nil),
+		// EnsureShared is called before UpdateAvailable for core-egress-gateway
+		serviceClient.EXPECT().EnsureShared(gomock.Any(), req, gomock.Any()).Return(nil),
 		crPriorityService.EXPECT().UpdateAvailable(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil),
 		// SERVICE_NAME_VARIABLE must be "egress-gateway", not "core-egress-gateway"
 		deploymentClient.EXPECT().Apply(gomock.Any(), req, getDeployment(reconciler.base, req, facade.EgressGateway, egressGatewayDeploymentName, publicGatewayImage, facadeService, true, "1")).Return(nil),
@@ -1522,6 +1524,124 @@ func TestFacadeServiceReconciler_getFacadeGatewayConcurrency(t *testing.T) {
 	}
 	res = rec.getFacadeGatewayConcurrency(context.Background(), facadeService)
 	assert.Equal(t, 0, res)
+}
+
+func TestReconcile_shouldNeverCallApply_forCoreEgressGatewayService(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	ctx := context.Background()
+	utils.MonitoringEnabled = "true"
+	publicGatewayImage := "publicGatewayImage"
+
+	reconciler, deploymentClient, serviceClient, podMonitorClient, configMapClient, k8sClient, statusUpdater, readyService, _, crPriorityService, hpaClient := getFacadeServiceReconciler(mockCtrl)
+
+	req := reconcile.Request{NamespacedName: types.NamespacedName{Namespace: "test-namespace", Name: facade.CoreEgressGateway}}
+	egressGatewayDeploymentName := facade.EgressGateway + utils.GatewaySuffix
+	facadeService := &facadeV1Alpha.FacadeService{
+		Spec: facade.FacadeServiceSpec{
+			Replicas:    int32(1),
+			Port:        8080,
+			Gateway:     egressGatewayDeploymentName,
+			GatewayType: facade.Egress,
+			Env: facade.FacadeServiceEnv{
+				FacadeGatewayCpuLimit:      "10m",
+				FacadeGatewayCpuRequest:    "1m",
+				FacadeGatewayMemoryLimit:   "200Mi",
+				FacadeGatewayMemoryRequest: "100Mi",
+			},
+		},
+	}
+
+	serviceClient.EXPECT().Apply(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+	serviceClient.EXPECT().EnsureShared(gomock.Any(), req, gomock.Any()).Return(nil)
+
+	gomock.InOrder(
+		k8sClient.EXPECT().Get(gomock.Any(), req.NamespacedName, &facadeV1Alpha.FacadeService{}, &client.GetOptions{}).DoAndReturn(
+			func(_ context.Context, _ types.NamespacedName, fs *facadeV1Alpha.FacadeService, _ *client.GetOptions) error {
+				*fs = *facadeService
+				return nil
+			}),
+		deploymentClient.EXPECT().GetMeshRouterDeployments(gomock.Any(), req).Return(nil, nil),
+		readyService.EXPECT().IsUpdatingPhase(gomock.Any(), gomock.Any(), gomock.Any()).Return(false).AnyTimes(),
+		statusUpdater.EXPECT().SetUpdating(gomock.Any(), gomock.Any()).AnyTimes(),
+		reconciler.base.controlPlaneClient.(*mock_restclient.MockControlPlaneClient).EXPECT().RegisterGateway(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil),
+		configMapClient.EXPECT().GetGatewayImage(gomock.Any(), req).Return(publicGatewayImage, nil),
+		crPriorityService.EXPECT().UpdateAvailable(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil),
+		deploymentClient.EXPECT().Apply(gomock.Any(), req, gomock.Any()).Return(nil),
+		configMapClient.EXPECT().Apply(gomock.Any(), req, gomock.Any()).Return(nil),
+		hpaClient.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()),
+		podMonitorClient.EXPECT().Create(gomock.Any(), req, gomock.Any()).Return(nil),
+		deploymentClient.EXPECT().IsFacadeGateway(gomock.Any(), req, gomock.Any()).Return(false, nil),
+		k8sClient.EXPECT().List(gomock.Any(), &v1beta1.IngressList{}, gomock.Any(), gomock.Any()).DoAndReturn(
+			func(_ context.Context, list *v1beta1.IngressList, _ ...client.ListOption) error {
+				*list = v1beta1.IngressList{}
+				return nil
+			}),
+	)
+
+	result, err := reconciler.Reconcile(ctx, req)
+	assert.Nil(t, err)
+	assert.Equal(t, ctrl.Result{}, result)
+}
+
+func TestReconcile_shouldCallApply_notEnsureShared_forRegularMeshCR(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	ctx := context.Background()
+	utils.MonitoringEnabled = "true"
+	publicGatewayImage := "publicGatewayImage"
+
+	reconciler, deploymentClient, serviceClient, podMonitorClient, configMapClient, k8sClient, statusUpdater, readyService, _, crPriorityService, hpaClient := getFacadeServiceReconciler(mockCtrl)
+
+	req := getFacadeServiceRequest()
+	facadeService := &facadeV1Alpha.FacadeService{
+		Spec: facade.FacadeServiceSpec{
+			Replicas: int32(1),
+			Port:     8080,
+			Gateway:  req.Name + "-composite",
+			Env: facade.FacadeServiceEnv{
+				FacadeGatewayCpuLimit:      "10m",
+				FacadeGatewayCpuRequest:    "1m",
+				FacadeGatewayMemoryLimit:   "200Mi",
+				FacadeGatewayMemoryRequest: "100Mi",
+			},
+		},
+	}
+
+	serviceClient.EXPECT().EnsureShared(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+	// gatewayType defaults to mesh, so applyService runs twice: once for the CR name and
+	// once for the deployment name (facade_common_controller.go:612)
+	serviceClient.EXPECT().Apply(gomock.Any(), req, gomock.Any()).Return(nil).Times(2)
+
+	gomock.InOrder(
+		k8sClient.EXPECT().Get(gomock.Any(), req.NamespacedName, &facadeV1Alpha.FacadeService{}, &client.GetOptions{}).DoAndReturn(
+			func(_ context.Context, _ types.NamespacedName, fs *facadeV1Alpha.FacadeService, _ *client.GetOptions) error {
+				*fs = *facadeService
+				return nil
+			}),
+		deploymentClient.EXPECT().GetMeshRouterDeployments(gomock.Any(), req).Return(nil, nil),
+		readyService.EXPECT().IsUpdatingPhase(gomock.Any(), gomock.Any(), gomock.Any()).Return(false).AnyTimes(),
+		statusUpdater.EXPECT().SetUpdating(gomock.Any(), gomock.Any()).AnyTimes(),
+		reconciler.base.controlPlaneClient.(*mock_restclient.MockControlPlaneClient).EXPECT().RegisterGateway(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil),
+		configMapClient.EXPECT().GetGatewayImage(gomock.Any(), req).Return(publicGatewayImage, nil),
+		crPriorityService.EXPECT().UpdateAvailable(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil),
+		deploymentClient.EXPECT().Apply(gomock.Any(), req, gomock.Any()).Return(nil),
+		configMapClient.EXPECT().Apply(gomock.Any(), req, gomock.Any()).Return(nil),
+		hpaClient.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()),
+		podMonitorClient.EXPECT().Create(gomock.Any(), req, gomock.Any()).Return(nil),
+		deploymentClient.EXPECT().IsFacadeGateway(gomock.Any(), req, gomock.Any()).Return(false, nil),
+		k8sClient.EXPECT().List(gomock.Any(), &v1beta1.IngressList{}, gomock.Any(), gomock.Any()).DoAndReturn(
+			func(_ context.Context, list *v1beta1.IngressList, _ ...client.ListOption) error {
+				*list = v1beta1.IngressList{}
+				return nil
+			}),
+	)
+
+	result, err := reconciler.Reconcile(ctx, req)
+	assert.Nil(t, err)
+	assert.Equal(t, ctrl.Result{}, result)
 }
 
 func TestReconcile_shouldBeNoopOnDelete_whenEgressGatewayDeletedAndCoreEgressGatewayExists(t *testing.T) {

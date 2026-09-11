@@ -29,7 +29,7 @@ spec:
 
 ### Resources Created
 
-The operator creates the following resources for `core-egress-gateway`:
+The operator creates and manages the following resources for `core-egress-gateway`:
 
 1. **Deployment**: Named `egress-gateway-gateway`
    - Container environment variable `SERVICE_NAME_VARIABLE` is set to `egress-gateway`
@@ -37,15 +37,36 @@ The operator creates the following resources for `core-egress-gateway`:
 2. **ConfigMap**: Named `egress-gateway-gateway.monitoring-config`
 3. **HPA**: Named `egress-gateway-gateway`
 4. **PodMonitor**: Named `egress-gateway-gateway-pod-monitor`
+5. **Service**: Named `egress-gateway` (shared; see below)
+
+### Shared Service (`egress-gateway`)
+
+`Service/egress-gateway` is declared by the `qubership-core-mesh-config` helm chart and is the stable client-facing entrypoint for egress traffic. The operator does **not** own this service — the helm chart is the authoritative source of its spec, labels, and annotations.
+
+On every `core-egress-gateway` reconcile the operator:
+
+- **Strips `FacadeService`/`Gateway` ownerReferences** from the live Service object so that no CR deletion can garbage-collect it via Kubernetes GC.
+- **Creates the Service if it is absent** (e.g. it was explicitly deleted while an old operator pod was running), using a spec that matches the helm chart: ports `web/TCP/8080` and a selector that depends on `SERVICE_MESH_TYPE`:
+
+  | `SERVICE_MESH_TYPE` | selector |
+  |---|---|
+  | `Istio` | `gateway.networking.k8s.io/gateway-name: egress-gateway` |
+  | `Core` (or unset) | `app: egress-gateway-gateway` |
+
+A recreated Service will temporarily show as OutOfSync in ArgoCD (it lacks the tracking annotation) until the next Argo sync adopts it. This is expected and self-resolves without intervention.
+
+The operator never patches the spec, labels, or annotations of an existing Service — only its `ownerReferences`.
 
 ### Cleanup
 
-All created resources have `OwnerReferences` set to the `core-egress-gateway` CR. When the CR is deleted, Kubernetes garbage collection automatically removes all associated resources.
+Resources 1–4 above have `OwnerReferences` set to the `core-egress-gateway` CR. When the CR is deleted, Kubernetes garbage collection automatically removes them.
+
+The shared `Service/egress-gateway` (resource 5) is **not** owned by the CR and is therefore **not** deleted when the CR is deleted — the helm chart remains its owner.
 
 ## Coexistence with `egress-gateway`
 
 Both `egress-gateway` and `core-egress-gateway` CRs can exist in the same namespace. When `core-egress-gateway` CR exists, it **always wins** and controls the egress gateway resources regardless of any `masterCR` settings:
 
 - Any reconciliation event for `egress-gateway` CR is a complete no-op — no resources are created, updated, or deleted.
-- Deleting `egress-gateway` CR while `core-egress-gateway` exists has no effect on the egress gateway resources (deployment, service, etc.).
-- `core-egress-gateway` is the authoritative owner of all egress gateway resources and takes precedence over any other `egress-gateway` CR.
+- Deleting `egress-gateway` CR while `core-egress-gateway` exists has no effect on the egress gateway resources (deployment, service, etc.). The service is protected because the operator strips any `FacadeService` ownerReferences from it during `core-egress-gateway` reconcile.
+- `core-egress-gateway` is the authoritative owner of the egress gateway deployment and its associated resources, and takes precedence over any other `egress-gateway` CR.
