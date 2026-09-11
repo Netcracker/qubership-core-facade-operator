@@ -5,9 +5,9 @@ go 1.26.5
 require (
 	github.com/cert-manager/cert-manager v1.21.1
 	github.com/gofiber/fiber/v2 v2.52.15
-	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.11.1-0.20260901123101-ba9b1df2a800
+	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.11.1-0.20260910134727-3b9f12bf318e
 	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.7.0
-	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.10.1-0.20260901124918-b2ee85924baf
+	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.10.1-0.20260910134852-6fabd90b23e7
 	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.8.0
 	github.com/netcracker/qubership-core-lib-go/v3 v3.14.0
 	github.com/openshift/api v0.0.0-20260827203510-c7d4aa14a764
