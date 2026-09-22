@@ -5,11 +5,11 @@ go 1.26.5
 require (
 	github.com/cert-manager/cert-manager v1.21.2
 	github.com/gofiber/fiber/v2 v2.52.15
-	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.11.1-0.20260917080101-f7f8ae4fadbd
-	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.7.0
-	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.10.1-0.20260917082039-c3ebd29a1125
-	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.8.1-0.20260916135923-51b88a0872b6
-	github.com/netcracker/qubership-core-lib-go/v3 v3.14.0
+	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.12.0
+	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.7.1
+	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.11.0
+	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.9.0
+	github.com/netcracker/qubership-core-lib-go/v3 v3.14.1
 	github.com/openshift/api v0.0.0-20260827203510-c7d4aa14a764
 	github.com/stretchr/testify v1.12.1
 	go.opentelemetry.io/otel v1.46.0
@@ -115,7 +115,7 @@ require (
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/term v0.45.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
-	golang.org/x/time v0.15.0 // indirect
+	golang.org/x/time v0.16.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
