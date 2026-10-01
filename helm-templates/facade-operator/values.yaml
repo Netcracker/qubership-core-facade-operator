@@ -50,5 +50,5 @@ HTTP_ROUTE_REQUEST_IDLE_TIMEOUT: ''
 #         - name: X-Custom-Header
 #           value: value
 HTTP_ROUTE_CUSTOM_FILTERS: []
-KUBERNETES_M2M_ENABLED: false
+M2M_AUTH_MODE: legacy
 DEPLOYMENT_STRATEGY_TYPE: recreate
