@@ -3,8 +3,8 @@ module github.com/netcracker/qubership-core-facade-operator/facade-operator-serv
 go 1.26.7
 
 require (
-	github.com/cert-manager/cert-manager v1.21.2
-	github.com/gofiber/fiber/v2 v2.52.15
+	github.com/cert-manager/cert-manager v1.21.3
+	github.com/gofiber/fiber/v2 v2.52.16
 	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.12.3
 	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.7.4
 	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.11.3
