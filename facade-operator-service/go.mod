@@ -10,7 +10,7 @@ require (
 	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.11.3
 	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.10.1
 	github.com/netcracker/qubership-core-lib-go/v3 v3.15.2
-	github.com/openshift/api v0.0.0-20261026215420-da0032bf0c5f
+	github.com/openshift/api v0.0.0-20261027123455-77c45d1bcab3
 	github.com/stretchr/testify v1.12.1
 	go.opentelemetry.io/otel v1.47.0
 	go.opentelemetry.io/otel/sdk v1.47.0
