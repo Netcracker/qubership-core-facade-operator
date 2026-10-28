@@ -1,6 +1,6 @@
 module github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2
 
-go 1.26.7
+go 1.26.9
 
 require (
 	github.com/cert-manager/cert-manager v1.21.3
@@ -8,7 +8,7 @@ require (
 	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.12.4
 	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.7.5
 	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.11.3
-	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.10.1
+	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.11.0
 	github.com/netcracker/qubership-core-lib-go/v3 v3.15.3
 	github.com/openshift/api v0.0.0-20261028095540-9af1f7b4730c
 	github.com/stretchr/testify v1.12.1
@@ -59,7 +59,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/hashicorp/consul/api v1.34.5 // indirect
+	github.com/hashicorp/consul/api v1.35.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
