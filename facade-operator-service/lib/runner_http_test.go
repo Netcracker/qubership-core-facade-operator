@@ -68,6 +68,8 @@ func startHttpServer(t *testing.T) int {
 	port := freePort(t)
 	t.Setenv("HTTP_SERVER_BIND", ":"+strconv.Itoa(port))
 	t.Setenv("PPROF_PORT", "0")
+	t.Setenv("MICROSERVICE_NAME", "facade-operator")
+	t.Setenv("MICROSERVICE_NAMESPACE", "test")
 	configloader.Init(configloader.EnvPropertySource())
 	app, err := newHttpApp()
 	require.NoError(t, err)
