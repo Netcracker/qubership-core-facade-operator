@@ -26,7 +26,7 @@ func TestHttpServerResponses(t *testing.T) {
 	}{
 		{name: "health probe", path: "/health", wantStatus: http.StatusOK, wantContentType: "application/json", wantBody: `"ok"`},
 		{name: "readiness probe", path: "/ready", wantStatus: http.StatusOK, wantContentType: "application/json", wantBody: `"ok"`},
-		{name: "unknown path", path: "/missing", wantStatus: http.StatusNotFound, wantContentType: "text/plain; charset=utf-8", wantBody: "Cannot GET /missing"},
+		{name: "unknown path", path: "/missing", wantStatus: http.StatusNotFound, wantContentType: "text/plain; charset=utf-8", wantBody: "Not Found"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
