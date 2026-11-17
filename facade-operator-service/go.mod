@@ -23,6 +23,8 @@ require (
 	sigs.k8s.io/gateway-api v1.6.3
 )
 
+require github.com/prometheus/client_golang v1.25.0
+
 require (
 	github.com/KimMachineGun/automemlimit v0.7.5 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
@@ -90,7 +92,6 @@ require (
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/prometheus/client_golang v1.25.0 // indirect
 	github.com/prometheus/client_model v0.6.3 // indirect
 	github.com/prometheus/common v0.72.0 // indirect
 	github.com/prometheus/procfs v0.22.0 // indirect
