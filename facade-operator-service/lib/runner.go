@@ -9,7 +9,7 @@ import (
 	"time"
 
 	v1cert "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	facadeV1 "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1"
 	facadeV1Alpha "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/facade/v1alpha"
 	monitoringV1 "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/monitoring/v1"
@@ -23,8 +23,8 @@ import (
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
 	errs "github.com/netcracker/qubership-core-lib-go-error-handling/v3/errors"
 	"github.com/netcracker/qubership-core-lib-go-actuator-common/v2/tracing"
-	fiberserver "github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2"
-	"github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2/server"
+	fiberserver "github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v3"
+	"github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v3/server"
 	"github.com/netcracker/qubership-core-lib-go-rest-utils/v2/consul-propertysource"
 	"github.com/netcracker/qubership-core-lib-go/v3/configloader"
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
@@ -137,7 +137,6 @@ func startServer(mgr manager.Manager) {
 
 func newHttpApp() (*fiber.App, error) {
 	fiberConfig := fiber.Config{
-		Network:     fiber.NetworkTCP,
 		IdleTimeout: 30 * time.Second,
 	}
 	pprofPort := configloader.GetOrDefaultString("pprof.port", "6060")
@@ -151,7 +150,7 @@ func newHttpApp() (*fiber.App, error) {
 }
 
 func listenHttp(app *fiber.App) {
-	server.StartServer(app, "http.server.bind")
+	server.StartServer(app, "http.server.bind", fiber.ListenConfig{ListenerNetwork: fiber.NetworkTCP})
 }
 
 // newFiberServerApp builds the Fiber actuator app with Zipkin tracing.
@@ -166,8 +165,8 @@ func newFiberServerApp(fiberConfig fiber.Config, pprofPort string) (*fiber.App, 
 		Process()
 }
 
-func healthProbe(c *fiber.Ctx) error {
-	return c.Status(http.StatusOK).JSON("ok")
+func healthProbe(c fiber.Ctx) error {
+	return c.Status(http.StatusOK).JSON("ok", fiber.MIMEApplicationJSON)
 }
 
 func setupReconcilers(mgr manager.Manager, namespace string) {
