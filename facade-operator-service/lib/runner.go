@@ -120,12 +120,18 @@ func RunService() {
 func startServer(mgr manager.Manager) {
 	setupLog.Info("Start server...")
 
-	app, err := newHttpApp()
+	fiberConfig := fiber.Config{
+		IdleTimeout: 30 * time.Second,
+	}
+	pprofPort := configloader.GetOrDefaultString("pprof.port", "6060")
+	app, err := newFiberServerApp(fiberConfig, pprofPort)
 	if err != nil {
 		setupLog.Error("Error while create app because: %s", err.Error())
 		return
 	}
-	go listenHttp(app)
+	app.Get("/health", healthProbe)
+	app.Get("/ready", healthProbe)
+	go server.StartServer(app, "http.server.bind", fiber.ListenConfig{ListenerNetwork: fiber.NetworkTCP})
 
 	//+kubebuilder:scaffold:builder
 	setupLog.Info("starting manager")
@@ -133,24 +139,6 @@ func startServer(mgr manager.Manager) {
 		setupLog.Error("%s", errs.ToLogFormat(errs.NewError(customerrors.UnknownErrorCode, "Can not run manager", err)))
 		os.Exit(1)
 	}
-}
-
-func newHttpApp() (*fiber.App, error) {
-	fiberConfig := fiber.Config{
-		IdleTimeout: 30 * time.Second,
-	}
-	pprofPort := configloader.GetOrDefaultString("pprof.port", "6060")
-	app, err := newFiberServerApp(fiberConfig, pprofPort)
-	if err != nil {
-		return nil, err
-	}
-	app.Get("/health", healthProbe)
-	app.Get("/ready", healthProbe)
-	return app, nil
-}
-
-func listenHttp(app *fiber.App) {
-	server.StartServer(app, "http.server.bind", fiber.ListenConfig{ListenerNetwork: fiber.NetworkTCP})
 }
 
 // newFiberServerApp builds the Fiber actuator app with Zipkin tracing.
