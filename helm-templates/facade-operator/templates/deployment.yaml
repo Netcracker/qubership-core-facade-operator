@@ -59,6 +59,22 @@ spec:
     spec:
       serviceAccountName: '{{ .Values.SERVICE_NAME }}'
       volumes:
+        - name: client-credentials
+          secret:
+            secretName: "{{ .Values.SERVICE_NAME }}-client-credentials"
+        {{ if .Values.INTERNAL_TLS_ENABLED }}
+        - name: tls
+          secret:
+            secretName: '{{ .Values.SERVICE_NAME }}-tls'
+        {{ end }}
+{{ if .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED }}
+        - name: tmp
+          emptyDir: { }
+        - name: sslcerts
+          emptyDir: { }
+        - name: cacerts
+          emptyDir: { }
+{{ end }}
         - name: projected-tokens
           projected:
             defaultMode: 292
@@ -136,6 +152,34 @@ spec:
               value: {{ .Values.HTTP_ROUTE_CUSTOM_FILTERS | toJson | quote }}
             - name: FACADE_GATEWAY_TERMINATION_GRACE_PERIOD_S
               value: '{{ .Values.FACADE_GATEWAY_TERMINATION_GRACE_PERIOD_S }}'
+            - name: GATEWAY_HPA_MIN_REPLICAS
+              value: '{{ .Values.GATEWAY_HPA_MIN_REPLICAS }}'
+            - name: GATEWAY_HPA_MAX_REPLICAS
+              value: '{{ .Values.GATEWAY_HPA_MAX_REPLICAS }}'
+            - name: GATEWAY_HPA_AVERAGE_UTILIZATION_TARGET_PERCENT
+              value: '{{ .Values.GATEWAY_HPA_AVERAGE_UTILIZATION_TARGET_PERCENT }}'
+            - name: GATEWAY_HPA_SELECT_POLICY
+              value: '{{ .Values.GATEWAY_HPA_SELECT_POLICY }}'
+            - name: GATEWAY_HPA_SCALE_UP_STABILIZATION_WINDOW_SECONDS
+              value: '{{ .Values.GATEWAY_HPA_SCALE_UP_STABILIZATION_WINDOW_SECONDS }}'
+            - name: GATEWAY_HPA_SCALE_UP_PERCENT_VALUE
+              value: '{{ .Values.GATEWAY_HPA_SCALE_UP_PERCENT_VALUE }}'
+            - name: GATEWAY_HPA_SCALE_UP_PERCENT_PERIOD_SECONDS
+              value: '{{ .Values.GATEWAY_HPA_SCALE_UP_PERCENT_PERIOD_SECONDS }}'
+            - name: GATEWAY_HPA_SCALE_UP_PODS_VALUE
+              value: '{{ .Values.GATEWAY_HPA_SCALE_UP_PODS_VALUE }}'
+            - name: GATEWAY_HPA_SCALE_UP_PODS_PERIOD_SECONDS
+              value: '{{ .Values.GATEWAY_HPA_SCALE_UP_PODS_PERIOD_SECONDS }}'
+            - name: GATEWAY_HPA_SCALE_DOWN_STABILIZATION_WINDOW_SECONDS
+              value: '{{ .Values.GATEWAY_HPA_SCALE_DOWN_STABILIZATION_WINDOW_SECONDS }}'
+            - name: GATEWAY_HPA_SCALE_DOWN_PERCENT_VALUE
+              value: '{{ .Values.GATEWAY_HPA_SCALE_DOWN_PERCENT_VALUE }}'
+            - name: GATEWAY_HPA_SCALE_DOWN_PERCENT_PERIOD_SECONDS
+              value: '{{ .Values.GATEWAY_HPA_SCALE_DOWN_PERCENT_PERIOD_SECONDS }}'
+            - name: GATEWAY_HPA_SCALE_DOWN_PODS_VALUE
+              value: '{{ .Values.GATEWAY_HPA_SCALE_DOWN_PODS_VALUE }}'
+            - name: GATEWAY_HPA_SCALE_DOWN_PODS_PERIOD_SECONDS
+              value: '{{ .Values.GATEWAY_HPA_SCALE_DOWN_PODS_PERIOD_SECONDS }}'
             - name: ARTIFACT_DESCRIPTOR_VERSION
               value: '{{ .Values.ARTIFACT_DESCRIPTOR_VERSION }}'
             - name: IP_STACK
@@ -170,16 +214,20 @@ spec:
               value: '{{ .Values.INTERNAL_TLS_ENABLED }}'
             - name: TLS_SECRET
               value: '/etc/tls'
-            - name: TLS_PASSWORD_SECRET_NAME
-              value: 'tls-password-secret'
-            - name: TLS_PASSWORD_KEY
-              value: 'tls-password'
             - name: READONLY_CONTAINER_FILE_SYSTEM_ENABLED
-              value: '{{ and .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED (eq .Values.PAAS_PLATFORM "KUBERNETES") }}'
+              value: '{{ .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED }}'
 {{- if .Values.CLOUD_TOPOLOGIES }}
             - name: CLOUD_TOPOLOGIES_JSON_BASE64
               value: {{ .Values.CLOUD_TOPOLOGIES | toJson | b64enc }}
 {{- end }}
+{{ if .Values.INTERNAL_TLS_ENABLED }}
+            - name: COMPOSITE_PLATFORM
+              value: '{{ not (empty (.Values.BASELINE_ORIGIN)) }}'
+            - name: BASELINE_PROJ
+              value: '{{ .Values.BASELINE_PROJ }}'
+            - name: X509_AUTHENTICATION_ENABLED
+              value: '{{ .Values.X509_AUTHENTICATION_ENABLED }}'
+{{ end }}
             - name: K8S_SERVICE_TYPE
               value: '{{ .Values.K8S_SERVICE_TYPE }}'
             - name: SERVICE_MESH_TYPE
@@ -190,14 +238,6 @@ spec:
             - name: CONSUL_URL
               value: '{{ .Values.CONSUL_URL }}'
                     {{ end }}
-            - name: CONSUL_AUTH_MODE
-              value: '{{ .Values.CONSUL_AUTH_MODE }}'
-            - name: CONSUL_AUTH_METHOD
-              value: '{{ .Values.CONSUL_AUTH_METHOD }}'
-            - name: CONSUL_AUTH_AUDIENCE
-              value: '{{ .Values.CONSUL_AUTH_AUDIENCE }}'
-            - name: CONSUL_AUTH_FALLBACK_RECHECK_INTERVAL
-              value: '{{ .Values.CONSUL_AUTH_FALLBACK_RECHECK_INTERVAL }}'
           resources:
             requests:
               cpu: {{ .Values.CPU_REQUEST }}
@@ -209,8 +249,8 @@ spec:
             failureThreshold: {{ ternary 3 .Values.PROBE_LIVENESS_FAILURE_THRESHOLD (lt (int .Values.PROBE_LIVENESS_FAILURE_THRESHOLD) 0) }}
             httpGet:
               path: /health
-              port: web
-              scheme: HTTP
+              port: {{ if .Values.INTERNAL_TLS_ENABLED }} tls {{ else }} web {{ end }}
+              scheme: {{ if .Values.INTERNAL_TLS_ENABLED }} HTTPS {{ else }} HTTP {{ end }}
             initialDelaySeconds: {{ ternary 10 .Values.PROBE_LIVENESS_INITIAL_DELAY_SECONDS (lt (int .Values.PROBE_LIVENESS_INITIAL_DELAY_SECONDS) 0) }}
             periodSeconds: {{ ternary 5 .Values.PROBE_LIVENESS_PERIOD_SECONDS (lt (int .Values.PROBE_LIVENESS_PERIOD_SECONDS) 0) }}
             timeoutSeconds: {{ ternary 5 .Values.PROBE_LIVENESS_TIMEOUT_SECONDS (lt (int .Values.PROBE_LIVENESS_TIMEOUT_SECONDS) 0) }}
@@ -218,8 +258,8 @@ spec:
             failureThreshold: {{ ternary 15 .Values.PROBE_READINESS_FAILURE_THRESHOLD (lt (int .Values.PROBE_READINESS_FAILURE_THRESHOLD) 0) }}
             httpGet:
               path: /ready
-              port: web
-              scheme: HTTP
+              port: {{ if .Values.INTERNAL_TLS_ENABLED }} tls {{ else }} web {{ end }}
+              scheme: {{ if .Values.INTERNAL_TLS_ENABLED }} HTTPS {{ else }} HTTP {{ end }}
             initialDelaySeconds: {{ ternary 2 .Values.PROBE_READINESS_INITIAL_DELAY_SECONDS (lt (int .Values.PROBE_READINESS_INITIAL_DELAY_SECONDS) 0) }}
             periodSeconds: {{ ternary 2 .Values.PROBE_READINESS_PERIOD_SECONDS (lt (int .Values.PROBE_READINESS_PERIOD_SECONDS) 0) }}
             successThreshold: {{ ternary 1 .Values.PROBE_READINESS_SUCCESS_THRESHOLD (lt (int .Values.PROBE_READINESS_SUCCESS_THRESHOLD) 0) }}
@@ -228,17 +268,18 @@ spec:
             failureThreshold: {{ ternary 20 .Values.PROBE_STARTUP_FAILURE_THRESHOLD (lt (int .Values.PROBE_STARTUP_FAILURE_THRESHOLD) 0) }}
             httpGet:
               path: /ready
-              port: web
-              scheme: HTTP
+              port: {{ if .Values.INTERNAL_TLS_ENABLED }} tls {{ else }} web {{ end }}
+              scheme: {{ if .Values.INTERNAL_TLS_ENABLED }} HTTPS {{ else }} HTTP {{ end }}
             initialDelaySeconds: {{ ternary 5 .Values.PROBE_STARTUP_INITIAL_DELAY_SECONDS (lt (int .Values.PROBE_STARTUP_INITIAL_DELAY_SECONDS) 0) }}
             periodSeconds: {{ ternary 2 .Values.PROBE_STARTUP_PERIOD_SECONDS (lt (int .Values.PROBE_STARTUP_PERIOD_SECONDS) 0) }}
             timeoutSeconds: {{ ternary 5 .Values.PROBE_STARTUP_TIMEOUT_SECONDS (lt (int .Values.PROBE_STARTUP_TIMEOUT_SECONDS) 0) }}
 
           securityContext:
 {{ if eq .Values.PAAS_PLATFORM "KUBERNETES" }}
+            runAsUser: 10001
             runAsGroup: 10001
 {{ end }}
-            readOnlyRootFilesystem: {{ and .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED (eq .Values.PAAS_PLATFORM "KUBERNETES") }}
+            readOnlyRootFilesystem: {{ .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED }}
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
@@ -247,6 +288,22 @@ spec:
               drop:
                 - ALL
           volumeMounts:
+{{ if .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED }}
+            - name: tmp
+              mountPath: /tmp
+            - name: sslcerts
+              mountPath: /etc/ssl/certs
+            - name: cacerts
+              mountPath: /usr/local/share/ca-certificates
+{{ end }}
+            - name: client-credentials
+              mountPath: "/etc/secret"
+              readOnly: true
+{{ if .Values.INTERNAL_TLS_ENABLED }}
+            - name: tls
+              mountPath: '/etc/tls'
+              readOnly: true
+{{ end }}
             - name: projected-tokens
               mountPath: /var/run/secrets/tokens
               readOnly: true
