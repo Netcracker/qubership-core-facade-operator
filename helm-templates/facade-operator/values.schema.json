@@ -401,7 +401,7 @@
       "$id": "#/properties/GW_INGRESS_ANNOTATIONS",
       "type": "string",
       "title": "The GW_INGRESS_ANNOTATIONS schema",
-      "description": "Annotations for public and private gateways ingresses/routes.",
+      "description": "Additional annotations for public and private gateway Ingresses. nginx proxy-read-timeout and proxy-send-timeout default to 120s and can be overridden here. Those timeout keys are also used as fallback idle timeout for Gateway API BackendTrafficPolicy.",
       "default": ""
     },
     "TRACING_SAMPLER_RATELIMITING": {
