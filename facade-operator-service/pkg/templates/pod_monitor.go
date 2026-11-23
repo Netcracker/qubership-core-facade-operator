@@ -71,6 +71,13 @@ func (f FacadePodMonitor) getPodMetricsEndpoint() []v1.PodMetricsEndpoint {
 		Port:     "admin",
 		Scheme:   "http",
 		Path:     "/stats/prometheus",
+		MetricRelabelings: []v1.MetricRelabelingConfig{
+			{
+				Action: "keep",
+				Regex:  "envoy_.*_(ms|time|duration)_bucket;(1|10|100|1000|10000|60000)",
+				SourceLabels: []string{"__name__", "le"},
+			},
+		},
 	}
 
 	return []v1.PodMetricsEndpoint{podMetricEndpoint}
