@@ -1,11 +1,16 @@
 package templates
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	v1 "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/monitoring/v1"
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
+	"github.com/netcracker/qubership-core-lib-go/v3/logging"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
+
+var logger = logging.GetLogger("PodMonitor")
 
 type FacadePodMonitor struct {
 	Name            string
@@ -67,18 +72,33 @@ func (f FacadePodMonitor) GetPodMonitor() *v1.PodMonitor {
 
 func (f FacadePodMonitor) getPodMetricsEndpoint() []v1.PodMetricsEndpoint {
 	podMetricEndpoint := v1.PodMetricsEndpoint{
-		Interval: "30s",
-		Port:     "admin",
-		Scheme:   "http",
-		Path:     "/stats/prometheus",
-		MetricRelabelings: []v1.MetricRelabelingConfig{
-			{
-				Action: "keep",
-				Regex:  "envoy_.*_(ms|time|duration)_bucket;(1|10|100|1000|10000|60000)",
-				SourceLabels: []string{"__name__", "le"},
-			},
-		},
+		Interval:          "30s",
+		Port:              "admin",
+		Scheme:            "http",
+		Path:              "/stats/prometheus",
+		MetricRelabelings: getMetricRelabeling(),
 	}
 
 	return []v1.PodMetricsEndpoint{podMetricEndpoint}
+}
+
+func getMetricRelabeling() []v1.MetricRelabelingConfig {
+	if utils.MetricRelabeling == "" {
+		return nil
+	}
+
+	jsonBytes, err := base64.StdEncoding.DecodeString(utils.MetricRelabeling)
+	if err != nil {
+		logger.Errorf("Error during decoding env variable METRIC_RELABELING: %v", err)
+		return nil
+	}
+
+	var metricRelabeling []v1.MetricRelabelingConfig
+	err = json.Unmarshal(jsonBytes, &metricRelabeling)
+	if err != nil {
+		logger.Errorf("Error during unmarshaling env variable METRIC_RELABELING: %v", err)
+		return nil
+	}
+
+	return metricRelabeling
 }
