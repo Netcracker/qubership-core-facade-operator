@@ -46,10 +46,17 @@ type PodMonitorList struct {
 }
 
 type PodMetricsEndpoint struct {
-	Interval string `json:"interval,omitempty"`
-	Port     string `json:"port,omitempty"`
-	Scheme   string `json:"scheme,omitempty"`
-	Path     string `json:"path,omitempty"`
+	Interval          string                     `json:"interval,omitempty"`
+	Port              string                     `json:"port,omitempty"`
+	Scheme            string                     `json:"scheme,omitempty"`
+	Path              string                     `json:"path,omitempty"`
+	MetricRelabelings []MetricRelabelingConfig   `json:"metricRelabelings,omitempty"`
+}
+
+type MetricRelabelingConfig struct {
+	Action       string   `json:"action,omitempty"`
+	Regex        string   `json:"regex,omitempty"`
+	SourceLabels []string `json:"sourceLabels,omitempty"`
 }
 
 type NamespaceSelector struct {
