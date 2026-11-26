@@ -3,9 +3,9 @@ package templates
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	v1 "github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/api/monitoring/v1"
 	"github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2/pkg/utils"
-	"github.com/netcracker/qubership-core-lib-go/v3/configloader"
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -27,12 +27,6 @@ type FacadePodMonitor struct {
 }
 
 func (f FacadePodMonitor) GetPodMonitor() *v1.PodMonitor {
-	metricRelabelAction := configloader.GetOrDefaultString("metricRelabel.action", "default_keep")
-	metricRelabelRegex := configloader.GetOrDefaultString("metricRelabel.regex", "default_regex")
-
-	logger.Infof("Metric relabeling action: %s", metricRelabelAction)
-	logger.Infof("Metric relabeling regex: %s", metricRelabelRegex)
-
 	labels := map[string]string{
 		"k8s-app":                                 f.NameLabel,
 		"app.kubernetes.io/name":                  f.NameLabel,
@@ -86,17 +80,6 @@ func (f FacadePodMonitor) getPodMetricsEndpoint() []v1.PodMetricsEndpoint {
 		MetricRelabelings: getMetricRelabeling(),
 	}
 
-	// Alternative approach - hardcode metric relabeling config and check for non-empty MetricRelabeling env var
-	if utils.MetricRelabeling != "" {
-		podMetricEndpoint.MetricRelabelings = []v1.MetricRelabelingConfig{
-			{
-				Action:       "keep",
-				Regex:        "envoy_.*_(ms|time|duration)_bucket;(1|10|100|1000|10000|60000)",
-				SourceLabels: []string{"__name__", "le"},
-			},
-		}
-	}
-
 	return []v1.PodMetricsEndpoint{podMetricEndpoint}
 }
 
@@ -118,5 +101,26 @@ func getMetricRelabeling() []v1.MetricRelabelingConfig {
 		return nil
 	}
 
+	err = checkMandatoryParameters(metricRelabeling)
+	if err != nil {
+		logger.Errorf("Error during checking mandatory parameters for METRIC_RELABELING: %v", err)
+		return nil
+	}
+
 	return metricRelabeling
+}
+
+func checkMandatoryParameters(metricRelabeling []v1.MetricRelabelingConfig) error {
+	for _, v := range metricRelabeling {
+		if v.Action == "" {
+			return fmt.Errorf("parameter METRIC_RELABELING does't contain mandatory field 'action'")
+		}
+		if v.Regex == "" {
+			return fmt.Errorf("parameter METRIC_RELABELING does't contain mandatory field 'regex'")
+		}
+		if len(v.SourceLabels) == 0 {
+			return fmt.Errorf("parameter METRIC_RELABELING does't contain mandatory field 'sourceLabels'")
+		}
+	}
+	return nil
 }
