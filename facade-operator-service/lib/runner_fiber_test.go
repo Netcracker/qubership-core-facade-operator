@@ -5,8 +5,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2/security"
+	"github.com/gofiber/fiber/v3"
+	"github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v3/security"
 	"github.com/netcracker/qubership-core-lib-go/v3/configloader"
 	"github.com/netcracker/qubership-core-lib-go/v3/serviceloader"
 	"github.com/stretchr/testify/assert"
@@ -42,7 +42,7 @@ func TestNewFiberServerAppRegistersTracerWhenEnabled(t *testing.T) {
 	_, ok := otel.GetTracerProvider().(*sdktrace.TracerProvider)
 	assert.True(t, ok, "expected SDK tracer provider when tracing is enabled")
 
-	resp, err := app.Test(httptest.NewRequest(fiber.MethodGet, "/prometheus", nil), -1)
+	resp, err := app.Test(httptest.NewRequest(fiber.MethodGet, "/prometheus", nil), fiber.TestConfig{Timeout: 0})
 	require.NoError(t, err)
 	assert.Equal(t, fiber.StatusOK, resp.StatusCode)
 }
