@@ -1,14 +1,17 @@
 module github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2
 
-go 1.26.9
+go 1.27.0
 
 require (
 	github.com/cert-manager/cert-manager v1.21.3
+	github.com/gofiber/fiber/v3 v3.7.0
 	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.13.0
 	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.8.0
+	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v3 v3.0.0-20261127125851-b1545d1dfd49
 	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.12.1-0.20261127110133-31cf2681e66c
 	github.com/netcracker/qubership-core-lib-go/v3 v3.16.0
 	github.com/openshift/api v0.0.0-20261120004813-41d935148e5e
+	github.com/prometheus/client_golang v1.25.0
 	github.com/stretchr/testify v1.12.1
 	go.opentelemetry.io/otel v1.47.0
 	go.opentelemetry.io/otel/sdk v1.47.0
@@ -18,13 +21,7 @@ require (
 	k8s.io/apimachinery v0.37.2
 	k8s.io/client-go v0.37.2
 	sigs.k8s.io/controller-runtime v0.24.1 // check compatibility table here https://github.com/kubernetes-sigs/controller-runtime AND cannot be updated until client-go is updated in go-security-scripts and paas-mediation-client
-	sigs.k8s.io/gateway-api v1.6.3
-)
-
-require (
-	github.com/gofiber/fiber/v3 v3.7.0
-	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v3 v3.0.0-20261127125851-b1545d1dfd49
-	github.com/prometheus/client_golang v1.25.0
+	sigs.k8s.io/gateway-api v1.7.0
 )
 
 require (
