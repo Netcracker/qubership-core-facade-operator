@@ -8,7 +8,7 @@ require (
 	github.com/netcracker/qubership-core-lib-go-actuator-common/v2 v2.13.0
 	github.com/netcracker/qubership-core-lib-go-error-handling/v3 v3.8.0
 	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.12.0
-	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.12.1-0.20261127092444-acecc53c0613
+	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.12.1-0.20261127110133-31cf2681e66c
 	github.com/netcracker/qubership-core-lib-go/v3 v3.16.0
 	github.com/openshift/api v0.0.0-20261120004813-41d935148e5e
 	github.com/stretchr/testify v1.12.1
